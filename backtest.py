@@ -7,7 +7,6 @@ import time
 import talib
 from numba import njit
 import gc
-from Clean_data import Clean_data
 from typing import Tuple
 from Straetgy import Strategy
 
@@ -19,24 +18,18 @@ vbt.settings.portfolio['fees'] = 0.002      # in %
 vbt.settings.portfolio['slippage'] = 0.0025  # in %
 
 
-# Hyperparameter optimization
+df = pd.read_csv('BTCUSDT-F-15-Min.csv')
+df.set_index('Datetime', inplace=True)
+print(df)
 
 
-# 資料準備
-btc_price = pd.read_csv('BTCUSDT-1h-data.csv')
-btc_price['timestamp'] = pd.to_datetime(btc_price['timestamp'])
-btc_price.set_index('timestamp', inplace=True)
-# 拋棄不要的 columns
-df = Clean_data.drop_colunms(btc_price)
-
-
-@Strategy(highest_1=30, lowest_1=30, win_out=0.001)
+@Strategy(highest_1=30, lowest_1=30, win_out=0.01)
 def turtle_strategy(df: pd.DataFrame) -> Tuple[pd.Series, pd.Series]:
-    Open = df['open']
-    High = df['high']
-    Low = df['low']
-    Close = df['close']
-    
+    Open = df['Open']
+    High = df['High']
+    Low = df['Low']
+    Close = df['Close']
+
     Highest_var = High.rolling(int(turtle_strategy.highest_1)).max()
     Lowest_var = Low.rolling(int(turtle_strategy.lowest_1)).min()
 
@@ -65,6 +58,17 @@ def turtle_strategy(df: pd.DataFrame) -> Tuple[pd.Series, pd.Series]:
 # print(pf.orders.records_readable)
 # pf.plot().show()
 
-variables = {"highest_1": list(range(10, 500, 10)), "lowest_1": list(range(10, 500, 10)), "win_out": list(map(lambda x : x*0.01, list(range(1, 15, 1))))}
 
-pf = turtle_strategy.backtest(df, variables)
+# 最佳化mode
+# variables = {"highest_1": list(range(10, 500, 10)), "lowest_1": list(range(
+#     10, 500, 10)), "win_out": list(map(lambda x: x*0.01, list(range(1, 15, 1))))}
+
+# pf = turtle_strategy.backtest_Hyperparameter_optimization(df, variables)
+
+
+# 一般模式測試
+pf = turtle_strategy.backtest(df,size = 1)
+print(pf.orders.records_readable)
+
+# 查看權益數之圖表
+pf.value().vbt.plot().show()

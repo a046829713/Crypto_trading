@@ -6,6 +6,8 @@ import time
 import gc
 from tqdm import tqdm
 from decimal import *
+from typing import Optional
+
 
 class Strategy(object):
     """
@@ -156,16 +158,15 @@ class Strategy(object):
         exits = exits.squeeze()
         return entries, exits
 
-    
-    def change_str(self,enumeration_vars:list)->list:
+    def change_str(self, enumeration_vars: list) -> list:
         out_list = []
-        
+
         for each_ in enumeration_vars:
-            each_ = list(map(str,each_))
-            out_list.append(list(map(Decimal,each_)))
-            
+            each_ = list(map(str, each_))
+            out_list.append(list(map(Decimal, each_)))
+
         return out_list
-    
+
     def enumerate_variables(self, variables: dict) -> list:
         """ 將資料改變（配對成每一對）
 
@@ -187,7 +188,6 @@ class Strategy(object):
         enumeration_vars = []
         constant_d = {}
 
-        
         for name, v in variables.items():
             if (isinstance(v, Iterable) and not isinstance(v, str)
                 and not isinstance(v, pd.Series)
@@ -202,9 +202,10 @@ class Strategy(object):
 
         variable_enumerations = []
         for ps in list(product(*enumeration_vars)):
-            ps = (tuple(map(float,ps)))
-            variable_enumerations.append(dict(**dict(zip(enumeration_name, ps)), **constant_d))
-            
+            ps = (tuple(map(float, ps)))
+            variable_enumerations.append(
+                dict(**dict(zip(enumeration_name, ps)), **constant_d))
+
         return variable_enumerations
 
     def is_evalable(self, obj):
@@ -270,12 +271,12 @@ class Strategy(object):
 
         return entries, exits, fig
 
-    def backtest(self, df: pd, variables: dict, batchoperation: int = 500):
+    def backtest_Hyperparameter_optimization(self, df: pd.DataFrame, variables: dict, batchoperation: int = 500):
         """
             use backtest
                 # if 'entries' to large to rasie memory
-                    then slicing
-                    
+                    then slicing data
+
                 修正字典記憶體不足 
         """
         variables = variables or dict()
@@ -285,43 +286,43 @@ class Strategy(object):
         # 總運算次數
         all_num = divmod(len(variable_enumerates), batchoperation)
         all_num = all_num[0] if all_num[1] == 0 else all_num[0] + 1
-        
+
         i = 0
         total_returns = []
         for _i in tqdm(range(all_num)):
-            variable_batch =  variable_enumerates[i:i+batchoperation]          
+            variable_batch = variable_enumerates[i:i+batchoperation]
             # args['size'] = vbt.settings.portfolio['init_cash'] / ohlcv_lookback.close[0]
-            entries, exits, fig_data = self.enumerate_signal(df, variable_batch)
-            
+            entries, exits, fig_data = self.enumerate_signal(
+                df, variable_batch)
+
             # entries = pd.DataFrame
             portfolio = vbt.Portfolio.from_signals(
-                df['close'], entries, exits)
+                df['Close'], entries, exits)
 
             total_returns.append(portfolio.total_return())
 
             del portfolio
             gc.collect()
-            
+
             i += batchoperation
-            
-            
+
         total_return = pd.concat(total_returns)
         print(total_return.max())
         return total_return
-        
-        
-        
-        
-        
-        
 
+    def backtest(self, df: pd.DataFrame, **kwargs):
+        """
+            一般參數情況 使用內建參數並且於此中此
 
+        Args:
+            df (pd): _description_
 
+        """
+        print('backtest 回測準備參數', kwargs)
+        variable_enumerates = [self._default_parameters]
 
-        
-        
+        entries, exits, fig_data = self.enumerate_signal(
+            df, variable_enumerates)
 
-
-
-
-
+        return vbt.Portfolio.from_signals(
+            df['Close'], entries, exits, **kwargs)
