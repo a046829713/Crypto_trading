@@ -20,7 +20,6 @@ vbt.settings.portfolio['slippage'] = 0.0025  # in %
 
 df = pd.read_csv('BTCUSDT-F-15-Min.csv')
 df.set_index('Datetime', inplace=True)
-print(df)
 
 
 @Strategy(highest_1=30, lowest_1=30, win_out=0.01)
@@ -68,7 +67,14 @@ def turtle_strategy(df: pd.DataFrame) -> Tuple[pd.Series, pd.Series]:
 
 # 一般模式測試
 pf = turtle_strategy.backtest(df,size = 1)
+print(pf)
 print(pf.orders.records_readable)
 
 # 查看權益數之圖表
 pf.value().vbt.plot().show()
+
+
+from vectorbt import Portfolio
+
+
+Portfolio.metrics

@@ -75,4 +75,4 @@ class DataProvider:
 
 if __name__ == "__main__":
     dataprovider = DataProvider()
-    print(dataprovider.get_symboldata("BTCUSDT", 15))
+    print(dataprovider.get_symboldata("ETHUSDT", 15))
