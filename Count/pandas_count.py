@@ -19,11 +19,25 @@ class Pandas_count():
 
 class Event_count():
     @staticmethod
+    def get_highest(data: list, periods):
+        return max(data[-(periods+1):-1])
+    
+    @staticmethod
+    def get_lowest(data: list, periods):
+        return min(data[-(periods+1):-1])
+
+    @staticmethod
+    def get_profit(profit, marketpostion, last_marketpostion, Close, sell_sizes, last_entryprice):
+        if marketpostion == 0 and last_marketpostion == 1:
+            profit = Close * sell_sizes - last_entryprice * sell_sizes
+        else:
+            profit = 0
+        return profit
+
+    @staticmethod
     def get_OpenPostionprofit(OpenPostionprofit, marketpostion, last_marketpostion, buy_Fees, Close, buy_sizes, entryprice):
-        if marketpostion == 1 and last_marketpostion == 0:
-            OpenPostionprofit = - buy_Fees
-        elif marketpostion == 1:
-            OpenPostionprofit = Close * buy_sizes - entryprice * buy_sizes - buy_Fees
+        if marketpostion == 1:
+            OpenPostionprofit = Close * buy_sizes - entryprice * buy_sizes
         else:
             OpenPostionprofit = 0
         return OpenPostionprofit
@@ -81,6 +95,11 @@ class Event_count():
 
     @staticmethod
     def get_info(data: dict, target_name: str) -> list:
+        print(type(data))
+        for index, value in data.items():
+            
+            print(index, value)
+            print(value[target_name])
         return [value[target_name] for index, value in data.items()]
 
     @staticmethod

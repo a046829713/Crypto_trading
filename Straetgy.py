@@ -205,7 +205,8 @@ class Strategy(object):
             ps = (tuple(map(float, ps)))
             variable_enumerations.append(
                 dict(**dict(zip(enumeration_name, ps)), **constant_d))
-
+        print(variable_enumerations)
+        exit()
         return variable_enumerations
 
     def is_evalable(self, obj):

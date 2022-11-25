@@ -59,22 +59,22 @@ def turtle_strategy(df: pd.DataFrame) -> Tuple[pd.Series, pd.Series]:
 
 
 # 最佳化mode
-# variables = {"highest_1": list(range(10, 500, 10)), "lowest_1": list(range(
-#     10, 500, 10)), "win_out": list(map(lambda x: x*0.01, list(range(1, 15, 1))))}
+variables = {"highest_1": list(range(10, 500, 10)), "lowest_1": list(range(
+    10, 500, 10)), "win_out": list(map(lambda x: x*0.01, list(range(1, 15, 1))))}
 
-# pf = turtle_strategy.backtest_Hyperparameter_optimization(df, variables)
+pf = turtle_strategy.backtest_Hyperparameter_optimization(df, variables)
 
 
 # 一般模式測試
-pf = turtle_strategy.backtest(df,size = 1)
-print(pf)
-print(pf.orders.records_readable)
+# pf = turtle_strategy.backtest(df,size = 1)
+# print(pf)
+# print(pf.orders.records_readable)
 
-# 查看權益數之圖表
-pf.value().vbt.plot().show()
-
-
-from vectorbt import Portfolio
+# # 查看權益數之圖表
+# pf.value().vbt.plot().show()
 
 
-Portfolio.metrics
+# from vectorbt import Portfolio
+
+
+# Portfolio.metrics
