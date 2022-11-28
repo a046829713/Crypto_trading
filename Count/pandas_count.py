@@ -95,11 +95,6 @@ class Event_count():
 
     @staticmethod
     def get_info(data: dict, target_name: str) -> list:
-        print(type(data))
-        for index, value in data.items():
-            
-            print(index, value)
-            print(value[target_name])
         return [value[target_name] for index, value in data.items()]
 
     @staticmethod

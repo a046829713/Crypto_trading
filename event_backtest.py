@@ -61,6 +61,9 @@ class Order_info(object):
         self.order.reset_index(inplace=True)
         self.order['Order Id'] = self.order.index
         self.order.set_index("Datetime", inplace=True)
+        # print(self.order)
+        
+        
 
     def drawdown(self):
         """
@@ -71,7 +74,7 @@ class Order_info(object):
         print(self.order['ClosedPostionprofit'].to_list())
 
 
-class Strategy_info(object):
+class Strategy_base(object):
     """ 
     取得策略的基本資料及訊息
     Args:
@@ -134,7 +137,7 @@ class Order_Strategy(object):
         object (_type_): _description_
     """
 
-    def __init__(self, strategy_info: Strategy_info) -> None:
+    def __init__(self, strategy_info: Strategy_base) -> None:
         self.strategy_info = strategy_info
         self.original_data = self.strategy_info.data
 
@@ -144,6 +147,7 @@ class Order_Strategy(object):
             profit "採用MC裡面的想法 不添加手續費的計算 單純用來計算買賣價差"
         """
         newdata = copy.deepcopy(self.original_data)
+
         init_cash = self.strategy_info.init_cash
 
         # 此變數區列可以在迭代當中改變
@@ -162,12 +166,10 @@ class Order_Strategy(object):
         buy_sizes = self.strategy_info.size  # 買進部位大小
         sell_sizes = self.strategy_info.size  # 賣出進部位大小
 
-        
-
-    
         min_periods_lock = 0
-        high_list =[]
-        Low_list =[]  
+        high_list = []
+        Low_list = []
+        del_list = []
         for each_index, each_price in self.original_data.items():
             Open = each_price['Open']
             High = each_price['High']
@@ -176,13 +178,14 @@ class Order_Strategy(object):
             # ==============================================================
             high_list.append(each_price['High'])
             Low_list.append(each_price['Low'])
-            
-            min_periods_lock +=1
-            #////////////要更改/////////////////
-            if min_periods_lock<500:
+
+            min_periods_lock += 1
+            # ////////////要更改/////////////////
+            if min_periods_lock < 500:
+                del_list.append(each_index)
                 continue
-            Highest1 = Event_count.get_highest(high_list,3)
-            Lowest1 = Event_count.get_lowest(Low_list,3)        
+            Highest1 = Event_count.get_highest(high_list, 3)
+            Lowest1 = Event_count.get_lowest(Low_list, 3)
             # ==============================================================
             # 策略所產生之資訊
             last_marketpostion = marketpostion
@@ -251,7 +254,7 @@ class Order_Strategy(object):
 
             # 保存相關即時資訊
             newdata[each_index]['marketpostion'] = marketpostion
-            
+
             newdata[each_index]['ClosedPostionprofit'] = ClosedPostionprofit
             newdata[each_index]['OpenPostionprofit'] = OpenPostionprofit
             newdata[each_index]['buy_sizes'] = buy_sizes
@@ -265,12 +268,16 @@ class Order_Strategy(object):
             newdata[each_index]['netprofit'] = netprofit
             newdata[each_index]['all_Fees'] = all_Fees
 
+        # 將newdata無使用的資料過濾
+        for del_index in del_list:
+            del newdata[del_index]
+        
         # 運算開發環境
         # for index, value in newdata.items():
-        #     print(value)
+        #     print(index, value)
         #     print('*'*120)
 
-        
+
         # 取得單一元素的時間序列
         Close_list = Event_count.get_info(newdata, 'Close')
         marketpostion_list = Event_count.get_info(newdata, 'marketpostion')
@@ -339,9 +346,9 @@ class Order_Strategy(object):
 inputs_parameter = {"highest_n1": list(
     range(10, 500, 10)), "lowest_n2": list(range(10, 500, 10))}
 
-strategy1 = Strategy_info("BTCUSDT-15K-OB", "BTCUSDT", 15, 1, 0.002, 0.0025)
+strategy1 = Strategy_base("BTCUSDT-15K-OB", "BTCUSDT", 15, 1, 0.002, 0.0025)
 ordermap = Order_Strategy(strategy1)
-# for each_parameter in tqdm(Hyper_optimization.generator_parameter(inputs_parameter)):
-for each_parameter in [{'highest_n1': 3, 'lowest_n2': 410}]:
+for each_parameter in tqdm(Hyper_optimization.generator_parameter(inputs_parameter)):
+# for each_parameter in [{'highest_n1': 3, 'lowest_n2': 410}]:
     pf = ordermap.logic_order()
-#     print(pf.order['netprofit'].iloc[-1])
+    print(pf.order['netprofit'].iloc[-1])
