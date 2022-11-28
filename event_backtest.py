@@ -62,8 +62,6 @@ class Order_info(object):
         self.order['Order Id'] = self.order.index
         self.order.set_index("Datetime", inplace=True)
         # print(self.order)
-        
-        
 
     def drawdown(self):
         """
@@ -88,7 +86,7 @@ class Strategy_base(object):
                  size: int,
                  fee: float,
                  slippage: float,
-                 init_cash: float = 100.0,
+                 init_cash: float = 10000.0,
                  symobl_type: str = "Futures") -> None:
         """ to get strategy info msg
 
@@ -141,6 +139,9 @@ class Order_Strategy(object):
         self.strategy_info = strategy_info
         self.original_data = self.strategy_info.data
 
+    def set_parameter(self, parameter: dict):
+        self.parameter = parameter
+
     def logic_order(self):
         """
             撰寫邏輯的演算法
@@ -170,6 +171,9 @@ class Order_Strategy(object):
         high_list = []
         Low_list = []
         del_list = []
+
+        
+        
         for each_index, each_price in self.original_data.items():
             Open = each_price['Open']
             High = each_price['High']
@@ -180,12 +184,13 @@ class Order_Strategy(object):
             Low_list.append(each_price['Low'])
 
             min_periods_lock += 1
-            # ////////////要更改/////////////////
-            if min_periods_lock < 500:
+            if min_periods_lock < max(list(self.parameter.values())):
                 del_list.append(each_index)
                 continue
-            Highest1 = Event_count.get_highest(high_list, 3)
-            Lowest1 = Event_count.get_lowest(Low_list, 3)
+            Highest1 = Event_count.get_highest(
+                high_list, self.parameter['highest_n1'])
+            Lowest1 = Event_count.get_lowest(
+                Low_list, self.parameter['lowest_n2'])
             # ==============================================================
             # 策略所產生之資訊
             last_marketpostion = marketpostion
@@ -206,8 +211,8 @@ class Order_Strategy(object):
 
             # 計算當前買進部位大小
             if marketpostion == 1 and last_marketpostion == 0:
-                # buy_sizes = init_cash / Close
-                buy_sizes = 1
+                buy_sizes = init_cash / Close
+                # buy_sizes = 1
             elif marketpostion == 0:
                 buy_sizes = 0
 
@@ -271,12 +276,11 @@ class Order_Strategy(object):
         # 將newdata無使用的資料過濾
         for del_index in del_list:
             del newdata[del_index]
-        
+
         # 運算開發環境
         # for index, value in newdata.items():
         #     print(index, value)
         #     print('*'*120)
-
 
         # 取得單一元素的時間序列
         Close_list = Event_count.get_info(newdata, 'Close')
@@ -313,35 +317,6 @@ class Order_Strategy(object):
                           ClosedPostionprofit_list,
                           OpenPostionprofit_list)
 
-    # @TimeCountMsg.record_timemsg
-    def adjust_data(self):
-        """
-            不是需要原數據 取得調整後數據
-        """
-        # 最小數據量的鎖定 未來可以加入
-        self.strategy_info.data
-        # 不可視未來
-        df['highest_n1'] = Pandas_count.highest(
-            High, self.strategy_info.parameter['highest_n1']).shift()
-        df['lowest_n2'] = Pandas_count.lowest(
-            Low, self.strategy_info.parameter['lowest_n2']).shift()
-        df.dropna(inplace=True)
-
-        # 取得參數
-        return df.to_dict("index")
-
-    # def data_change(self,each_parameter):
-    #     """
-    #         這邊設計是用來處理資料回測前就可以取得的資料
-    #     """
-    #     min_periods_lock = 0
-    #     maxlength = 0
-    #     for _i,_v in each_parameter.items():
-    #         if _v > maxlength:
-    #             maxlength = _v
-
-    #     print(self.strategy_info.row_data['High'])
-
 
 inputs_parameter = {"highest_n1": list(
     range(10, 500, 10)), "lowest_n2": list(range(10, 500, 10))}
@@ -349,6 +324,7 @@ inputs_parameter = {"highest_n1": list(
 strategy1 = Strategy_base("BTCUSDT-15K-OB", "BTCUSDT", 15, 1, 0.002, 0.0025)
 ordermap = Order_Strategy(strategy1)
 for each_parameter in tqdm(Hyper_optimization.generator_parameter(inputs_parameter)):
-# for each_parameter in [{'highest_n1': 3, 'lowest_n2': 410}]:
+    # for each_parameter in [{'highest_n1': 3, 'lowest_n2': 410}]:
+    ordermap.set_parameter(each_parameter)
     pf = ordermap.logic_order()
     print(pf.order['netprofit'].iloc[-1])
