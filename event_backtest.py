@@ -1,6 +1,6 @@
 import pandas as pd
 from typing import Union
-from Count.pandas_count import Pandas_count, Event_count
+from Count.Base import Pandas_count, Event_count
 import copy
 from typing import List
 import matplotlib.pyplot as plt
@@ -9,6 +9,7 @@ import numpy as np
 from Hyper_optimiza import Hyper_optimization
 from tqdm import tqdm
 from utils.TimeCountMsg import TimeCountMsg
+from Base.Strategy_base import Strategy_base
 # pd.set_option('display.max_rows', None)
 # pd.set_option('display.max_columns', None)
 # pd.set_option('display.width', None)
@@ -72,59 +73,7 @@ class Order_info(object):
         print(self.order['ClosedPostionprofit'].to_list())
 
 
-class Strategy_base(object):
-    """ 
-    取得策略的基本資料及訊息
-    Args:
-        object (_type_): _description_
-    """
 
-    def __init__(self,
-                 strategy_name: str,
-                 symbol_name: str,
-                 freq_time: int,
-                 size: int,
-                 fee: float,
-                 slippage: float,
-                 init_cash: float = 10000.0,
-                 symobl_type: str = "Futures") -> None:
-        """ to get strategy info msg
-
-        Args:
-            strategy_name (str): _description_
-            symbol_name (int): _description_
-                like : BTCUSDT
-            freq_time (int): _description_
-            fee (float): _description_
-            slippage (float): _description_
-        """
-        self.strategy_name = strategy_name
-        self.symbol_name = symbol_name
-        self.freq_time = freq_time
-        self.size = size
-        self.fee = fee
-        self.slippage = slippage
-        self.init_cash = init_cash
-        self.symobl_type = symobl_type
-        self.data = self.simulationdata
-
-    @property
-    def simulationdata(self):
-        """
-
-        Args:
-            data_type (str, optional): _description_. Defaults to 'event_data'.
-
-        Returns:
-            _type_: _description_
-        """
-        if self.symobl_type == 'Futures':
-            self.symobl_type = "F"
-
-        df = pd.read_csv(
-            f"{self.symbol_name}-{self.symobl_type}-{self.freq_time}-Min.csv")
-        df.set_index("Datetime", inplace=True)
-        return df.to_dict("index")
 
 
 class Order_Strategy(object):
@@ -323,6 +272,7 @@ inputs_parameter = {"highest_n1": list(
 
 strategy1 = Strategy_base("BTCUSDT-15K-OB", "BTCUSDT", 15, 1, 0.002, 0.0025)
 ordermap = Order_Strategy(strategy1)
+
 for each_parameter in tqdm(Hyper_optimization.generator_parameter(inputs_parameter)):
     # for each_parameter in [{'highest_n1': 3, 'lowest_n2': 410}]:
     ordermap.set_parameter(each_parameter)

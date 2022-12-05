@@ -1,4 +1,6 @@
 import pandas as pd
+import numpy as np
+from typing import Sequence
 
 
 class Pandas_count():
@@ -21,7 +23,7 @@ class Event_count():
     @staticmethod
     def get_highest(data: list, periods):
         return max(data[-(periods+1):-1])
-    
+
     @staticmethod
     def get_lowest(data: list, periods):
         return min(data[-(periods+1):-1])
@@ -53,7 +55,7 @@ class Event_count():
             ClosedPostionprofit = ClosedPostionprofit + \
                 (Close * sizes - last_entryprice * sizes)
         return ClosedPostionprofit
-
+    
     @staticmethod
     def get_entryprice(entryprice, Close, marketpostion, last_marketpostion, slippage=None):
         if marketpostion == 1 and last_marketpostion == 0:
@@ -100,8 +102,9 @@ class Event_count():
     @staticmethod
     def get_index(data: dict) -> list:
         return list(data.keys())
-
-    def get_order(marketpostion: list) -> list:
+    
+    @staticmethod
+    def get_order(marketpostion: Sequence) -> list:
         out_list = []
         order = 0
         for i in range(len(marketpostion)):
@@ -124,3 +127,47 @@ class Event_count():
             out_list.append(order)
 
         return out_list
+
+
+class vecbot_count():
+    @staticmethod
+    def Highest(data_array: np.ndarray, step: int) -> np.ndarray:
+        """取得rolling的滾動值 和官方的不一樣,並且完成不可視的未來
+
+        Args:
+            data_array (np.ndarray): original data like "Open" "High"
+            step (int): to window
+
+        Returns:
+            np.ndarray: _description_
+        """
+        high_array = np.empty(shape=data_array.shape[0])
+        # 由前向後滾動
+        for i in range(0, data_array.shape[0]):
+            if i < step:
+                high_array[i] = np.nan
+                continue
+            else:
+                high_array[i] = np.max(data_array[i-step:i])
+        return high_array
+
+    @staticmethod
+    def Lowest(data_array: np.ndarray, step: int) -> np.ndarray:
+        """取得rolling的滾動值 和官方的不一樣,並且完成不可視的未來
+
+        Args:
+            data_array (np.ndarray): original data like "Open" "High"
+            step (int): to window
+
+        Returns:
+            np.ndarray: _description_
+        """
+        low_array = np.empty(shape=data_array.shape[0])
+        # 由前向後滾動
+        for i in range(0, data_array.shape[0]):
+            if i < step:
+                low_array[i] = np.nan
+                continue
+            else:
+                low_array[i] = np.min(data_array[i-step:i])
+        return low_array
