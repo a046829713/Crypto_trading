@@ -4,6 +4,33 @@ from typing import Sequence
 
 
 @njit
+def get_drawdown_per(ClosedPostionprofit: np.ndarray):
+    DD_per_array = np.empty(shape=ClosedPostionprofit.shape[0])
+    max_profit = 0
+    for i in range(ClosedPostionprofit.shape[0]):
+        if ClosedPostionprofit[i] > max_profit:
+            max_profit = ClosedPostionprofit[i]
+            DD_per_array[i] = 0
+        else:
+            DD_per_array[i] = 100 * (ClosedPostionprofit[i] -
+                                     max_profit) / max_profit
+    return DD_per_array
+
+
+@njit
+def get_drawdown(ClosedPostionprofit: np.ndarray):
+    DD_array = np.empty(shape=ClosedPostionprofit.shape[0])
+    max_profit = 0
+    for i in range(ClosedPostionprofit.shape[0]):
+        if ClosedPostionprofit[i] > max_profit:
+            max_profit = ClosedPostionprofit[i]
+            DD_array[i] = 0
+        else:
+            DD_array[i] = (ClosedPostionprofit[i] - max_profit)
+    return DD_array
+
+
+@njit
 def get_entryprice(entryprice, Close, marketpostion, last_marketpostion, slippage=None):
     if marketpostion == 1 and last_marketpostion == 0:
         if slippage:

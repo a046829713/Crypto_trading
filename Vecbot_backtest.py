@@ -1,60 +1,10 @@
 from Base.Strategy_base import Strategy_base
 from Count.Base import vecbot_count, Event_count
 from Count import nb
-import numpy as np
-import pandas as pd
 from tqdm import tqdm
 from Hyper_optimiza import Hyper_optimization
+from Base.Order_Info import Np_Order_Info
 
-
-class Np_Order_Info(object):
-    """ 用來處理訂單的相關資訊
-    Args:
-        object (_type_): _description_
-    """
-
-    def __init__(self, datetime_list,
-                 orders: np.ndarray,
-                 marketpostion: np.ndarray,
-                 entryprice: np.ndarray,
-                 buy_Fees: np.ndarray,
-                 sell_Fees: np.ndarray,
-                 OpenPostionprofit: np.ndarray,
-                 ClosedPostionprofit: np.ndarray,
-                 profit: np.ndarray,
-                 Gross_profit: np.ndarray,
-                 Gross_loss: np.ndarray,
-                 all_Fees: np.ndarray,
-                 netprofit: np.ndarray,
-                 ) -> None:
-        # 取得order儲存列
-        self.order = pd.DataFrame(datetime_list, columns=['Datetime'])
-        self.order['Order'] = orders
-        self.order['Marketpostion'] = marketpostion
-        self.order['Entryprice'] = entryprice
-        self.order['Buy_Fees'] = buy_Fees
-        self.order['Sell_Fees'] = sell_Fees
-        self.order['OpenPostionprofit'] = OpenPostionprofit
-        self.order['ClosedPostionprofit'] = ClosedPostionprofit
-        self.order['Profit'] = profit
-        self.order['Gross_profit'] = Gross_profit
-        self.order['Gross_loss'] = Gross_loss
-        self.order['all_Fees'] = all_Fees
-        self.order['netprofit'] = netprofit
-        self.order.set_index("Datetime", inplace=True)
-        
-
-    @property
-    def TotalTrades(self):
-        """ 透過訂單的長度即可判斷交易的次數
-
-        Returns:
-            _type_: _description_
-        """
-        return  divmod(len(self.order['Order'][self.order['Order']!=0]),2)[0]
-        
-        
-        
 class Np_Order_Strategy(object):
     """ order產生裝置
         來自向量式
@@ -85,7 +35,6 @@ class Np_Order_Strategy(object):
         low_array = self.original_data[:, 2]
         close_array = self.original_data[:, 3]
 
-
         orders, marketpostion_array, entryprice_array, buy_Fees_array, sell_Fees_array, OpenPostionprofit_array, ClosedPostionprofit_array, profit_array, Gross_profit_array, Gross_loss_array, all_Fees_array, netprofit_array = nb.logic_order(
             high_array,
             low_array,
@@ -97,8 +46,8 @@ class Np_Order_Strategy(object):
             self.strategy_info.fee,
             self.parameter['highest_n1'],
             self.parameter['lowest_n2'])
-
-        return Np_Order_Info(self.datetime_list,
+        
+        Order_Info = Np_Order_Info(self.datetime_list,
                              orders,
                              marketpostion_array,
                              entryprice_array,
@@ -111,6 +60,13 @@ class Np_Order_Strategy(object):
                              Gross_loss_array,
                              all_Fees_array,
                              netprofit_array)
+        
+        
+        Order_Info.register(self.strategy_info)
+        
+        
+        Order_Info.UI_indicators
+        return Order_Info
 
 
 inputs_parameter = {"highest_n1": list(
@@ -121,11 +77,10 @@ ordermap = Np_Order_Strategy(strategy1)
 
 out_list = []
 for each_parameter in tqdm(Hyper_optimization.generator_parameter(inputs_parameter)):
-    # for each_parameter in [{'highest_n1': 3, 'lowest_n2': 410}]:
+# for each_parameter in [{'highest_n1': 3, 'lowest_n2': 410}]:
     ordermap.set_parameter(each_parameter)
     pf = ordermap.logic_order()
-    out_list.append(pf.order['netprofit'].iloc[-1])
+    out_list.append([each_parameter,pf.UI_indicators])
 
     
-    break
-print(max(out_list))
+print(out_list)
