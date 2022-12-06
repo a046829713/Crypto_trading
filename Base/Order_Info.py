@@ -118,11 +118,6 @@ class Np_Order_Info(object):
             _type_: _description_
         """
         sumallDD = np.sum(self.drawdown_per**2)
-        
         ROI = (self.ClosedPostionprofit_array[-1] / self.strategy_info.init_cash)-1
-        print(ROI)
-        print((sumallDD / self.TotalTrades))
-        print(((sumallDD / self.TotalTrades)**0.5))
         ui_ = (ROI*100) / ((sumallDD / self.TotalTrades)**0.5)
-        print(ui_)
         return ui_

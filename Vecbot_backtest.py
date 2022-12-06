@@ -4,7 +4,7 @@ from Count import nb
 from tqdm import tqdm
 from Hyper_optimiza import Hyper_optimization
 from Base.Order_Info import Np_Order_Info
-from Plot_draw import plot_image
+from Plot_draw.Picture_Mode import Picture_maker
 import matplotlib.pyplot as plt
 
 
@@ -82,9 +82,9 @@ for each_parameter in [{'highest_n1': 470, 'lowest_n2': 370}]:
     pf = ordermap.logic_order()
     out_list.append([each_parameter, pf.UI_indicators])
 
-    # 繪圖區域
-    plot_image.get_Mdd_UI(pf.order.index.to_numpy(),
-                          pf.order['ClosedPostionprofit'].to_numpy(),pf.drawdown, pf.drawdown_per)
+    
+    Picture_maker(pf)
+    
 
 
 UI_list = [i[1] for i in out_list]
