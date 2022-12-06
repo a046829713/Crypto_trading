@@ -4,6 +4,9 @@ from Count import nb
 from tqdm import tqdm
 from Hyper_optimiza import Hyper_optimization
 from Base.Order_Info import Np_Order_Info
+from Plot_draw import plot_image
+import matplotlib.pyplot as plt
+
 
 class Np_Order_Strategy(object):
     """ order產生裝置
@@ -46,26 +49,23 @@ class Np_Order_Strategy(object):
             self.strategy_info.fee,
             self.parameter['highest_n1'],
             self.parameter['lowest_n2'])
-        
+
         Order_Info = Np_Order_Info(self.datetime_list,
-                             orders,
-                             marketpostion_array,
-                             entryprice_array,
-                             buy_Fees_array,
-                             sell_Fees_array,
-                             OpenPostionprofit_array,
-                             ClosedPostionprofit_array,
-                             profit_array,
-                             Gross_profit_array,
-                             Gross_loss_array,
-                             all_Fees_array,
-                             netprofit_array)
-        
-        
+                                   orders,
+                                   marketpostion_array,
+                                   entryprice_array,
+                                   buy_Fees_array,
+                                   sell_Fees_array,
+                                   OpenPostionprofit_array,
+                                   ClosedPostionprofit_array,
+                                   profit_array,
+                                   Gross_profit_array,
+                                   Gross_loss_array,
+                                   all_Fees_array,
+                                   netprofit_array)
+
         Order_Info.register(self.strategy_info)
-        
-        
-        Order_Info.UI_indicators
+
         return Order_Info
 
 
@@ -76,11 +76,20 @@ strategy1 = Strategy_base("BTCUSDT-15K-OB", "BTCUSDT", 15, 1.0, 0.002, 0.0025)
 ordermap = Np_Order_Strategy(strategy1)
 
 out_list = []
-for each_parameter in tqdm(Hyper_optimization.generator_parameter(inputs_parameter)):
-# for each_parameter in [{'highest_n1': 3, 'lowest_n2': 410}]:
+# for each_parameter in tqdm(Hyper_optimization.generator_parameter(inputs_parameter)):
+for each_parameter in [{'highest_n1': 470, 'lowest_n2': 370}]:
     ordermap.set_parameter(each_parameter)
     pf = ordermap.logic_order()
-    out_list.append([each_parameter,pf.UI_indicators])
+    out_list.append([each_parameter, pf.UI_indicators])
 
-    
-print(out_list)
+    # 繪圖區域
+    plot_image.get_Mdd_UI(pf.order.index.to_numpy(),
+                          pf.order['ClosedPostionprofit'].to_numpy(),pf.drawdown, pf.drawdown_per)
+
+
+UI_list = [i[1] for i in out_list]
+max_data = max(UI_list)
+
+for i in out_list:
+    if i[1] == max_data:
+        print(i)
