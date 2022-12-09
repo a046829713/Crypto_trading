@@ -47,6 +47,7 @@ class DataProvider:
 
             df = pd.DataFrame()
 
+        
         # 這邊的資料為原始的UTC資料 無任何加工
         original_df = Data.custom.BinanceDate.download(
             df, f"{symbol_name}", '1m')
@@ -75,4 +76,4 @@ class DataProvider:
 
 if __name__ == "__main__":
     dataprovider = DataProvider()
-    print(dataprovider.get_symboldata("ETHUSDT", 15))
+    print(dataprovider.get_symboldata("BTCUSDT", 2))

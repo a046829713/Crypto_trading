@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.dates as dates
 import matplotlib.dates as mdates  # 處理日期
-from Base.Order_Info import Np_Order_Info
+from Base.Strategy_base import Np_Order_Info
 
 # 初始化
 plt.style.use('seaborn-deep')

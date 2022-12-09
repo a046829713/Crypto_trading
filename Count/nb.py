@@ -89,8 +89,11 @@ def get_ClosedPostionprofit(ClosedPostionprofit, marketpostion, last_marketposti
     elif marketpostion == 0 and last_marketpostion == 1:
         ClosedPostionprofit = ClosedPostionprofit - sell_Fees
         # 當部位為平倉後 計算交易損益
+        # =====================================================================
+        # 注意這邊應該是會以開盤價做平倉?
         ClosedPostionprofit = ClosedPostionprofit + \
             (Close * sizes - last_entryprice * sizes)
+        # =====================================================================
     return ClosedPostionprofit
 
 
