@@ -204,7 +204,13 @@ class Binance_server(object):
     """
 
     def __init__(self) -> None:
-        self.clinet = Client()
+        self.get_clinet()
+
+    def get_clinet(self,formal:False):
+        if formal:
+            self.clinet = Client()
+        else:
+            self.clinet = Client()
 
     def getfuturesinfo(self) -> dict:
         """ 回傳交易所的合約

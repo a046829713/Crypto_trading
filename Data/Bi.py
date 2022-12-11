@@ -3,8 +3,6 @@
 import os.path
 import time
 
-
-
 from tqdm import tqdm_notebook  # (Optional, used for progress-bars)
 
 import json
