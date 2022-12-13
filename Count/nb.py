@@ -31,7 +31,7 @@ def get_drawdown(ClosedPostionprofit: np.ndarray):
 
 
 @njit
-def get_entryprice(entryprice, Close, marketpostion, last_marketpostion, slippage=None):
+def get_entryprice(entryprice, Close, marketpostion, last_marketpostion, slippage=None, direction=None):
     if marketpostion == 1 and last_marketpostion == 0:
         if slippage:
             entryprice = Close * (1 + slippage)
@@ -40,6 +40,37 @@ def get_entryprice(entryprice, Close, marketpostion, last_marketpostion, slippag
     elif marketpostion == 0:
         entryprice = 0
     return entryprice
+
+
+@njit
+def get_exitsprice(exitsprice, Close, marketpostion, last_marketpostion, slippage=None, direction=None):
+    """
+    exitsprice (有2種連貫性的設定)
+    決定採用2
+
+    1.給予每一個array 出場價 (方便未來可以運用和計算)
+    2.只判斷在沒有部位時候的出價格 並且加入滑價
+
+    attetion : 滑價設定要往不利的方向 以免錯估
+    Args:
+        exitsprice (_type_): _description_
+        Close (_type_): _description_
+        marketpostion (_type_): _description_
+        last_marketpostion (_type_): _description_
+        slippage (_type_, optional): _description_. Defaults to None.
+
+    Returns:
+        _type_: _description_
+    """
+    if direction == 'buyonly':
+        if marketpostion == 0 and last_marketpostion == 1:
+            if slippage:
+                exitsprice = Close * (1 - slippage)
+            else:
+                exitsprice = Close
+        elif marketpostion == 1:
+            exitsprice = 0
+    return exitsprice
 
 
 @njit
@@ -82,7 +113,7 @@ def get_OpenPostionprofit(OpenPostionprofit, marketpostion, last_marketpostion, 
 
 
 @njit
-def get_ClosedPostionprofit(ClosedPostionprofit, marketpostion, last_marketpostion, buy_Fees, sell_Fees, Close, sizes, last_entryprice):
+def get_ClosedPostionprofit(ClosedPostionprofit, marketpostion, last_marketpostion, buy_Fees, sell_Fees, Close, sizes, last_entryprice, exitsprice):
     # 我的定義是當部位改變的時候再紀錄
     if marketpostion == 1 and last_marketpostion == 0:
         ClosedPostionprofit = ClosedPostionprofit - buy_Fees
@@ -91,8 +122,10 @@ def get_ClosedPostionprofit(ClosedPostionprofit, marketpostion, last_marketposti
         # 當部位為平倉後 計算交易損益
         # =====================================================================
         # 注意這邊應該是會以開盤價做平倉?
+        # 思考方向是 因為當收盤價結束時才會判斷 是否需要賣出 當需要賣出的時候 以收盤價 當作出場價
+        # 是否需要考量賣出時的滑價
         ClosedPostionprofit = ClosedPostionprofit + \
-            (Close * sizes - last_entryprice * sizes)
+            (exitsprice * sizes - last_entryprice * sizes)
         # =====================================================================
     return ClosedPostionprofit
 
@@ -190,6 +223,7 @@ def logic_order(high_array: np.ndarray,
     """
         撰寫邏輯的演算法
         init_cash = init_cash  # 起始資金
+        exitsprice (設計時認為應該要添加滑價)
 
     """
     # 資料產生區
@@ -210,10 +244,12 @@ def logic_order(high_array: np.ndarray,
     Gross_loss_array = np.empty(shape=Length)
     all_Fees_array = np.empty(shape=Length)
     netprofit_array = np.empty(shape=Length)
+    exitsprice_array = np.empty(shape=Length)
 
     # 此變數區列可以在迭代當中改變
     marketpostion = 0  # 部位方向
     entryprice = 0  # 入場價格
+    exitsprice = 0  # 出場價格
     buy_Fees = 0  # 買方手續費
     sell_Fees = 0  # 賣方手續費
     all_Fees = 0  # 累積手續費
@@ -229,6 +265,8 @@ def logic_order(high_array: np.ndarray,
     # 商品固定屬性
     slippage = slippage  # 滑價計算
     fee = fee  # 手續費率
+
+    direction = "buyonly"
     # 主循環區域
     for i in range(Length):
         High = high_array[i]
@@ -238,11 +276,13 @@ def logic_order(high_array: np.ndarray,
         last_marketpostion = marketpostion
         last_entryprice = entryprice
         # ==============================================================
+        # 主邏輯區段
         if High > highest_price[i]:
             marketpostion = 1
 
         if Low < lowest_price[i]:
             marketpostion = 0
+        # ==============================================================
 
         # 計算當前賣出進部位大小 (由於賣出部位是買入給的 要先判斷賣出)
         if marketpostion == 0 and last_marketpostion == 1:
@@ -259,7 +299,11 @@ def logic_order(high_array: np.ndarray,
 
         # 計算當前入場價(並且記錄滑價)
         entryprice = get_entryprice(
-            entryprice, Close, marketpostion, last_marketpostion, slippage)
+            entryprice, Close, marketpostion, last_marketpostion, slippage, direction)
+
+        # 計算當前出場價(並且記錄滑價)
+        exitsprice = get_exitsprice(
+            exitsprice, Close, marketpostion, last_marketpostion, slippage, direction)
 
         # 計算入場手續費
         buy_Fees = get_buy_Fees(
@@ -273,9 +317,9 @@ def logic_order(high_array: np.ndarray,
         OpenPostionprofit = get_OpenPostionprofit(
             OpenPostionprofit, marketpostion, last_marketpostion, buy_Fees, Close, buy_sizes, entryprice)
 
-        # 計算已平倉損益(累積式)
+        # 計算已平倉損益(累積式) # v:20221213
         ClosedPostionprofit = get_ClosedPostionprofit(
-            ClosedPostionprofit, marketpostion, last_marketpostion, buy_Fees, sell_Fees, Close, sell_sizes, last_entryprice)
+            ClosedPostionprofit, marketpostion, last_marketpostion, buy_Fees, sell_Fees, Close, sell_sizes, last_entryprice, exitsprice)
 
         # 計算已平倉損益(非累積式純計算無單時)
         profit = get_profit(

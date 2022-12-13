@@ -13,6 +13,8 @@ plt.style.use('seaborn-deep')
 class Picture_maker():
     def __init__(self, Order_info: Np_Order_Info) -> None:
         self.pf = Order_info
+        print("開始繪圖",len(self.pf.order.index.to_numpy()),len(self.pf.order['ClosedPostionprofit'].to_numpy()),len(self.pf.drawdown))
+        print(self.pf.drawdown)
         self.get_Mdd_UI(self.pf.order.index.to_numpy(
         ), self.pf.order['ClosedPostionprofit'].to_numpy(), self.pf.drawdown, self.pf.drawdown_per)
 

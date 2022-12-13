@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 from typing import Sequence
 
+class Portfolio_count():
+    pass
 
 class Pandas_count():
     @staticmethod

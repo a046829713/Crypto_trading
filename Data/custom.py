@@ -203,14 +203,28 @@ class Binance_server(object):
         object (_type_): 
     """
 
-    def __init__(self) -> None:
-        self.get_clinet()
+    def __init__(self, formal=False) -> None:
+        self.get_clinet(formal)
 
-    def get_clinet(self,formal:False):
+    def get_clinet(self, formal=False):
         if formal:
-            self.clinet = Client()
+            with open(r"C:\bi_.txt", 'r') as file:
+                data = file.read()
+                account = data.split("\n")[0]
+                passwd = data.split("\n")[1]
+
+            print(account)
+            print(passwd)
+            self.client = Client(account, passwd)
         else:
-            self.clinet = Client()
+            self.client = Client()
+        
+    def getaccount(self) -> dict:
+        """ 回傳保證金帳戶
+        Returns:
+            _type_: _description_
+        """
+        return self.client.get_margin_account()
 
     def getfuturesinfo(self) -> dict:
         """ 回傳交易所的合約
@@ -218,7 +232,7 @@ class Binance_server(object):
         Returns:
             _type_: _description_
         """
-        return self.clinet.futures_exchange_info()
+        return self.client.futures_exchange_info()
 
     def get_symbolinfo(self, symbol: str):
         """ 回傳想要查詢的商品資料
@@ -229,7 +243,7 @@ class Binance_server(object):
         Returns:
             _type_: _description_
         """
-        return self.clinet.get_symbol_info(symbol)
+        return self.client.get_symbol_info(symbol)
 
     def get_targetsymobls(self) -> list:
         """

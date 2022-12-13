@@ -6,6 +6,7 @@ from Count import nb
 from collections import namedtuple
 import copy
 
+
 class Strategy_base(object):
     """ 
     取得策略的基本資料及訊息
@@ -65,7 +66,6 @@ class Strategy_base(object):
             return self.df.to_dict("index")
         elif data_type == 'array_data':
             return self.df.to_numpy()
-
 
 class Np_Order_Info(object):
     """ 用來處理訂單的相關資訊
@@ -169,7 +169,7 @@ class Np_Order_Info(object):
 
     @property
     def UI_indicators(self):
-        """ 還需要驗算
+        """ 
 
         Returns:
             _type_: _description_
@@ -180,7 +180,20 @@ class Np_Order_Info(object):
         ui_ = (ROI*100) / ((sumallDD / self.TotalTrades)**0.5)
         return ui_
 
+class Portfolio_Order_Info(Np_Order_Info):
+    def __init__(self, datetime_list, orders, stragtegy_names, Portfolio_profit, Portfolio_ClosedPostionprofit):
+        self.order = pd.DataFrame(datetime_list, columns=['Datetime'])
+        self.order['Order'] = orders
+        self.order['StragtegyNames'] = stragtegy_names
+        self.order['Profit'] = Portfolio_profit
+        self.order['ClosedPostionprofit'] = Portfolio_ClosedPostionprofit
+        self.order.set_index("Datetime", inplace=True)
+        
+        self.ClosedPostionprofit_array = self.order['ClosedPostionprofit'].to_numpy(
+        )
 
+        print(len(self.drawdown),len(self.ClosedPostionprofit_array))
+        
 class Np_Order_Strategy(object):
     """ order產生裝置
         來自向量式
@@ -241,11 +254,10 @@ class Np_Order_Strategy(object):
 
         return Order_Info
 
-
 class PortfolioTrader(object):
     def __init__(self) -> None:
         self.strategys = []
-        self.strategys_maps ={}
+        self.strategys_maps = {}
 
     def register(self, strategy_info: Strategy_base):
         """
@@ -256,8 +268,9 @@ class PortfolioTrader(object):
 
         """
         self.strategys.append(strategy_info)
-        self.strategys_maps.update({strategy_info.strategy_name:strategy_info}) 
-    
+        self.strategys_maps.update(
+            {strategy_info.strategy_name: strategy_info})
+
     def time_min_scale(self):
         all_datetimes = []
         for strategy in self.strategys:
@@ -353,6 +366,7 @@ class PortfolioTrader(object):
     def logic_order(self):
         """ 產生投資組合的order
 
+            採用對抗模式
         Returns:
             _type_: _description_
         """
@@ -361,22 +375,77 @@ class PortfolioTrader(object):
         self.add_data()
         self.data = self.get_data()
 
-        
-        Portfolio_profit = 10000
-        
+        Portfolio_initcash = 10000  # 投資組合起始資金
+        ClosedPostionprofit = [Portfolio_initcash]
+
+        strategy_order_info = {}  # 專門用來保存資料
+        datetimelist = []  # 保存時間
+        orders = []  # 保存訂單
+        stragtegy_names = []  # 保存策略名稱
+        Portfolio_ClosedPostionprofit = []  # 保存已平倉損益
+        Portfolio_profit = []  # 保存單次已平倉損益
+
+        # 單次已平倉損益init
+        profit = 0
         for each_index, each_row in self.data.items():
             for each_strategy_index, each_strategy_value in each_row.items():
                 # 如果那個時間有資料的話 且有訂單的話
                 if each_strategy_value:
-                    if each_strategy_value['Order']:
+                    Order = each_strategy_value['Order']
+                    Close = each_strategy_value['Close']
+                    if Order:
                         # 這邊開始判斷單一資訊
-                        entryprice = 0
-                        
-                        
+                        size = 1
+
+                        # =========================================================================================
                         new_value = copy.deepcopy(each_strategy_value)
-                        if each_strategy_value['Order'] >0:
-                            new_value['Entryprice'] = each_strategy_value['Close'] * (1 + self.strategys_maps[each_strategy_index].slippage)
-                        
-                        print(each_index, each_strategy_index,new_value)
-                        
-                        
+
+                        # 進場價格(已加滑價)
+                        if Order > 0:
+                            new_value['Entryprice'] = Close * \
+                                (1 +
+                                 self.strategys_maps[each_strategy_index].slippage)
+
+                            new_value['buy_size'] = size
+                            new_value['buy_fee'] = Close * new_value['buy_size'] * \
+                                self.strategys_maps[each_strategy_index].fee
+
+                        # 出場價格(已加滑價)
+                        if Order < 0:
+                            new_value['Exitsprice'] = Close * \
+                                (1 -
+                                 self.strategys_maps[each_strategy_index].slippage)
+                            new_value['sell_size'] = strategy_order_info[each_strategy_index][-1]['buy_size']
+                            new_value['sell_fee'] = Close * new_value['sell_size'] * \
+                                self.strategys_maps[each_strategy_index].fee
+
+                        # 將資料保存下來
+                        if each_strategy_index in strategy_order_info:
+                            last_order = strategy_order_info[each_strategy_index][-1]
+                            # 如果最後一次是多單
+                            if Order < 0 and last_order['Order'] > 0:
+                                # 取得已平倉損益(單次)
+                                profit = (
+                                    new_value['Exitsprice'] - last_order['Entryprice']) * size - last_order['buy_fee'] - new_value['sell_fee']
+
+                                ClosedPostionprofit.append(
+                                    ClosedPostionprofit[-1] + profit)
+                            else:
+                                profit = 0
+
+                            strategy_order_info[each_strategy_index].append(
+                                new_value)
+                        else:
+                            strategy_order_info[each_strategy_index] = [
+                                new_value]
+
+                        datetimelist.append(each_index)
+                        orders.append(Order)
+                        stragtegy_names.append(each_strategy_index)
+                        Portfolio_ClosedPostionprofit.append(
+                            ClosedPostionprofit[-1])
+                        Portfolio_profit.append(profit)
+
+        Order_Info = Portfolio_Order_Info(
+            datetimelist, orders, stragtegy_names, Portfolio_profit, Portfolio_ClosedPostionprofit)
+        return Order_Info
