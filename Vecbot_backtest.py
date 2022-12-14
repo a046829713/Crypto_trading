@@ -7,54 +7,62 @@ from tqdm import tqdm
 from Hyper_optimiza import Hyper_optimization
 from Plot_draw.Picture_Mode import Picture_maker
 
-strategy1 = Strategy_base("BTCUSDT-15K-OB", "BTCUSDT", 15, 1.0, 0.002, 0.0025)
-ordermap1 = Np_Order_Strategy(strategy1)
 
-strategy2 = Strategy_base("ETHUSDT-15K-OB", "ETHUSDT", 15, 1.0, 0.002, 0.0025)
-ordermap2 = Np_Order_Strategy(strategy2)
+class Trading_systeam():
+    def __init__(self) -> None:
+        self.strategy1 = Strategy_base(
+            "BTCUSDT-15K-OB", "BTCUSDT", 15, 1.0, 0.002, 0.0025)
 
-strategy3 = Strategy_base("BTCUSDT-2K-OB", "BTCUSDT", 2, 1.0, 0.002, 0.0025)
-ordermap3 = Np_Order_Strategy(strategy3)
+        self.strategy2 = Strategy_base(
+            "ETHUSDT-15K-OB", "ETHUSDT", 15, 1.0, 0.002, 0.0025)
 
-# 優化
-def optimize():
-    """
-        用來計算最佳化的參數
-    """
+        self.strategy3 = Strategy_base(
+            "BTCUSDT-2K-OB", "BTCUSDT", 2, 1.0, 0.002, 0.0025)
 
-    inputs_parameter = {"highest_n1": list(
-        range(10, 500, 10)), "lowest_n2": list(range(10, 500, 10))}
-    out_list = []
-    # for each_parameter in tqdm(Hyper_optimization.generator_parameter(inputs_parameter)):
-    for each_parameter in [{'highest_n1': 470, 'lowest_n2': 370}]:
-        ordermap1.set_parameter(each_parameter)
+        # ordermap3 = Np_Order_Strategy(strategy3)
+
+    def optimize(self):
+        """
+            用來計算最佳化的參數
+        """
+        ordermap = Np_Order_Strategy(self.strategy2)
+        inputs_parameter = {"highest_n1": list(
+            range(10, 500, 10)), "lowest_n2": list(range(10, 500, 10))}
+
+        out_list = []
+        for each_parameter in tqdm(Hyper_optimization.generator_parameter(inputs_parameter)):
+            ordermap.set_parameter(each_parameter)
+            pf = ordermap.logic_order()
+            out_list.append([each_parameter, pf.UI_indicators])
+
+        print(out_list)
+        UI_list = [i[1] for i in out_list]
+        max_data = max(UI_list)
+
+        for i in out_list:
+            if i[1] == max_data:
+                print(i)
+
+    def Backtesting(self):
+        """
+            普通回測模式
+        """
+        ordermap1.set_parameter({'highest_n1': 470, 'lowest_n2': 370})
         pf = ordermap1.logic_order()
-        out_list.append([each_parameter, pf.UI_indicators])
-
         Picture_maker(pf)
 
-    # UI_list = [i[1] for i in out_list]
-    # max_data = max(UI_list)
+    def PortfolioBacktesting(self):
+        # 總回測
+        app = PortfolioTrader()
+        app.register(
+            self.strategy1, {'highest_n1': 470, 'lowest_n2': 370})
+        app.register(
+            self.strategy2, {'highest_n1': 230, 'lowest_n2': 420})
 
-    # for i in out_list:
-    #     if i[1] == max_data:
-    #         print(i)
-
-
-# 普通
-
-def Backtesting():
-    ordermap.set_parameter({'highest_n1': 470, 'lowest_n2': 370})
-    pf = ordermap.logic_order()
-    print(pf)
+        pf = app.logic_order()
+        Picture_maker(pf)
 
 
-# 總回測
-app = PortfolioTrader()
-app.register(strategy1)
-app.register(strategy2)
-
-
-
-pf = app.logic_order()
-Picture_maker(pf)
+if __name__ == "__main__":
+    systeam = Trading_systeam()
+    systeam.PortfolioBacktesting()

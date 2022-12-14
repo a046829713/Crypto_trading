@@ -67,6 +67,7 @@ class Strategy_base(object):
         elif data_type == 'array_data':
             return self.df.to_numpy()
 
+
 class Np_Order_Info(object):
     """ 用來處理訂單的相關資訊
     Args:
@@ -180,6 +181,7 @@ class Np_Order_Info(object):
         ui_ = (ROI*100) / ((sumallDD / self.TotalTrades)**0.5)
         return ui_
 
+
 class Portfolio_Order_Info(Np_Order_Info):
     def __init__(self, datetime_list, orders, stragtegy_names, Portfolio_profit, Portfolio_ClosedPostionprofit):
         self.order = pd.DataFrame(datetime_list, columns=['Datetime'])
@@ -188,12 +190,11 @@ class Portfolio_Order_Info(Np_Order_Info):
         self.order['Profit'] = Portfolio_profit
         self.order['ClosedPostionprofit'] = Portfolio_ClosedPostionprofit
         self.order.set_index("Datetime", inplace=True)
-        
+
         self.ClosedPostionprofit_array = self.order['ClosedPostionprofit'].to_numpy(
         )
 
-        print(len(self.drawdown),len(self.ClosedPostionprofit_array))
-        
+
 class Np_Order_Strategy(object):
     """ order產生裝置
         來自向量式
@@ -254,12 +255,14 @@ class Np_Order_Strategy(object):
 
         return Order_Info
 
+
 class PortfolioTrader(object):
     def __init__(self) -> None:
         self.strategys = []
         self.strategys_maps = {}
+        self.strategys_parameter = {}
 
-    def register(self, strategy_info: Strategy_base):
+    def register(self, strategy_info: Strategy_base, parameter: dict):
         """
             將所有的商品資訊 合併做總回測
 
@@ -271,6 +274,9 @@ class PortfolioTrader(object):
         self.strategys_maps.update(
             {strategy_info.strategy_name: strategy_info})
 
+        self.strategys_parameter.update(
+            {strategy_info.strategy_name: parameter})
+
     def time_min_scale(self):
         all_datetimes = []
         for strategy in self.strategys:
@@ -280,52 +286,6 @@ class PortfolioTrader(object):
         self.min_scale = list(set(all_datetimes))
         self.min_scale.sort()
 
-    def get_pd_data(self):
-        """
-            減少搜尋的量 以column 欄位值做塞選
-            output:{
-                "Open":
-                        ......
-
-                'Volume':                       
-                                            BTCUSDT    ETHUSDT
-                        Datetime
-                        2019-09-09 01:45:00     0.002        NaN
-                        2019-09-09 02:00:00     0.000        NaN
-                        2019-09-09 02:15:00     0.000        NaN
-                        2019-09-09 02:30:00     0.000        NaN
-                        2019-09-09 02:45:00     0.000        NaN
-                        ...                       ...        ...
-                        2022-10-29 14:30:00  2906.644  57096.426
-                        2022-10-29 14:45:00  1182.533  20274.797
-                        2022-10-29 15:00:00  1799.500  20477.292
-                        2022-10-29 15:15:00  3720.461  39870.559
-                        2022-10-29 15:30:00  1005.658  39955.072
-            }
-        """
-        all_df = pd.DataFrame()
-        for strategy in self.strategys:
-            strategy: Strategy_base
-            strategy.df["strategy_name"] = strategy.strategy_name
-            all_df = pd.concat([all_df, strategy.df])
-
-        data_map = {}
-        for col in all_df.columns:
-            if col == 'strategy_name':
-                continue
-            for strategy in self.strategys:
-                if col in data_map:
-                    data_map[col][strategy.strategy_name] = all_df[all_df['strategy_name']
-                                                                   == strategy.strategy_name][col]
-                else:
-                    row_df = pd.DataFrame(
-                        all_df[all_df['strategy_name'] == strategy.strategy_name][col])
-                    row_df.rename(
-                        columns={col: strategy.strategy_name}, inplace=True)
-                    data_map.update({col: row_df})
-
-        self.col_data = data_map
-
     def add_data(self):
         """
             將訂單的買賣方向匯入
@@ -333,7 +293,8 @@ class PortfolioTrader(object):
         for strategy in self.strategys:
             strategy: Strategy_base
             ordermap = Np_Order_Strategy(strategy)
-            ordermap.set_parameter({'highest_n1': 470, 'lowest_n2': 370})
+            ordermap.set_parameter(
+                self.strategys_parameter[strategy.strategy_name])
             pf = ordermap.logic_order()
 
             out_list = []
@@ -374,7 +335,7 @@ class PortfolioTrader(object):
         self.time_min_scale()
         self.add_data()
         self.data = self.get_data()
-
+        levelage = 2  # 槓桿倍數
         Portfolio_initcash = 10000  # 投資組合起始資金
         ClosedPostionprofit = [Portfolio_initcash]
 
@@ -394,8 +355,9 @@ class PortfolioTrader(object):
                     Order = each_strategy_value['Order']
                     Close = each_strategy_value['Close']
                     if Order:
-                        # 這邊開始判斷單一資訊
-                        size = 1
+                        # 這邊開始判斷單一資訊 # 用來編寫系統權重
+                        size = ClosedPostionprofit[-1] * levelage / Close
+                        # size = 1
 
                         # =========================================================================================
                         new_value = copy.deepcopy(each_strategy_value)

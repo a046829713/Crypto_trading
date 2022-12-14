@@ -13,17 +13,16 @@ plt.style.use('seaborn-deep')
 class Picture_maker():
     def __init__(self, Order_info: Np_Order_Info) -> None:
         self.pf = Order_info
-        print("開始繪圖",len(self.pf.order.index.to_numpy()),len(self.pf.order['ClosedPostionprofit'].to_numpy()),len(self.pf.drawdown))
-        print(self.pf.drawdown)
+        
         self.get_Mdd_UI(self.pf.order.index.to_numpy(
-        ), self.pf.order['ClosedPostionprofit'].to_numpy(), self.pf.drawdown, self.pf.drawdown_per)
+        ), self.pf.ClosedPostionprofit_array, self.pf.drawdown, self.pf.drawdown_per)
 
     def get_Mdd_UI(self, x1_data: np.ndarray, y1_data, dd_data: np.ndarray, dd_perdata: np.ndarray):
 
         x1_data = np.array([date.split(' ')[0] for date in x1_data])
 
         fig, (ax1, ax2, ax3) = plt.subplots(
-            3, 1, height_ratios=(2, 1, 1), sharex=True)
+            3, 1, figsize=(80, 10), height_ratios=(2, 1, 1),dpi=80)
 
         # X 軸相關設置
         out_list = []
