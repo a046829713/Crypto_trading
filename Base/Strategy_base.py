@@ -1,10 +1,11 @@
 import pandas as pd
-from Count.Base import Event_count
+from Count.Base import Event_count, vecbot_count
 import numpy as np
 import pandas as pd
 from Count import nb
 from collections import namedtuple
 import copy
+import talib
 
 
 class Strategy_base(object):
@@ -222,7 +223,7 @@ class Np_Order_Strategy(object):
         high_array = self.original_data[:, 1]
         low_array = self.original_data[:, 2]
         close_array = self.original_data[:, 3]
-        
+
         # 嘗試將主邏輯獨立出來===============================================
         # 資料產生區
         highest_price = nb.Highest(
@@ -230,21 +231,34 @@ class Np_Order_Strategy(object):
         lowest_price = nb.Lowest(
             low_array, step=self.parameter['lowest_n2'])
 
+        marketpostion_array = np.empty(shape=self.Length)
+        marketpostion = 0
+
+        # 往後移一位
+        ATR_short = talib.SMA(close_array, timeperiod=10)[:]
+        ATR_short = vecbot_count.shift(ATR_short, 1)
+
+        
+        ATR_long = talib.SMA(close_array, timeperiod=20)[:]
+        ATR_long = vecbot_count.shift(ATR_long, 1)
+        
+        
         for i in range(self.Length):
             High = high_array[i]
             Low = low_array[i]
             Close = close_array[i]
-            # 策略所產生之資訊
-            last_marketpostion = marketpostion
-            last_entryprice = entryprice
+
             # ==============================================================
             # 主邏輯區段
-            if High > highest_price[i]:
+            if High > highest_price[i] and ATR_short[i] > ATR_long[i]:
                 marketpostion = 1
 
             if Low < lowest_price[i]:
                 marketpostion = 0
             # ==============================================================
+            marketpostion_array[i] = marketpostion
+
+        print(marketpostion_array)
 
     def logic_order(self):
         """_summary_
@@ -253,6 +267,7 @@ class Np_Order_Strategy(object):
             _type_: _description_
         """
         self.main_logic()
+        
         high_array = self.original_data[:, 1]
         low_array = self.original_data[:, 2]
         close_array = self.original_data[:, 3]

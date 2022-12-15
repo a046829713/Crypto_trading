@@ -38,8 +38,6 @@ class Picture_maker():
         # 坐標軸的內容
         ax1.set_xticklabels(out_lables)
         
-        print(out_list)
-        print(out_lables)
         ax1.plot(y1_data)
 
         # 創新高時畫上綠點

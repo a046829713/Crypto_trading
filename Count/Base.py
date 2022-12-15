@@ -173,3 +173,10 @@ class vecbot_count():
             else:
                 low_array[i] = np.min(data_array[i-step:i])
         return low_array
+
+    @staticmethod
+    def shift(xs, n):
+        if n >= 0:
+            return np.r_[np.full(n, np.nan), xs[:-n]]
+        else:
+            return np.r_[xs[-n:], np.full(-n, np.nan)]
