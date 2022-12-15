@@ -171,7 +171,7 @@ class Np_Order_Info(object):
     @property
     def UI_indicators(self):
         """ 
-
+            可根据价格下跌的深度和持续时间来衡量下行风险
         Returns:
             _type_: _description_
         """
@@ -215,12 +215,44 @@ class Np_Order_Strategy(object):
     def set_parameter(self, parameter: dict):
         self.parameter = parameter
 
+    def main_logic(self):
+        """
+            這邊就類似MC內編譯地方
+        """
+        high_array = self.original_data[:, 1]
+        low_array = self.original_data[:, 2]
+        close_array = self.original_data[:, 3]
+        
+        # 嘗試將主邏輯獨立出來===============================================
+        # 資料產生區
+        highest_price = nb.Highest(
+            high_array, step=self.parameter['highest_n1'])
+        lowest_price = nb.Lowest(
+            low_array, step=self.parameter['lowest_n2'])
+
+        for i in range(self.Length):
+            High = high_array[i]
+            Low = low_array[i]
+            Close = close_array[i]
+            # 策略所產生之資訊
+            last_marketpostion = marketpostion
+            last_entryprice = entryprice
+            # ==============================================================
+            # 主邏輯區段
+            if High > highest_price[i]:
+                marketpostion = 1
+
+            if Low < lowest_price[i]:
+                marketpostion = 0
+            # ==============================================================
+
     def logic_order(self):
         """_summary_
 
         Returns:
             _type_: _description_
         """
+        self.main_logic()
         high_array = self.original_data[:, 1]
         low_array = self.original_data[:, 2]
         close_array = self.original_data[:, 3]

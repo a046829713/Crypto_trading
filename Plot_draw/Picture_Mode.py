@@ -37,6 +37,9 @@ class Picture_maker():
         ax1.set_xticks(out_list)
         # 坐標軸的內容
         ax1.set_xticklabels(out_lables)
+        
+        print(out_list)
+        print(out_lables)
         ax1.plot(y1_data)
 
         # 創新高時畫上綠點
@@ -47,11 +50,12 @@ class Picture_maker():
         ax1.grid(True)
         ax1.set_title("ClosedPostionprofit")
 
+        
         # 坐標軸的位置
         ax2.set_xticks(out_list)
         # 坐標軸的內容
         ax2.set_xticklabels(out_lables)
-        ax2.bar(x1_data, dd_data, width=0.4, color='#F08080')
+        ax2.bar(range(len(x1_data)), dd_data, width=0.4, color='#F08080')
         ax2.grid(True)
         ax2.set_title("MDD")
 
@@ -59,7 +63,7 @@ class Picture_maker():
         ax3.set_xticks(out_list)
         # 坐標軸的內容
         ax3.set_xticklabels(out_lables)
-        ax3.bar(x1_data, dd_perdata, width=0.4, color='#22C32E')
+        ax3.bar(range(len(x1_data)), dd_perdata, width=0.4, color='#22C32E')
         ax3.grid(True)
         ax3.set_title("MDDPer")
         plt.show()

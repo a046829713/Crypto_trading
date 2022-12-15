@@ -1,7 +1,7 @@
 from numba import njit
 import numpy as np
 from typing import Sequence
-
+from datetime import datetime
 
 @njit
 def get_drawdown_per(ClosedPostionprofit: np.ndarray):
@@ -210,22 +210,24 @@ def get_order(marketpostion: Sequence) -> list:
 
 
 @njit
-def logic_order(high_array: np.ndarray,
-                low_array: np.ndarray,
-                close_array: np.ndarray,
-                Length: int,
-                init_cash: float,
-                slippage: float,
-                size: float,
-                fee: float,
-                parameter_1,
-                parameter_2):
+def logic_order(
+        high_array: np.ndarray,
+        low_array: np.ndarray,
+        close_array: np.ndarray,
+        Length: int,
+        init_cash: float,
+        slippage: float,
+        size: float,
+        fee: float,
+        parameter_1,
+        parameter_2):
     """
         撰寫邏輯的演算法
         init_cash = init_cash  # 起始資金
         exitsprice (設計時認為應該要添加滑價)
 
     """
+
     # 資料產生區
     highest_price = Highest(
         high_array, step=parameter_1)
@@ -261,29 +263,30 @@ def logic_order(high_array: np.ndarray,
     netprofit = 0  # 淨利
     buy_sizes = size  # 買進部位大小
     sell_sizes = size  # 賣出進部位大小
-
+    
     # 商品固定屬性
     slippage = slippage  # 滑價計算
     fee = fee  # 手續費率
-
     direction = "buyonly"
     # 主循環區域
     for i in range(Length):
         High = high_array[i]
         Low = low_array[i]
         Close = close_array[i]
+        
+
         # 策略所產生之資訊
         last_marketpostion = marketpostion
         last_entryprice = entryprice
         # ==============================================================
         # 主邏輯區段
-        if High > highest_price[i]:
+        if High > highest_price[i] :
             marketpostion = 1
 
         if Low < lowest_price[i]:
             marketpostion = 0
-        # ==============================================================
 
+        # ==============================================================
         # 計算當前賣出進部位大小 (由於賣出部位是買入給的 要先判斷賣出)
         if marketpostion == 0 and last_marketpostion == 1:
             sell_sizes = buy_sizes

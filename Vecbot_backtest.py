@@ -47,8 +47,9 @@ class Trading_systeam():
         """
             普通回測模式
         """
-        ordermap1.set_parameter({'highest_n1': 470, 'lowest_n2': 370})
-        pf = ordermap1.logic_order()
+        ordermap = Np_Order_Strategy(self.strategy1)
+        ordermap.set_parameter({'highest_n1': 470, 'lowest_n2': 370})
+        pf = ordermap.logic_order()
         Picture_maker(pf)
 
     def PortfolioBacktesting(self):
@@ -65,4 +66,4 @@ class Trading_systeam():
 
 if __name__ == "__main__":
     systeam = Trading_systeam()
-    systeam.PortfolioBacktesting()
+    systeam.Backtesting()
