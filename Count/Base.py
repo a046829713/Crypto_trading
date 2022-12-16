@@ -1,9 +1,12 @@
 import pandas as pd
 import numpy as np
 from typing import Sequence
+import talib
+
 
 class Portfolio_count():
     pass
+
 
 class Pandas_count():
     @staticmethod
@@ -57,7 +60,7 @@ class Event_count():
             ClosedPostionprofit = ClosedPostionprofit + \
                 (Close * sizes - last_entryprice * sizes)
         return ClosedPostionprofit
-    
+
     @staticmethod
     def get_entryprice(entryprice, Close, marketpostion, last_marketpostion, slippage=None):
         if marketpostion == 1 and last_marketpostion == 0:
@@ -104,7 +107,7 @@ class Event_count():
     @staticmethod
     def get_index(data: dict) -> list:
         return list(data.keys())
-    
+
     @staticmethod
     def get_order(marketpostion: Sequence) -> list:
         out_list = []
@@ -176,7 +179,23 @@ class vecbot_count():
 
     @staticmethod
     def shift(xs, n):
+        # 將數據往後推
         if n >= 0:
             return np.r_[np.full(n, np.nan), xs[:-n]]
         else:
             return np.r_[xs[-n:], np.full(-n, np.nan)]
+
+    # @staticmethod
+    # def get_ATR(high_array, low_array, close_array: np.array, parameter):
+        
+    #     ATR_short = talib.ATR(high_array, low_array,
+    #                           close_array, timeperiod=parameter)
+    #     ATR_short = vecbot_count.shift(ATR_short, 1)
+    #     return ATR_short
+    @staticmethod
+    def get_ATR(high_array, low_array, close_array: np.array, parameter):
+        
+        ATR_short = talib.ATR(high_array, low_array,
+                              close_array, timeperiod=parameter)
+        ATR_short = vecbot_count.shift(ATR_short, 1)
+        return ATR_short

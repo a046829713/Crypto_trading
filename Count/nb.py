@@ -2,7 +2,32 @@ from numba import njit
 import numpy as np
 from typing import Sequence
 from datetime import datetime
+from Count.Base import vecbot_count
 
+
+def get_marketpostion_array(Length, high_array, low_array, close_array, parameter, ATR_short, ATR_long):
+    # 資料產生區
+    highest_price = Highest(
+        high_array, step=parameter['highest_n1'])
+    lowest_price = Lowest(
+        low_array, step=parameter['lowest_n2'])
+
+    marketpostion_array = np.empty(shape=Length)
+    marketpostion = 0
+    for i in range(Length):
+        High = high_array[i]
+        Low = low_array[i]
+        Close = close_array[i]
+        # ==============================================================
+        # 主邏輯區段
+        if High > highest_price[i] and ATR_short[i] > ATR_long[i]:
+            marketpostion = 1
+        if Low < lowest_price[i]:
+            marketpostion = 0
+        # ==============================================================
+        marketpostion_array[i] = marketpostion
+
+    return marketpostion_array
 @njit
 def get_drawdown_per(ClosedPostionprofit: np.ndarray):
     DD_per_array = np.empty(shape=ClosedPostionprofit.shape[0])
@@ -211,6 +236,7 @@ def get_order(marketpostion: Sequence) -> list:
 
 @njit
 def logic_order(
+        marketpostion_array: np.ndarray,
         high_array: np.ndarray,
         low_array: np.ndarray,
         close_array: np.ndarray,
@@ -219,23 +245,14 @@ def logic_order(
         slippage: float,
         size: float,
         fee: float,
-        parameter_1,
-        parameter_2):
+):
     """
         撰寫邏輯的演算法
         init_cash = init_cash  # 起始資金
         exitsprice (設計時認為應該要添加滑價)
 
     """
-
-    # 資料產生區
-    highest_price = Highest(
-        high_array, step=parameter_1)
-    lowest_price = Lowest(
-        low_array, step=parameter_2)
-
     # 初始化資料
-    marketpostion_array = np.empty(shape=Length)
     entryprice_array = np.empty(shape=Length)
     buy_Fees_array = np.empty(shape=Length)
     sell_Fees_array = np.empty(shape=Length)
@@ -263,29 +280,21 @@ def logic_order(
     netprofit = 0  # 淨利
     buy_sizes = size  # 買進部位大小
     sell_sizes = size  # 賣出進部位大小
-    
+
     # 商品固定屬性
     slippage = slippage  # 滑價計算
     fee = fee  # 手續費率
     direction = "buyonly"
     # 主循環區域
     for i in range(Length):
-        High = high_array[i]
-        Low = low_array[i]
         Close = close_array[i]
-        
 
         # 策略所產生之資訊
         last_marketpostion = marketpostion
         last_entryprice = entryprice
         # ==============================================================
         # 主邏輯區段
-        if High > highest_price[i] :
-            marketpostion = 1
-
-        if Low < lowest_price[i]:
-            marketpostion = 0
-
+        marketpostion = marketpostion_array[i]
         # ==============================================================
         # 計算當前賣出進部位大小 (由於賣出部位是買入給的 要先判斷賣出)
         if marketpostion == 0 and last_marketpostion == 1:
@@ -346,7 +355,6 @@ def logic_order(
         netprofit = init_cash - all_Fees + Gross_profit + Gross_loss + OpenPostionprofit
 
         # 記錄保存位置
-        marketpostion_array[i] = marketpostion
         entryprice_array[i] = entryprice
         buy_Fees_array[i] = buy_Fees
         sell_Fees_array[i] = sell_Fees
@@ -360,4 +368,4 @@ def logic_order(
 
     orders = np.array(get_order(marketpostion_array))
 
-    return orders, marketpostion_array, entryprice_array, buy_Fees_array, sell_Fees_array, OpenPostionprofit_array, ClosedPostionprofit_array, profit_array, Gross_profit_array, Gross_loss_array, all_Fees_array, netprofit_array
+    return orders, entryprice_array, buy_Fees_array, sell_Fees_array, OpenPostionprofit_array, ClosedPostionprofit_array, profit_array, Gross_profit_array, Gross_loss_array, all_Fees_array, netprofit_array

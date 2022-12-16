@@ -26,13 +26,15 @@ class Trading_systeam():
             用來計算最佳化的參數
         """
         ordermap = Np_Order_Strategy(self.strategy2)
-        inputs_parameter = {"highest_n1": list(
-            range(10, 500, 10)), "lowest_n2": list(range(10, 500, 10))}
+        inputs_parameter = {"highest_n1": list(range(10, 500, 10)), "lowest_n2": list(range(
+            10, 500, 10)), 'ATR_short1': list(range(30, 200, 10)), 'ATR_long2': list(range(60, 200, 10))}
 
         out_list = []
         for each_parameter in tqdm(Hyper_optimization.generator_parameter(inputs_parameter)):
             ordermap.set_parameter(each_parameter)
             pf = ordermap.logic_order()
+            # 這邊有0再思考一下
+            if len(pf.order) ==0:continue
             out_list.append([each_parameter, pf.UI_indicators])
 
         print(out_list)
@@ -48,7 +50,8 @@ class Trading_systeam():
             普通回測模式
         """
         ordermap = Np_Order_Strategy(self.strategy1)
-        ordermap.set_parameter({'highest_n1': 470, 'lowest_n2': 370})
+        ordermap.set_parameter(
+            {'highest_n1': 470, 'lowest_n2': 370, 'ATR_short1': 30, 'ATR_long2': 60})
         pf = ordermap.logic_order()
         Picture_maker(pf)
 
@@ -66,4 +69,4 @@ class Trading_systeam():
 
 if __name__ == "__main__":
     systeam = Trading_systeam()
-    systeam.Backtesting()
+    systeam.optimize()

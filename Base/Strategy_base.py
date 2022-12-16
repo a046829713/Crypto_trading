@@ -212,6 +212,9 @@ class Np_Order_Strategy(object):
         self.original_data = strategy_info.array_data
         self.datetime_list = strategy_info.datetimes
         self.Length = self.original_data.shape[0]
+        self.high_array = self.original_data[:, 1]
+        self.low_array = self.original_data[:, 2]
+        self.close_array = self.original_data[:, 3]
 
     def set_parameter(self, parameter: dict):
         self.parameter = parameter
@@ -220,45 +223,15 @@ class Np_Order_Strategy(object):
         """
             這邊就類似MC內編譯地方
         """
-        high_array = self.original_data[:, 1]
-        low_array = self.original_data[:, 2]
-        close_array = self.original_data[:, 3]
 
-        # 嘗試將主邏輯獨立出來===============================================
-        # 資料產生區
-        highest_price = nb.Highest(
-            high_array, step=self.parameter['highest_n1'])
-        lowest_price = nb.Lowest(
-            low_array, step=self.parameter['lowest_n2'])
+        ATR_short = vecbot_count.get_ATR(
+            self.high_array, self.low_array, self.close_array, self.parameter['ATR_short1'])
 
-        marketpostion_array = np.empty(shape=self.Length)
-        marketpostion = 0
+        ATR_long = vecbot_count.get_ATR(
+            self.high_array, self.low_array, self.close_array, self.parameter['ATR_long2'])
 
-        # 往後移一位
-        ATR_short = talib.SMA(close_array, timeperiod=10)[:]
-        ATR_short = vecbot_count.shift(ATR_short, 1)
-
-        
-        ATR_long = talib.SMA(close_array, timeperiod=20)[:]
-        ATR_long = vecbot_count.shift(ATR_long, 1)
-        
-        
-        for i in range(self.Length):
-            High = high_array[i]
-            Low = low_array[i]
-            Close = close_array[i]
-
-            # ==============================================================
-            # 主邏輯區段
-            if High > highest_price[i] and ATR_short[i] > ATR_long[i]:
-                marketpostion = 1
-
-            if Low < lowest_price[i]:
-                marketpostion = 0
-            # ==============================================================
-            marketpostion_array[i] = marketpostion
-
-        print(marketpostion_array)
+        self.marketpostion_array = nb.get_marketpostion_array(
+            self.Length, self.high_array, self.low_array, self.close_array, self.parameter, ATR_short, ATR_long)
 
     def logic_order(self):
         """_summary_
@@ -267,26 +240,22 @@ class Np_Order_Strategy(object):
             _type_: _description_
         """
         self.main_logic()
-        
-        high_array = self.original_data[:, 1]
-        low_array = self.original_data[:, 2]
-        close_array = self.original_data[:, 3]
 
-        orders, marketpostion_array, entryprice_array, buy_Fees_array, sell_Fees_array, OpenPostionprofit_array, ClosedPostionprofit_array, profit_array, Gross_profit_array, Gross_loss_array, all_Fees_array, netprofit_array = nb.logic_order(
-            high_array,
-            low_array,
-            close_array,
+        orders, entryprice_array, buy_Fees_array, sell_Fees_array, OpenPostionprofit_array, ClosedPostionprofit_array, profit_array, Gross_profit_array, Gross_loss_array, all_Fees_array, netprofit_array = nb.logic_order(
+            self.marketpostion_array,
+            self.high_array,
+            self.low_array,
+            self.close_array,
             self.Length,
             self.strategy_info.init_cash,
             self.strategy_info.slippage,
             self.strategy_info.size,
-            self.strategy_info.fee,
-            self.parameter['highest_n1'],
-            self.parameter['lowest_n2'])
+            self.strategy_info.fee
+        )
 
         Order_Info = Np_Order_Info(self.datetime_list,
                                    orders,
-                                   marketpostion_array,
+                                   self.marketpostion_array,
                                    entryprice_array,
                                    buy_Fees_array,
                                    sell_Fees_array,
