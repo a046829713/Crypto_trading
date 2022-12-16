@@ -252,29 +252,99 @@ def Lowest(data_array: np.ndarray, step: int) -> np.ndarray:
 
 
 @njit
-def get_order(marketpostion: Sequence) -> list:
-    out_list = []
-    order = 0
+def get_order(marketpostion: np.array) -> np.array:
+    order_array = np.empty(shape=marketpostion.shape[0])
     for i in range(len(marketpostion)):
         if i > 0:
             # 用來比較轉換的時候
             # 狀態一樣不需要改變
             if marketpostion[i] == marketpostion[i-1]:
-                order = 0
+                order_array[i] = 0
 
             # 當狀態不一樣的時候
             if marketpostion[i] != marketpostion[i-1]:
                 if marketpostion[i] == 1:
-                    order = 1
+                    order_array[i] = 1
                 else:
-                    order = -1
+                    order_array[i] = -1
         else:
-            order = marketpostion[i]
+            order_array[i] = marketpostion[i]
+    return order_array
 
-        # 求 order size
-        out_list.append(order)
 
-    return out_list
+@njit
+def more_fast_logic_order(
+        marketpostion_array: np.ndarray,
+        close_array: np.ndarray,
+        Length: int,
+        init_cash: float,
+        slippage: float,
+        size: float,
+        fee: float,
+):
+
+    # 初始化資料
+    ClosedPostionprofit_array = np.empty(shape=Length)
+
+    # 此變數區列可以在迭代當中改變
+    marketpostion = 0  # 部位方向
+    entryprice = 0  # 入場價格
+    exitsprice = 0  # 出場價格
+    buy_Fees = 0  # 買方手續費
+    sell_Fees = 0  # 賣方手續費
+    ClosedPostionprofit = init_cash   # 已平倉損益
+    buy_sizes = size  # 買進部位大小
+    sell_sizes = size  # 賣出進部位大小
+
+    # 商品固定屬性
+    slippage = slippage  # 滑價計算
+    fee = fee  # 手續費率
+    direction = "buyonly"
+
+    # 取得訂單
+    orders = get_order(marketpostion_array)
+    # 主循環區域
+    for i in range(Length):
+        Close = close_array[i]
+
+        # 策略所產生之資訊
+        last_marketpostion = marketpostion
+        last_entryprice = entryprice
+        # ==============================================================
+        # 主邏輯區段
+        marketpostion = marketpostion_array[i]
+        
+        # 加速寫法
+        if orders[i] == 0:
+            ClosedPostionprofit_array[i] = ClosedPostionprofit
+            continue
+        # ==============================================================
+        # 計算當前入場價(並且記錄滑價)
+        entryprice = get_entryprice(
+            entryprice, Close, marketpostion, last_marketpostion, slippage, direction)
+
+        # 計算當前出場價(並且記錄滑價)
+        exitsprice = get_exitsprice(
+            exitsprice, Close, marketpostion, last_marketpostion, slippage, direction)
+
+        # 計算入場手續費
+        buy_Fees = get_buy_Fees(
+            buy_Fees, fee, buy_sizes, Close, marketpostion, last_marketpostion)
+
+        # 計算出場手續費
+        sell_Fees = get_sell_Fees(
+            sell_Fees, fee, sell_sizes, Close, marketpostion, last_marketpostion)
+
+        # 計算已平倉損益(累積式) # v:20221213
+        ClosedPostionprofit = get_ClosedPostionprofit(
+            ClosedPostionprofit, marketpostion, last_marketpostion, buy_Fees, sell_Fees, Close, sell_sizes, last_entryprice, exitsprice)
+
+        # 記錄保存位置
+        ClosedPostionprofit_array[i] = ClosedPostionprofit
+
+        
+         
+    return orders, ClosedPostionprofit_array
 
 
 @njit
@@ -306,7 +376,7 @@ def logic_order(
     Gross_loss_array = np.empty(shape=Length)
     all_Fees_array = np.empty(shape=Length)
     netprofit_array = np.empty(shape=Length)
-    exitsprice_array = np.empty(shape=Length)
+    # exitsprice_array = np.empty(shape=Length)
 
     # 此變數區列可以在迭代當中改變
     marketpostion = 0  # 部位方向

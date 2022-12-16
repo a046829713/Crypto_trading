@@ -93,17 +93,17 @@ class Np_Order_Info(object):
         # 取得order儲存列
         self.order = pd.DataFrame(datetime_list, columns=['Datetime'])
         self.order['Order'] = orders
-        # self.order['Marketpostion'] = marketpostion
-        # self.order['Entryprice'] = entryprice
-        # self.order['Buy_Fees'] = buy_Fees
-        # self.order['Sell_Fees'] = sell_Fees
-        # self.order['OpenPostionprofit'] = OpenPostionprofit
+        self.order['Marketpostion'] = marketpostion
+        self.order['Entryprice'] = entryprice
+        self.order['Buy_Fees'] = buy_Fees
+        self.order['Sell_Fees'] = sell_Fees
+        self.order['OpenPostionprofit'] = OpenPostionprofit
         self.order['ClosedPostionprofit'] = ClosedPostionprofit
-        # self.order['Profit'] = profit
-        # self.order['Gross_profit'] = Gross_profit
-        # self.order['Gross_loss'] = Gross_loss
-        # self.order['all_Fees'] = all_Fees
-        # self.order['netprofit'] = netprofit
+        self.order['Profit'] = profit
+        self.order['Gross_profit'] = Gross_profit
+        self.order['Gross_loss'] = Gross_loss
+        self.order['all_Fees'] = all_Fees
+        self.order['netprofit'] = netprofit
 
         # 壓縮資訊減少運算
         self.order = self.order[self.order['Order'] != 0]
@@ -184,6 +184,31 @@ class Np_Order_Info(object):
         return ui_
 
 
+class small_Np_Order_Info(Np_Order_Info):
+    """ 用來處理最佳化訂單的相關資訊
+    Args:
+        object (_type_): _description_
+    """
+
+    def __init__(self,
+                 datetime_list,
+                 orders: np.ndarray,
+                 ClosedPostionprofit: np.ndarray,
+                 ) -> None:
+        # 取得order儲存列
+        self.order = pd.DataFrame(datetime_list, columns=['Datetime'])
+        self.order['Order'] = orders
+        self.order['ClosedPostionprofit'] = ClosedPostionprofit
+
+        # 壓縮資訊減少運算
+        self.order = self.order[self.order['Order'] != 0]
+        self.order.set_index("Datetime", inplace=True)
+
+        # 取得需要二次運算的資料(計算勝率，賠率....繪圖)
+        self.ClosedPostionprofit_array = self.order['ClosedPostionprofit'].to_numpy(
+        )
+
+
 class Portfolio_Order_Info(Np_Order_Info):
     def __init__(self, datetime_list, orders, stragtegy_names, Portfolio_profit, Portfolio_ClosedPostionprofit):
         self.order = pd.DataFrame(datetime_list, columns=['Datetime'])
@@ -237,6 +262,30 @@ class Np_Order_Strategy(object):
 
         self.marketpostion_array = nb.get_marketpostion_array(
             self.Length, self.high_array, self.low_array, self.close_array, ATR_short, ATR_long, self.highest_n1, self.lowest_n2)
+
+    def more_fast_logic_order(self):
+        """
+            用來創造閹割版的快速回測
+        """
+        self.main_logic()
+        
+        orders, ClosedPostionprofit_array = nb.more_fast_logic_order(
+            self.marketpostion_array,
+            self.close_array,
+            self.Length,
+            self.strategy_info.init_cash,
+            self.strategy_info.slippage,
+            self.strategy_info.size,
+            self.strategy_info.fee
+        )
+
+        Order_Info = small_Np_Order_Info(self.datetime_list,
+                                   orders,
+                                   ClosedPostionprofit_array)
+
+        Order_Info.register(self.strategy_info)
+
+        return Order_Info
 
     def logic_order(self):
         """_summary_
