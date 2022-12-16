@@ -36,7 +36,7 @@ class Trading_systeam():
             # 這邊有0再思考一下
             if len(pf.order) ==0:continue
             out_list.append([each_parameter, pf.UI_indicators])
-
+            
         print(out_list)
         UI_list = [i[1] for i in out_list]
         max_data = max(UI_list)
@@ -69,4 +69,4 @@ class Trading_systeam():
 
 if __name__ == "__main__":
     systeam = Trading_systeam()
-    systeam.optimize()
+    systeam.Backtesting()

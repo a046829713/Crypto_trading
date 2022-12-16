@@ -6,6 +6,7 @@ from Count import nb
 from collections import namedtuple
 import copy
 import talib
+import time
 
 
 class Strategy_base(object):
@@ -92,17 +93,17 @@ class Np_Order_Info(object):
         # 取得order儲存列
         self.order = pd.DataFrame(datetime_list, columns=['Datetime'])
         self.order['Order'] = orders
-        self.order['Marketpostion'] = marketpostion
-        self.order['Entryprice'] = entryprice
-        self.order['Buy_Fees'] = buy_Fees
-        self.order['Sell_Fees'] = sell_Fees
-        self.order['OpenPostionprofit'] = OpenPostionprofit
+        # self.order['Marketpostion'] = marketpostion
+        # self.order['Entryprice'] = entryprice
+        # self.order['Buy_Fees'] = buy_Fees
+        # self.order['Sell_Fees'] = sell_Fees
+        # self.order['OpenPostionprofit'] = OpenPostionprofit
         self.order['ClosedPostionprofit'] = ClosedPostionprofit
-        self.order['Profit'] = profit
-        self.order['Gross_profit'] = Gross_profit
-        self.order['Gross_loss'] = Gross_loss
-        self.order['all_Fees'] = all_Fees
-        self.order['netprofit'] = netprofit
+        # self.order['Profit'] = profit
+        # self.order['Gross_profit'] = Gross_profit
+        # self.order['Gross_loss'] = Gross_loss
+        # self.order['all_Fees'] = all_Fees
+        # self.order['netprofit'] = netprofit
 
         # 壓縮資訊減少運算
         self.order = self.order[self.order['Order'] != 0]
@@ -218,20 +219,24 @@ class Np_Order_Strategy(object):
 
     def set_parameter(self, parameter: dict):
         self.parameter = parameter
+        self.ATR_short1 = self.parameter['ATR_short1']
+        self.ATR_long2 = self.parameter['ATR_long2']
+        self.highest_n1 = self.parameter['highest_n1']
+        self.lowest_n2 = self.parameter['lowest_n2']
 
     def main_logic(self):
         """
             這邊就類似MC內編譯地方
         """
 
-        ATR_short = vecbot_count.get_ATR(
-            self.high_array, self.low_array, self.close_array, self.parameter['ATR_short1'])
+        ATR_short = nb.get_ATR(
+            self.Length, self.high_array, self.low_array, self.close_array, self.ATR_short1)
 
-        ATR_long = vecbot_count.get_ATR(
-            self.high_array, self.low_array, self.close_array, self.parameter['ATR_long2'])
+        ATR_long = nb.get_ATR(
+            self.Length, self.high_array, self.low_array, self.close_array, self.ATR_long2)
 
         self.marketpostion_array = nb.get_marketpostion_array(
-            self.Length, self.high_array, self.low_array, self.close_array, self.parameter, ATR_short, ATR_long)
+            self.Length, self.high_array, self.low_array, self.close_array, ATR_short, ATR_long, self.highest_n1, self.lowest_n2)
 
     def logic_order(self):
         """_summary_

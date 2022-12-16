@@ -177,25 +177,5 @@ class vecbot_count():
                 low_array[i] = np.min(data_array[i-step:i])
         return low_array
 
-    @staticmethod
-    def shift(xs, n):
-        # 將數據往後推
-        if n >= 0:
-            return np.r_[np.full(n, np.nan), xs[:-n]]
-        else:
-            return np.r_[xs[-n:], np.full(-n, np.nan)]
+    
 
-    # @staticmethod
-    # def get_ATR(high_array, low_array, close_array: np.array, parameter):
-        
-    #     ATR_short = talib.ATR(high_array, low_array,
-    #                           close_array, timeperiod=parameter)
-    #     ATR_short = vecbot_count.shift(ATR_short, 1)
-    #     return ATR_short
-    @staticmethod
-    def get_ATR(high_array, low_array, close_array: np.array, parameter):
-        
-        ATR_short = talib.ATR(high_array, low_array,
-                              close_array, timeperiod=parameter)
-        ATR_short = vecbot_count.shift(ATR_short, 1)
-        return ATR_short

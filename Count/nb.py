@@ -5,12 +5,13 @@ from datetime import datetime
 from Count.Base import vecbot_count
 
 
-def get_marketpostion_array(Length, high_array, low_array, close_array, parameter, ATR_short, ATR_long):
+@njit
+def get_marketpostion_array(Length, high_array, low_array, close_array, ATR_short, ATR_long, parameter_1, parameter_2):
     # 資料產生區
     highest_price = Highest(
-        high_array, step=parameter['highest_n1'])
+        high_array, step=parameter_1)
     lowest_price = Lowest(
-        low_array, step=parameter['lowest_n2'])
+        low_array, step=parameter_2)
 
     marketpostion_array = np.empty(shape=Length)
     marketpostion = 0
@@ -28,6 +29,48 @@ def get_marketpostion_array(Length, high_array, low_array, close_array, paramete
         marketpostion_array[i] = marketpostion
 
     return marketpostion_array
+
+
+@njit
+def get_ATR(Length, high_array: np.array, low_array: np.array, close_array: np.array, parameter_timeperiod):
+    """直接手寫ATR 希望可以加快速度(有判斷過不可視未來)
+
+    Args:
+        high_array (np.array): _description_
+        low_array (np.array): _description_
+        close_array (np.array): _description_
+        parameter (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    ATR_array = np.empty(shape=Length)
+    TR_array = np.empty(shape=Length)
+
+    for i in range(Length):
+        High = high_array[i]
+        Low = low_array[i]
+        Close = close_array[i]
+
+        if i > 0:
+            last_close = close_array[i - 1]
+        else:
+            last_close = 0
+
+        TR = max(Close - Low, abs(High - last_close),
+                 abs(Low - last_close))
+
+        TR_array[i] = TR
+
+        if i < parameter_timeperiod:
+            ATR_array[i] = np.nan
+        else:
+            ATR_array[i] = np.sum(
+                TR_array[i - parameter_timeperiod:i]) / parameter_timeperiod
+
+    return ATR_array
+
+
 @njit
 def get_drawdown_per(ClosedPostionprofit: np.ndarray):
     DD_per_array = np.empty(shape=ClosedPostionprofit.shape[0])
