@@ -4,8 +4,6 @@
 
 
 # need to do 
-
-to make parameter more use
-add all strategy engine
+須添加 選擇標的的功能
 
 

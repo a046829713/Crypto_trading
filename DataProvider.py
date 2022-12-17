@@ -6,51 +6,62 @@ from Datatransformer import Datatransformer
 
 
 class DataProvider:
+    """
+        用來整合 binance 的 API
+        MYSQL
+        和資料轉換
+    """
     def __init__(self):
         self.app = Data.custom.Binance_server()
         self.SQL = SQL_operate.DB_operate()
         self.transformer = Datatransformer()
 
-    def reload_all_data(self):
-        for symbol_name in self.app.get_targetsymobls():
-            self.reload_data(symbol_name)
-
-    def reload_data(self, symbol_name='BTCUSDT'):
+    def reload_data(self, symbol_name='BTCUSDT',time_type :str=None):
         # 先檢查是否有相關資料 取得目前所有列
         symbol_list = self.SQL.get_db_data('show tables;')
         symbol_list = [y[0] for y in symbol_list]
 
-        if symbol_name + '-F' in symbol_list:
-            print(f'{symbol_name}-已經有存在的資料')
-            df = self.SQL.read_Dateframe(f"{symbol_name}-F")
-            df['Datetime'] = df['Datetime'].astype(str)
+        # 如果這邊是有時間類型的話
+        if time_type =='D':
+            if symbol_name + '-F-D' in symbol_list:
+                print(f'{symbol_name}-已經有存在的資料')
+                df = self.SQL.read_Dateframe(f"{symbol_name}-F-D")
+                df['Datetime'] = df['Datetime'].astype(str)
         else:
-            print('創建資料')
-            self.SQL.change_db_data(
-                f"""
-                CREATE TABLE `crypto_data`.`{symbol_name}-F`(
-                `Datetime` DATETIME NOT NULL,
-                `Open` FLOAT NOT NULL,
-                `High` FLOAT NOT NULL,
-                `Low` FLOAT NOT NULL,
-                `Close` FLOAT NOT NULL,
-                `Volume` FLOAT NOT NULL,
-                `close_time` FLOAT NOT NULL,
-                `quote_av` FLOAT NOT NULL,
-                `trades` FLOAT NOT NULL,
-                `tb_base_av` FLOAT NOT NULL,
-                `tb_quote_av` FLOAT NOT NULL,
-                `ignore` FLOAT NOT NULL,
-                PRIMARY KEY(`Datetime`)
-                );"""
-            )
+            if symbol_name + '-F' in symbol_list:
+                print(f'{symbol_name}-已經有存在的資料')
+                df = self.SQL.read_Dateframe(f"{symbol_name}-F")
+                df['Datetime'] = df['Datetime'].astype(str)
+            else:
+                print('創建資料')
+                self.SQL.change_db_data(
+                    f"""
+                    CREATE TABLE `crypto_data`.`{symbol_name}-F`(
+                    `Datetime` DATETIME NOT NULL,
+                    `Open` FLOAT NOT NULL,
+                    `High` FLOAT NOT NULL,
+                    `Low` FLOAT NOT NULL,
+                    `Close` FLOAT NOT NULL,
+                    `Volume` FLOAT NOT NULL,
+                    `close_time` FLOAT NOT NULL,
+                    `quote_av` FLOAT NOT NULL,
+                    `trades` FLOAT NOT NULL,
+                    `tb_base_av` FLOAT NOT NULL,
+                    `tb_quote_av` FLOAT NOT NULL,
+                    `ignore` FLOAT NOT NULL,
+                    PRIMARY KEY(`Datetime`)
+                    );"""
+                )
 
-            df = pd.DataFrame()
+                df = pd.DataFrame()
 
-        
-        # 這邊的資料為原始的UTC資料 無任何加工
-        original_df = Data.custom.BinanceDate.download(
-            df, f"{symbol_name}", '1m')
+            # 這邊的資料為原始的UTC資料 無任何加工
+            original_df = Data.custom.BinanceDate.download(
+                df, f"{symbol_name}", '1m')
+            
+            
+            
+            
         return original_df
 
     def get_symboldata(self, symbol_name='BTCUSDT', freq: int = 15, save=True):
@@ -59,9 +70,9 @@ class DataProvider:
         """
         original_df = self.reload_data(symbol_name)
         if save:
-            self.save_data(symbol_name,original_df)            
-            
-        new_df =  self.transformer.get_tradedata(original_df, freq=freq)
+            self.save_data(symbol_name, original_df)
+
+        new_df = self.transformer.get_tradedata(original_df, freq=freq)
         print('產生實驗資料 DataProvider - get_symboldata')
         new_df.to_csv(f"{symbol_name}-F-{freq}-Min.csv")
         return new_df
@@ -71,9 +82,18 @@ class DataProvider:
         # 保存舊的資料
         self.SQL.write_Dateframe(original_df, f"{symbol_name}-F")
         print(f"{symbol_name}-F寫入完成")
-        
+
+    def reload_all_data(self):
+        """
+            用來回補所有symbol的歷史資料
+
+        """
+        for symbol_name in self.app.get_targetsymobls():
+            original_df = self.reload_data(symbol_name,time_type='D')
+            self.save_data(symbol_name, original_df)
 
 
 if __name__ == "__main__":
     dataprovider = DataProvider()
-    # print(dataprovider.get_symboldata("BTCUSDT", 2))
+    print(dataprovider.get_symboldata("BTCUSDT", 2))
+    
