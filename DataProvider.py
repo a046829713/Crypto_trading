@@ -4,6 +4,8 @@ from Database import SQL_operate
 import pandas as pd
 from Datatransformer import Datatransformer
 from typing import Optional
+from utils.Debug_tool import debug
+
 
 class DataProvider:
     """
@@ -12,12 +14,12 @@ class DataProvider:
         和資料轉換
     """
 
-    def __init__(self, time_type: Optional[str]=None):
+    def __init__(self, time_type: Optional[str] = None):
         self.app = Data.custom.Binance_server()
         self.SQL = SQL_operate.DB_operate()
         self.transformer = Datatransformer()
-        self.time_type = time_type    
-    
+        self.time_type = time_type
+
     def reload_data(self, symbol_name='BTCUSDT'):
         # 先檢查是否有相關資料 取得目前所有列
         symbol_name_list = self.SQL.get_db_data('show tables;')
@@ -101,8 +103,31 @@ class DataProvider:
             original_df = self.reload_data(symbol_name)
             self.save_data(symbol_name, original_df)
 
+    def get_symbols_history_data(self) -> list:
+        """
+            讀取所有日線資料 用來分析和排序
+
+        Returns:
+            list: 
+                [[tb_symbol_name,each_df],
+                 [tb_symbol_name,each_df],
+                 ....
+                ]
+        """
+
+        out_list = []
+        for symbol_name in self.app.get_targetsymobls():
+            if self.time_type == 'D':
+                tb_symbol_name = symbol_name + '-F-D'
+            else:
+                tb_symbol_name = symbol_name + '-F'
+            each_df = self.SQL.read_Dateframe(tb_symbol_name)
+            out_list.append([tb_symbol_name, each_df])
+
+        return out_list
+
 
 if __name__ == "__main__":
-    dataprovider = DataProvider(time_type ='D')
+    dataprovider = DataProvider(time_type='D')
     # print(dataprovider.get_symboldata("DEFIUSDT", 2))
     dataprovider.reload_all_data()

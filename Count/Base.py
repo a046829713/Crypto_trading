@@ -23,6 +23,15 @@ class Pandas_count():
         """
         return row_data.rolling(freq).min()
 
+    @staticmethod
+    def momentum(price: pd.Series, periond: int) -> pd.Series:
+        """
+            取得動量
+        """
+        lagPrice = price.shift(periond)
+        momen = price / lagPrice - 1
+        return momen
+
 
 class Event_count():
     @staticmethod
@@ -176,6 +185,3 @@ class vecbot_count():
             else:
                 low_array[i] = np.min(data_array[i-step:i])
         return low_array
-
-    
-

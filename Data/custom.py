@@ -186,10 +186,12 @@ class BinanceDate(object):
         else:
             new_df = data
 
+
         new_df.set_index('Datetime', inplace=True)
         # duplicated >> 重複 True 代表重複了
         new_df = new_df[~new_df.index.duplicated(keep='last')]
-
+        
+        
         print('商品資料回補完成!')
         new_df = new_df.astype(float)
         return new_df
@@ -251,11 +253,7 @@ class Binance_server(object):
         Returns:
             list: _description_
         """
-        data = self.getfuturesinfo()
-        with open('symbols.txt','w') as file:
-            file.write(json.dumps(data))
-        
-        
+        data = self.getfuturesinfo()        
         out_list = []
         for key in data.keys():
             if key == 'symbols':
