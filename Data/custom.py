@@ -7,14 +7,14 @@ from binance.client import Client
 from binance.enums import HistoricalKlinesType
 from binance.helpers import interval_to_milliseconds, convert_ts_str
 import pandas as pd
-import os
+import json
 from dateutil import parser
 import math
 from datetime import timedelta, datetime, timezone
 import re
 import time
 from utils.Date_time import parser_time
-
+import time
 
 class BinanceDate(object):
     """
@@ -126,12 +126,12 @@ class BinanceDate(object):
                 'Datetime']
 
         if source == "binance":
-            """ 取得最新的時間 取得合約現貨等無差別 都是24小時 """
-            new = pd.to_datetime(client.get_klines(symbol=symbol, interval=kline_size)[-1][0],
-                                 unit='ms')
-
-            # new2 = pd.to_datetime(client.futures_klines(symbol=symbol, interval=kline_size)[-1][0],
+            """ 有些商品只有期貨的部份 所以還是以期貨的API為主 """
+            # new = pd.to_datetime(client.get_klines(symbol=symbol, interval=kline_size)[-1][0],
             #                      unit='ms')
+
+            new = pd.to_datetime(client.futures_klines(symbol=symbol, interval=kline_size)[-1][0],
+                                 unit='ms')
 
         if source == "bitmex":
             new = \
@@ -252,6 +252,10 @@ class Binance_server(object):
             list: _description_
         """
         data = self.getfuturesinfo()
+        with open('symbols.txt','w') as file:
+            file.write(json.dumps(data))
+        
+        
         out_list = []
         for key in data.keys():
             if key == 'symbols':
