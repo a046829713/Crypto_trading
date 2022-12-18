@@ -11,7 +11,7 @@ class Trading_systeam():
         example = get_symobl_filter_useful(all_symbols)
         print(example)
 
-        # 取得交易標的
+        # 取得交易標的(頻率不需要太頻繁 一個月一次即可)
         
         
         
@@ -22,21 +22,21 @@ class Trading_systeam():
         
         
         # 取得回測參數
-        
+        # vecbot_backtest
         
         
         
         
         
         # 取得投資組合
-        
+        # vecbot_backtest.PortfolioBacktesting
         
         
         
         
         
         # 進行交易
-
+        # online output
 
 
 if __name__ == '__main__':
