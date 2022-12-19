@@ -268,7 +268,7 @@ class Np_Order_Strategy(object):
             用來創造閹割版的快速回測
         """
         self.main_logic()
-        
+
         orders, ClosedPostionprofit_array = nb.more_fast_logic_order(
             self.marketpostion_array,
             self.close_array,
@@ -280,8 +280,8 @@ class Np_Order_Strategy(object):
         )
 
         Order_Info = small_Np_Order_Info(self.datetime_list,
-                                   orders,
-                                   ClosedPostionprofit_array)
+                                         orders,
+                                         ClosedPostionprofit_array)
 
         Order_Info.register(self.strategy_info)
 

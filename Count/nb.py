@@ -3,6 +3,28 @@ import numpy as np
 from typing import Sequence
 from datetime import datetime
 from Count.Base import vecbot_count
+from numpy.lib.stride_tricks import sliding_window_view
+
+
+@njit
+def get_new_marketpostion_array(Length, high_array, low_array, close_array, ATR_short, ATR_long, parameter_1, parameter_2):
+    # 資料產生區
+    highest_price = Highest(
+        high_array, step=parameter_1)
+
+    lowest_price = Lowest(
+        low_array, step=parameter_2)
+
+    print(np.where((high_array - highest_price > 0)
+          & (ATR_short - ATR_long > 0), 1, 0))
+    # # ==============================================================
+    # # 主邏輯區段
+    # if High > highest_price[i] and ATR_short[i] > ATR_long[i]:
+    #     marketpostion = 1
+    # if Low < lowest_price[i]:
+    #     marketpostion = 0
+    # # ==============================================================
+    # marketpostion_array[i] = marketpostion
 
 
 @njit
@@ -10,6 +32,7 @@ def get_marketpostion_array(Length, high_array, low_array, close_array, ATR_shor
     # 資料產生區
     highest_price = Highest(
         high_array, step=parameter_1)
+
     lowest_price = Lowest(
         low_array, step=parameter_2)
 
@@ -228,7 +251,6 @@ def Highest(data_array: np.ndarray, step: int) -> np.ndarray:
             high_array[i] = np.max(data_array[i-step:i])
     return high_array
 
-
 @njit
 def Lowest(data_array: np.ndarray, step: int) -> np.ndarray:
     """取得rolling的滾動值 和官方的不一樣,並且完成不可視的未來
@@ -313,7 +335,7 @@ def more_fast_logic_order(
         # ==============================================================
         # 主邏輯區段
         marketpostion = marketpostion_array[i]
-        
+
         # 加速寫法
         if orders[i] == 0:
             ClosedPostionprofit_array[i] = ClosedPostionprofit
@@ -342,8 +364,6 @@ def more_fast_logic_order(
         # 記錄保存位置
         ClosedPostionprofit_array[i] = ClosedPostionprofit
 
-        
-         
     return orders, ClosedPostionprofit_array
 
 
