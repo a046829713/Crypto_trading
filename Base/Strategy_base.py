@@ -209,6 +209,23 @@ class small_Np_Order_Info(Np_Order_Info):
         )
 
 
+# class ALL_order_INFO():
+#     """
+#         將所有資料記錄起來 很快 但是會造成記憶體不足
+#     """
+#     def __init__(self) -> None:
+#         self.ordersmap = {}
+#         self.ClosedPostionprofitmap = {}
+
+#     def register(self,
+#                  name_str:str,
+#                  orders: np.ndarray,
+#                  ClosedPostionprofit: np.ndarray):
+
+#         self.ordersmap.update({name_str:orders})
+#         self.ClosedPostionprofitmap.update({name_str:ClosedPostionprofit})
+
+
 class Portfolio_Order_Info(Np_Order_Info):
     def __init__(self, datetime_list, orders, stragtegy_names, Portfolio_profit, Portfolio_ClosedPostionprofit):
         self.order = pd.DataFrame(datetime_list, columns=['Datetime'])
@@ -253,7 +270,6 @@ class Np_Order_Strategy(object):
         """
             這邊就類似MC內編譯地方
         """
-
         ATR_short = nb.get_ATR(
             self.Length, self.high_array, self.low_array, self.close_array, self.ATR_short1)
 
@@ -261,12 +277,17 @@ class Np_Order_Strategy(object):
             self.Length, self.high_array, self.low_array, self.close_array, self.ATR_long2)
 
         self.marketpostion_array = nb.get_marketpostion_array(
-            self.Length, self.high_array, self.low_array, self.close_array, ATR_short, ATR_long, self.highest_n1, self.lowest_n2)
+            self.Length, self.high_array, self.low_array, self.close_array, ATR_short, ATR_long, self.highestarr, self.lowestarr)
 
     def more_fast_logic_order(self):
         """
             用來創造閹割版的快速回測
         """
+        self.highestarr = vecbot_count.max_rolling(
+            self.high_array, self.highest_n1)
+        self.lowestarr = vecbot_count.min_rolling(
+            self.low_array, self.lowest_n2)
+
         self.main_logic()
 
         orders, ClosedPostionprofit_array = nb.more_fast_logic_order(
@@ -278,7 +299,6 @@ class Np_Order_Strategy(object):
             self.strategy_info.size,
             self.strategy_info.fee
         )
-
         Order_Info = small_Np_Order_Info(self.datetime_list,
                                          orders,
                                          ClosedPostionprofit_array)

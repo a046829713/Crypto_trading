@@ -4,38 +4,11 @@ from typing import Sequence
 from datetime import datetime
 from Count.Base import vecbot_count
 from numpy.lib.stride_tricks import sliding_window_view
+from utils.TimeCountMsg import TimeCountMsg
 
 
 @njit
-def get_new_marketpostion_array(Length, high_array, low_array, close_array, ATR_short, ATR_long, parameter_1, parameter_2):
-    # 資料產生區
-    highest_price = Highest(
-        high_array, step=parameter_1)
-
-    lowest_price = Lowest(
-        low_array, step=parameter_2)
-
-    print(np.where((high_array - highest_price > 0)
-          & (ATR_short - ATR_long > 0), 1, 0))
-    # # ==============================================================
-    # # 主邏輯區段
-    # if High > highest_price[i] and ATR_short[i] > ATR_long[i]:
-    #     marketpostion = 1
-    # if Low < lowest_price[i]:
-    #     marketpostion = 0
-    # # ==============================================================
-    # marketpostion_array[i] = marketpostion
-
-
-@njit
-def get_marketpostion_array(Length, high_array, low_array, close_array, ATR_short, ATR_long, parameter_1, parameter_2):
-    # 資料產生區
-    highest_price = Highest(
-        high_array, step=parameter_1)
-
-    lowest_price = Lowest(
-        low_array, step=parameter_2)
-
+def get_marketpostion_array(Length, high_array, low_array, close_array, ATR_short, ATR_long, highest_price, lowest_price):
     marketpostion_array = np.empty(shape=Length)
     marketpostion = 0
     for i in range(Length):
@@ -56,42 +29,65 @@ def get_marketpostion_array(Length, high_array, low_array, close_array, ATR_shor
 
 @njit
 def get_ATR(Length, high_array: np.array, low_array: np.array, close_array: np.array, parameter_timeperiod):
-    """直接手寫ATR 希望可以加快速度(有判斷過不可視未來)
+    last_close_array = np.roll(close_array, 1)
+    last_close_array[0] = 0
 
-    Args:
-        high_array (np.array): _description_
-        low_array (np.array): _description_
-        close_array (np.array): _description_
-        parameter (_type_): _description_
+    def moving_average(a, n=3):
+        """
+            決定平均類別不向後移動
+        """
+        ret = np.cumsum(a)
+        ret[n:] = ret[n:] - ret[:-n]
+        ret[:n] = np.nan
+        return ret/n
 
-    Returns:
-        _type_: _description_
-    """
-    ATR_array = np.empty(shape=Length)
-    TR_array = np.empty(shape=Length)
+    # maximum 這個要兩兩比較 不然會有問題
+    each_num = np.maximum(close_array - low_array,
+                          np.abs(high_array - last_close_array))
+    TR = np.maximum(each_num, np.abs(low_array - last_close_array))
+    ATR = moving_average(TR, parameter_timeperiod)
 
-    for i in range(Length):
-        High = high_array[i]
-        Low = low_array[i]
-        Close = close_array[i]
+    return ATR
 
-        if i > 0:
-            last_close = close_array[i - 1]
-        else:
-            last_close = 0
 
-        TR = max(Close - Low, abs(High - last_close),
-                 abs(Low - last_close))
+# @njit
+# def get_ATR(Length, high_array: np.array, low_array: np.array, close_array: np.array, parameter_timeperiod):
+#     """直接手寫ATR 希望可以加快速度(有判斷過不可視未來)
 
-        TR_array[i] = TR
+#     Args:
+#         high_array (np.array): _description_
+#         low_array (np.array): _description_
+#         close_array (np.array): _description_
+#         parameter (_type_): _description_
 
-        if i < parameter_timeperiod:
-            ATR_array[i] = np.nan
-        else:
-            ATR_array[i] = np.sum(
-                TR_array[i - parameter_timeperiod:i]) / parameter_timeperiod
+#     Returns:
+#         _type_: _description_
+#     """
+#     ATR_array = np.empty(shape=Length)
+#     TR_array = np.empty(shape=Length)
 
-    return ATR_array
+#     for i in range(Length):
+#         High = high_array[i]
+#         Low = low_array[i]
+#         Close = close_array[i]
+
+#         if i > 0:
+#             last_close = close_array[i - 1]
+#         else:
+#             last_close = 0
+
+#         TR = max(Close - Low, abs(High - last_close),
+#                  abs(Low - last_close))
+
+#         TR_array[i] = TR
+
+#         if i < parameter_timeperiod:
+#             ATR_array[i] = np.nan
+#         else:
+#             ATR_array[i] = np.sum(
+#                 TR_array[i - parameter_timeperiod:i]) / parameter_timeperiod
+
+#     return ATR_array
 
 
 @njit
@@ -250,6 +246,7 @@ def Highest(data_array: np.ndarray, step: int) -> np.ndarray:
         else:
             high_array[i] = np.max(data_array[i-step:i])
     return high_array
+
 
 @njit
 def Lowest(data_array: np.ndarray, step: int) -> np.ndarray:

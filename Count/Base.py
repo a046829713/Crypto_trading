@@ -185,3 +185,23 @@ class vecbot_count():
             else:
                 low_array[i] = np.min(data_array[i-step:i])
         return low_array
+
+    @staticmethod
+    def max_rolling(a, window, axis=1):
+        max_arr = np.empty(shape=a.shape[0])
+        shape = a.shape[:-1] + (a.shape[-1] - window + 1, window)
+        strides = a.strides + (a.strides[-1],)
+        rolling = np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
+        max_arr[window-1:] = np.roll(np.max(rolling, axis=1), 1)
+        max_arr[:window] = np.nan
+        return max_arr
+    
+    @staticmethod
+    def min_rolling(a, window, axis=1):
+        max_arr = np.empty(shape=a.shape[0])
+        shape = a.shape[:-1] + (a.shape[-1] - window + 1, window)
+        strides = a.strides + (a.strides[-1],)
+        rolling = np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
+        max_arr[window-1:] = np.roll(np.min(rolling, axis=1), 1)
+        max_arr[:window] = np.nan
+        return max_arr

@@ -37,7 +37,7 @@ class Quantify_systeam():
             # 這邊有0再思考一下
             if len(pf.order) == 0:
                 continue
-            out_list.append([each_parameter, pf.UI_indicators])
+            out_list.append([each_parameter, pf])
 
         # print(out_list)
         # UI_list = [i[1] for i in out_list]
@@ -51,24 +51,24 @@ class Quantify_systeam():
         """
             普通回測模式
         """
-        ordermap=Np_Order_Strategy(self.strategy1)
+        ordermap = Np_Order_Strategy(self.strategy1)
         ordermap.set_parameter(
             {'highest_n1': 470, 'lowest_n2': 370, 'ATR_short1': 30, 'ATR_long2': 60})
-        pf=ordermap.more_fast_logic_order()
+        pf = ordermap.more_fast_logic_order()
         Picture_maker(pf)
 
     def PortfolioBacktesting(self):
         # 總回測
-        app=PortfolioTrader()
+        app = PortfolioTrader()
         app.register(
             self.strategy1, {'highest_n1': 470, 'lowest_n2': 370})
         app.register(
             self.strategy2, {'highest_n1': 230, 'lowest_n2': 420})
 
-        pf=app.logic_order()
+        pf = app.logic_order()
         Picture_maker(pf)
 
 
 if __name__ == "__main__":
-    systeam=Quantify_systeam()
+    systeam = Quantify_systeam()
     systeam.optimize()
