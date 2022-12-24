@@ -209,21 +209,26 @@ class small_Np_Order_Info(Np_Order_Info):
         )
 
 
-# class ALL_order_INFO():
-#     """
-#         將所有資料記錄起來 很快 但是會造成記憶體不足
-#     """
-#     def __init__(self) -> None:
-#         self.ordersmap = {}
-#         self.ClosedPostionprofitmap = {}
+class ALL_order_INFO(Np_Order_Info):
+    def __init__(self) -> None:
+        pass
 
-#     def register(self,
-#                  name_str:str,
-#                  orders: np.ndarray,
-#                  ClosedPostionprofit: np.ndarray):
+    def register_data(self,
+                      datetime_list,
+                      orders: np.ndarray,
+                      ClosedPostionprofit: np.ndarray,):
+        # 取得order儲存列
+        self.order = pd.DataFrame(datetime_list, columns=['Datetime'])
+        self.order['Order'] = orders
+        self.order['ClosedPostionprofit'] = ClosedPostionprofit
 
-#         self.ordersmap.update({name_str:orders})
-#         self.ClosedPostionprofitmap.update({name_str:ClosedPostionprofit})
+        # 壓縮資訊減少運算
+        self.order = self.order[self.order['Order'] != 0]
+        self.order.set_index("Datetime", inplace=True)
+
+        # 取得需要二次運算的資料(計算勝率，賠率....繪圖)
+        self.ClosedPostionprofit_array = self.order['ClosedPostionprofit'].to_numpy(
+        )
 
 
 class Portfolio_Order_Info(Np_Order_Info):
@@ -279,6 +284,21 @@ class Np_Order_Strategy(object):
         self.marketpostion_array = nb.get_marketpostion_array(
             self.Length, self.high_array, self.low_array, self.close_array, ATR_short, ATR_long, self.highestarr, self.lowestarr)
 
+    def vb_logic_order(self):
+        self.highestarr = vecbot_count.max_rolling(
+            self.high_array, self.highest_n1)
+        self.lowestarr = vecbot_count.min_rolling(
+            self.low_array, self.lowest_n2)
+
+        ATR_short = nb.get_ATR(
+            self.Length, self.high_array, self.low_array, self.close_array, self.ATR_short1)
+
+        ATR_long = nb.get_ATR(
+            self.Length, self.high_array, self.low_array, self.close_array, self.ATR_long2)
+
+        self.order_array = nb.get_order_array(
+            self.high_array, self.low_array, self.close_array, ATR_short, ATR_long, self.highestarr, self.lowestarr)
+
     def more_fast_logic_order(self):
         """
             用來創造閹割版的快速回測
@@ -299,13 +319,8 @@ class Np_Order_Strategy(object):
             self.strategy_info.size,
             self.strategy_info.fee
         )
-        Order_Info = small_Np_Order_Info(self.datetime_list,
-                                         orders,
-                                         ClosedPostionprofit_array)
 
-        Order_Info.register(self.strategy_info)
-
-        return Order_Info
+        return self.datetime_list, orders, ClosedPostionprofit_array
 
     def logic_order(self):
         """_summary_

@@ -1,10 +1,12 @@
 from Base.Strategy_base import Strategy_base
 from Base.Strategy_base import Np_Order_Strategy
 from Base.Strategy_base import PortfolioTrader
+from Base.Strategy_base import ALL_order_INFO
 from tqdm import tqdm
 from Hyper_optimiza import Hyper_optimization
 from Plot_draw.Picture_Mode import Picture_maker
 import numpy as np
+import pandas as pd
 
 
 class Quantify_systeam():
@@ -27,17 +29,21 @@ class Quantify_systeam():
         ordermap = Np_Order_Strategy(self.strategy2)
         inputs_parameter = {"highest_n1": np.arange(10, 500, 10, dtype=np.int16),
                             "lowest_n2": np.arange(10, 500, 10, dtype=np.int16),
-        'ATR_short1': np.arange(10, 200, 10, dtype=np.int16),
-        'ATR_long2': np.arange(10, 200, 10, dtype=np.int16)}
+                            'ATR_short1': np.arange(10, 200, 10, dtype=np.int16),
+                            'ATR_long2': np.arange(10, 200, 10, dtype=np.int16)}
 
-        out_list=[]
+        all_orderinfo = ALL_order_INFO()
+
         for each_parameter in tqdm(Hyper_optimization.generator_parameter(inputs_parameter)):
             ordermap.set_parameter(each_parameter)
-            pf=ordermap.more_fast_logic_order()
-            # 這邊有0再思考一下
-            if len(pf.order) == 0:
+            self.datetime_list, orders, ClosedPostionprofit_array = ordermap.more_fast_logic_order()
+            all_orderinfo.register(ordermap.strategy_info)
+            all_orderinfo.register_data(
+                self.datetime_list, orders, ClosedPostionprofit_array)
+            if len(all_orderinfo.order) == 0:
                 continue
-            out_list.append([each_parameter, pf])
+
+
 
         # print(out_list)
         # UI_list = [i[1] for i in out_list]
@@ -71,4 +77,4 @@ class Quantify_systeam():
 
 if __name__ == "__main__":
     systeam = Quantify_systeam()
-    systeam.optimize()
+    systeam.Backtesting()

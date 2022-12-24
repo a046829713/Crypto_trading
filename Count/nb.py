@@ -5,9 +5,10 @@ from datetime import datetime
 from Count.Base import vecbot_count
 from numpy.lib.stride_tricks import sliding_window_view
 from utils.TimeCountMsg import TimeCountMsg
+import vectorbt as vbt
 
 
-@njit
+@TimeCountMsg.record_timemsg
 def get_marketpostion_array(Length, high_array, low_array, close_array, ATR_short, ATR_long, highest_price, lowest_price):
     marketpostion_array = np.empty(shape=Length)
     marketpostion = 0
@@ -27,7 +28,26 @@ def get_marketpostion_array(Length, high_array, low_array, close_array, ATR_shor
     return marketpostion_array
 
 
-@njit
+@TimeCountMsg.record_timemsg
+def get_order_array(high_array, low_array, close_array, ATR_short, ATR_long, highest_price, lowest_price):
+    # [True, True, True, False, False]
+    # [False, False, True, True, True]
+    # 0    1.0
+    # 1    0.0
+    # 2    0.0
+    # 3   -1.0
+    # 4    0.0
+    Entries = np.where((high_array - highest_price > 0) &
+                       (ATR_short - ATR_long > 0), 1, 0)
+    Exits = np.where((low_array - lowest_price) < 0, 1, 0)
+
+    Entries_cum = np.cumsum(Entries)
+    for i in range(high_array.shape[0]):
+        print(Entries[i],Exits[i],Entries_cum[i])
+    return Entries
+
+
+@TimeCountMsg.record_timemsg
 def get_ATR(Length, high_array: np.array, low_array: np.array, close_array: np.array, parameter_timeperiod):
     last_close_array = np.roll(close_array, 1)
     last_close_array[0] = 0
@@ -50,7 +70,7 @@ def get_ATR(Length, high_array: np.array, low_array: np.array, close_array: np.a
     return ATR
 
 
-# @njit
+# @TimeCountMsg.record_timemsg
 # def get_ATR(Length, high_array: np.array, low_array: np.array, close_array: np.array, parameter_timeperiod):
 #     """直接手寫ATR 希望可以加快速度(有判斷過不可視未來)
 
@@ -90,7 +110,7 @@ def get_ATR(Length, high_array: np.array, low_array: np.array, close_array: np.a
 #     return ATR_array
 
 
-@njit
+@TimeCountMsg.record_timemsg
 def get_drawdown_per(ClosedPostionprofit: np.ndarray):
     DD_per_array = np.empty(shape=ClosedPostionprofit.shape[0])
     max_profit = 0
@@ -104,7 +124,7 @@ def get_drawdown_per(ClosedPostionprofit: np.ndarray):
     return DD_per_array
 
 
-@njit
+@TimeCountMsg.record_timemsg
 def get_drawdown(ClosedPostionprofit: np.ndarray):
     DD_array = np.empty(shape=ClosedPostionprofit.shape[0])
     max_profit = 0
@@ -117,7 +137,7 @@ def get_drawdown(ClosedPostionprofit: np.ndarray):
     return DD_array
 
 
-@njit
+@TimeCountMsg.record_timemsg
 def get_entryprice(entryprice, Close, marketpostion, last_marketpostion, slippage=None, direction=None):
     if marketpostion == 1 and last_marketpostion == 0:
         if slippage:
@@ -129,7 +149,7 @@ def get_entryprice(entryprice, Close, marketpostion, last_marketpostion, slippag
     return entryprice
 
 
-@njit
+@TimeCountMsg.record_timemsg
 def get_exitsprice(exitsprice, Close, marketpostion, last_marketpostion, slippage=None, direction=None):
     """
     exitsprice (有2種連貫性的設定)
@@ -160,7 +180,7 @@ def get_exitsprice(exitsprice, Close, marketpostion, last_marketpostion, slippag
     return exitsprice
 
 
-@njit
+@TimeCountMsg.record_timemsg
 def get_buy_Fees(buy_Fee, fee, size, Close, marketpostion, last_marketpostion):
     if marketpostion == 1 and last_marketpostion == 0:
         buy_Fee = Close * fee * size
@@ -169,7 +189,7 @@ def get_buy_Fees(buy_Fee, fee, size, Close, marketpostion, last_marketpostion):
     return buy_Fee
 
 
-@njit
+@TimeCountMsg.record_timemsg
 def get_sell_Fees(sell_Fee, fee: float, size, Close, marketpostion, last_marketpostion):
     """_summary_
 
@@ -190,7 +210,7 @@ def get_sell_Fees(sell_Fee, fee: float, size, Close, marketpostion, last_marketp
     return sell_Fee
 
 
-@njit
+@TimeCountMsg.record_timemsg
 def get_OpenPostionprofit(OpenPostionprofit, marketpostion, last_marketpostion, buy_Fees, Close, buy_sizes, entryprice):
     if marketpostion == 1:
         OpenPostionprofit = Close * buy_sizes - entryprice * buy_sizes
@@ -199,7 +219,7 @@ def get_OpenPostionprofit(OpenPostionprofit, marketpostion, last_marketpostion, 
     return OpenPostionprofit
 
 
-@njit
+@TimeCountMsg.record_timemsg
 def get_ClosedPostionprofit(ClosedPostionprofit, marketpostion, last_marketpostion, buy_Fees, sell_Fees, Close, sizes, last_entryprice, exitsprice):
     # 我的定義是當部位改變的時候再紀錄
     if marketpostion == 1 and last_marketpostion == 0:
@@ -217,7 +237,7 @@ def get_ClosedPostionprofit(ClosedPostionprofit, marketpostion, last_marketposti
     return ClosedPostionprofit
 
 
-@njit
+@TimeCountMsg.record_timemsg
 def get_profit(profit, marketpostion, last_marketpostion, Close, sell_sizes, last_entryprice):
     if marketpostion == 0 and last_marketpostion == 1:
         profit = Close * sell_sizes - last_entryprice * sell_sizes
@@ -226,7 +246,7 @@ def get_profit(profit, marketpostion, last_marketpostion, Close, sell_sizes, las
     return profit
 
 
-@njit
+@TimeCountMsg.record_timemsg
 def Highest(data_array: np.ndarray, step: int) -> np.ndarray:
     """取得rolling的滾動值 和官方的不一樣,並且完成不可視的未來
 
@@ -248,7 +268,7 @@ def Highest(data_array: np.ndarray, step: int) -> np.ndarray:
     return high_array
 
 
-@njit
+@TimeCountMsg.record_timemsg
 def Lowest(data_array: np.ndarray, step: int) -> np.ndarray:
     """取得rolling的滾動值 和官方的不一樣,並且完成不可視的未來
 
@@ -270,7 +290,7 @@ def Lowest(data_array: np.ndarray, step: int) -> np.ndarray:
     return low_array
 
 
-@njit
+@TimeCountMsg.record_timemsg
 def get_order(marketpostion: np.array) -> np.array:
     order_array = np.empty(shape=marketpostion.shape[0])
     for i in range(len(marketpostion)):
@@ -291,7 +311,7 @@ def get_order(marketpostion: np.array) -> np.array:
     return order_array
 
 
-@njit
+@TimeCountMsg.record_timemsg
 def more_fast_logic_order(
         marketpostion_array: np.ndarray,
         close_array: np.ndarray,
@@ -364,7 +384,7 @@ def more_fast_logic_order(
     return orders, ClosedPostionprofit_array
 
 
-@njit
+@TimeCountMsg.record_timemsg
 def logic_order(
         marketpostion_array: np.ndarray,
         high_array: np.ndarray,
