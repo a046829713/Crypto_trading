@@ -88,4 +88,4 @@ class Quantify_systeam():
 
 if __name__ == "__main__":
     systeam = Quantify_systeam()
-    systeam.optimize()
+    systeam.Backtesting()

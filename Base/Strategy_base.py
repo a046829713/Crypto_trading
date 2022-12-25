@@ -260,6 +260,7 @@ class Np_Order_Strategy(object):
         self.original_data = strategy_info.array_data
         self.datetime_list = strategy_info.datetimes
         self.Length = self.original_data.shape[0]
+        self.open_array = self.original_data[:, 0]
         self.high_array = self.original_data[:, 1]
         self.low_array = self.original_data[:, 2]
         self.close_array = self.original_data[:, 3]
@@ -311,6 +312,7 @@ class Np_Order_Strategy(object):
         
 
         nb.more_fast_logic_order(
+            self.open_array,
             self.high_array,
             self.low_array,
             self.close_array,
