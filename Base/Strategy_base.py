@@ -266,10 +266,10 @@ class Np_Order_Strategy(object):
 
     def set_parameter(self, parameter: dict):
         self.parameter = parameter
-        self.ATR_short1 = self.parameter['ATR_short1']
-        self.ATR_long2 = self.parameter['ATR_long2']
         self.highest_n1 = self.parameter['highest_n1']
         self.lowest_n2 = self.parameter['lowest_n2']
+        self.ATR_short1 = self.parameter['ATR_short1']
+        self.ATR_long2 = self.parameter['ATR_long2']
 
     def main_logic(self):
         """
@@ -284,20 +284,20 @@ class Np_Order_Strategy(object):
         self.marketpostion_array = nb.get_marketpostion_array(
             self.Length, self.high_array, self.low_array, self.close_array, ATR_short, ATR_long, self.highestarr, self.lowestarr)
 
-    def vb_logic_order(self):
-        self.highestarr = vecbot_count.max_rolling(
-            self.high_array, self.highest_n1)
-        self.lowestarr = vecbot_count.min_rolling(
-            self.low_array, self.lowest_n2)
+    # def vb_logic_order(self):
+    #     self.highestarr = vecbot_count.max_rolling(
+    #         self.high_array, self.highest_n1)
+    #     self.lowestarr = vecbot_count.min_rolling(
+    #         self.low_array, self.lowest_n2)
 
-        ATR_short = nb.get_ATR(
-            self.Length, self.high_array, self.low_array, self.close_array, self.ATR_short1)
+    #     ATR_short = nb.get_ATR(
+    #         self.Length, self.high_array, self.low_array, self.close_array, self.ATR_short1)
 
-        ATR_long = nb.get_ATR(
-            self.Length, self.high_array, self.low_array, self.close_array, self.ATR_long2)
+    #     ATR_long = nb.get_ATR(
+    #         self.Length, self.high_array, self.low_array, self.close_array, self.ATR_long2)
 
-        self.order_array = nb.get_order_array(
-            self.high_array, self.low_array, self.close_array, ATR_short, ATR_long, self.highestarr, self.lowestarr)
+    #     self.order_array = nb.get_order_array(
+    #         self.high_array, self.low_array, self.close_array, ATR_short, ATR_long, self.highestarr, self.lowestarr)
 
     def more_fast_logic_order(self):
         """
@@ -305,22 +305,27 @@ class Np_Order_Strategy(object):
         """
         self.highestarr = vecbot_count.max_rolling(
             self.high_array, self.highest_n1)
+        
         self.lowestarr = vecbot_count.min_rolling(
             self.low_array, self.lowest_n2)
+        
 
-        self.main_logic()
-
-        orders, ClosedPostionprofit_array = nb.more_fast_logic_order(
-            self.marketpostion_array,
+        nb.more_fast_logic_order(
+            self.high_array,
+            self.low_array,
             self.close_array,
+            self.highestarr,
+            self.lowestarr,
             self.Length,
             self.strategy_info.init_cash,
             self.strategy_info.slippage,
             self.strategy_info.size,
-            self.strategy_info.fee
+            self.strategy_info.fee,
+            self.ATR_short1,
+            self.ATR_long2
         )
 
-        return self.datetime_list, orders, ClosedPostionprofit_array
+        
 
     def logic_order(self):
         """_summary_

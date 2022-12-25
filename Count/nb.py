@@ -5,10 +5,9 @@ from datetime import datetime
 from Count.Base import vecbot_count
 from numpy.lib.stride_tricks import sliding_window_view
 from utils.TimeCountMsg import TimeCountMsg
-import vectorbt as vbt
 
 
-@TimeCountMsg.record_timemsg
+@njit
 def get_marketpostion_array(Length, high_array, low_array, close_array, ATR_short, ATR_long, highest_price, lowest_price):
     marketpostion_array = np.empty(shape=Length)
     marketpostion = 0
@@ -28,7 +27,7 @@ def get_marketpostion_array(Length, high_array, low_array, close_array, ATR_shor
     return marketpostion_array
 
 
-@TimeCountMsg.record_timemsg
+@njit
 def get_order_array(high_array, low_array, close_array, ATR_short, ATR_long, highest_price, lowest_price):
     # [True, True, True, False, False]
     # [False, False, True, True, True]
@@ -47,7 +46,7 @@ def get_order_array(high_array, low_array, close_array, ATR_short, ATR_long, hig
     return Entries
 
 
-@TimeCountMsg.record_timemsg
+@njit
 def get_ATR(Length, high_array: np.array, low_array: np.array, close_array: np.array, parameter_timeperiod):
     last_close_array = np.roll(close_array, 1)
     last_close_array[0] = 0
@@ -70,7 +69,7 @@ def get_ATR(Length, high_array: np.array, low_array: np.array, close_array: np.a
     return ATR
 
 
-# @TimeCountMsg.record_timemsg
+# @njit
 # def get_ATR(Length, high_array: np.array, low_array: np.array, close_array: np.array, parameter_timeperiod):
 #     """直接手寫ATR 希望可以加快速度(有判斷過不可視未來)
 
@@ -110,7 +109,7 @@ def get_ATR(Length, high_array: np.array, low_array: np.array, close_array: np.a
 #     return ATR_array
 
 
-@TimeCountMsg.record_timemsg
+@njit
 def get_drawdown_per(ClosedPostionprofit: np.ndarray):
     DD_per_array = np.empty(shape=ClosedPostionprofit.shape[0])
     max_profit = 0
@@ -124,7 +123,7 @@ def get_drawdown_per(ClosedPostionprofit: np.ndarray):
     return DD_per_array
 
 
-@TimeCountMsg.record_timemsg
+@njit
 def get_drawdown(ClosedPostionprofit: np.ndarray):
     DD_array = np.empty(shape=ClosedPostionprofit.shape[0])
     max_profit = 0
@@ -137,7 +136,7 @@ def get_drawdown(ClosedPostionprofit: np.ndarray):
     return DD_array
 
 
-@TimeCountMsg.record_timemsg
+@njit
 def get_entryprice(entryprice, Close, marketpostion, last_marketpostion, slippage=None, direction=None):
     if marketpostion == 1 and last_marketpostion == 0:
         if slippage:
@@ -149,7 +148,7 @@ def get_entryprice(entryprice, Close, marketpostion, last_marketpostion, slippag
     return entryprice
 
 
-@TimeCountMsg.record_timemsg
+@njit
 def get_exitsprice(exitsprice, Close, marketpostion, last_marketpostion, slippage=None, direction=None):
     """
     exitsprice (有2種連貫性的設定)
@@ -180,7 +179,7 @@ def get_exitsprice(exitsprice, Close, marketpostion, last_marketpostion, slippag
     return exitsprice
 
 
-@TimeCountMsg.record_timemsg
+@njit
 def get_buy_Fees(buy_Fee, fee, size, Close, marketpostion, last_marketpostion):
     if marketpostion == 1 and last_marketpostion == 0:
         buy_Fee = Close * fee * size
@@ -189,7 +188,7 @@ def get_buy_Fees(buy_Fee, fee, size, Close, marketpostion, last_marketpostion):
     return buy_Fee
 
 
-@TimeCountMsg.record_timemsg
+@njit
 def get_sell_Fees(sell_Fee, fee: float, size, Close, marketpostion, last_marketpostion):
     """_summary_
 
@@ -210,7 +209,7 @@ def get_sell_Fees(sell_Fee, fee: float, size, Close, marketpostion, last_marketp
     return sell_Fee
 
 
-@TimeCountMsg.record_timemsg
+@njit
 def get_OpenPostionprofit(OpenPostionprofit, marketpostion, last_marketpostion, buy_Fees, Close, buy_sizes, entryprice):
     if marketpostion == 1:
         OpenPostionprofit = Close * buy_sizes - entryprice * buy_sizes
@@ -219,7 +218,7 @@ def get_OpenPostionprofit(OpenPostionprofit, marketpostion, last_marketpostion, 
     return OpenPostionprofit
 
 
-@TimeCountMsg.record_timemsg
+@njit
 def get_ClosedPostionprofit(ClosedPostionprofit, marketpostion, last_marketpostion, buy_Fees, sell_Fees, Close, sizes, last_entryprice, exitsprice):
     # 我的定義是當部位改變的時候再紀錄
     if marketpostion == 1 and last_marketpostion == 0:
@@ -237,7 +236,7 @@ def get_ClosedPostionprofit(ClosedPostionprofit, marketpostion, last_marketposti
     return ClosedPostionprofit
 
 
-@TimeCountMsg.record_timemsg
+@njit
 def get_profit(profit, marketpostion, last_marketpostion, Close, sell_sizes, last_entryprice):
     if marketpostion == 0 and last_marketpostion == 1:
         profit = Close * sell_sizes - last_entryprice * sell_sizes
@@ -246,7 +245,7 @@ def get_profit(profit, marketpostion, last_marketpostion, Close, sell_sizes, las
     return profit
 
 
-@TimeCountMsg.record_timemsg
+@njit
 def Highest(data_array: np.ndarray, step: int) -> np.ndarray:
     """取得rolling的滾動值 和官方的不一樣,並且完成不可視的未來
 
@@ -268,7 +267,7 @@ def Highest(data_array: np.ndarray, step: int) -> np.ndarray:
     return high_array
 
 
-@TimeCountMsg.record_timemsg
+@njit
 def Lowest(data_array: np.ndarray, step: int) -> np.ndarray:
     """取得rolling的滾動值 和官方的不一樣,並且完成不可視的未來
 
@@ -290,7 +289,7 @@ def Lowest(data_array: np.ndarray, step: int) -> np.ndarray:
     return low_array
 
 
-@TimeCountMsg.record_timemsg
+@njit
 def get_order(marketpostion: np.array) -> np.array:
     order_array = np.empty(shape=marketpostion.shape[0])
     for i in range(len(marketpostion)):
@@ -310,18 +309,21 @@ def get_order(marketpostion: np.array) -> np.array:
             order_array[i] = marketpostion[i]
     return order_array
 
-
-@TimeCountMsg.record_timemsg
+@njit
 def more_fast_logic_order(
-        marketpostion_array: np.ndarray,
-        close_array: np.ndarray,
-        Length: int,
-        init_cash: float,
-        slippage: float,
-        size: float,
-        fee: float,
+    high_array: np.ndarray,
+    low_array: np.ndarray,
+    close_array: np.ndarray,
+    highestarr: np.ndarray,
+    lowestarr: np.ndarray,
+    Length: int,
+    init_cash: float,
+    slippage: float,
+    size: float,
+    fee: float,
+    ATR_short1,
+    ATR_long2    
 ):
-
     # 初始化資料
     ClosedPostionprofit_array = np.empty(shape=Length)
 
@@ -335,38 +337,56 @@ def more_fast_logic_order(
     buy_sizes = size  # 買進部位大小
     sell_sizes = size  # 賣出進部位大小
 
+    
     # 商品固定屬性
     slippage = slippage  # 滑價計算
     fee = fee  # 手續費率
     direction = "buyonly"
 
-    # 取得訂單
-    orders = get_order(marketpostion_array)
+    # 迴圈可以先產生的資料
+    ATR_short = get_ATR(
+        Length, high_array, low_array, close_array, ATR_short1)
+
+    ATR_long = get_ATR(
+        Length, high_array, low_array, close_array, ATR_long2)
+
+    # 
+    # 取得order單為當前主要目的
+    trends = np.where((high_array - highestarr)>0,1,0)
+    orders = np.where((low_array - lowestarr)<0,-1,trends)
+    shiftorder = np.roll(orders,1)
+    shiftorder[0] = 0
+
+    
     # 主循環區域
     for i in range(Length):
+        current_order = shiftorder[i] # 實際送出訂單位置
         Close = close_array[i]
+        High = high_array[i]
+        Low = low_array[i]
 
         # 策略所產生之資訊
         last_marketpostion = marketpostion
         last_entryprice = entryprice
         # ==============================================================
         # 主邏輯區段
-        marketpostion = marketpostion_array[i]
-
-        # 加速寫法
-        if orders[i] == 0:
-            ClosedPostionprofit_array[i] = ClosedPostionprofit
+        if current_order == 1:
+            marketpostion = 1
+        if current_order == -1:
+            marketpostion = 0
+        
+        if current_order ==0:
             continue
         # ==============================================================
         # 計算當前入場價(並且記錄滑價)
         entryprice = get_entryprice(
             entryprice, Close, marketpostion, last_marketpostion, slippage, direction)
 
-        # 計算當前出場價(並且記錄滑價)
+        # # 計算當前出場價(並且記錄滑價)
         exitsprice = get_exitsprice(
             exitsprice, Close, marketpostion, last_marketpostion, slippage, direction)
 
-        # 計算入場手續費
+        # # 計算入場手續費
         buy_Fees = get_buy_Fees(
             buy_Fees, fee, buy_sizes, Close, marketpostion, last_marketpostion)
 
@@ -374,17 +394,24 @@ def more_fast_logic_order(
         sell_Fees = get_sell_Fees(
             sell_Fees, fee, sell_sizes, Close, marketpostion, last_marketpostion)
 
-        # 計算已平倉損益(累積式) # v:20221213
+        # # 計算已平倉損益(累積式) # v:20221213
         ClosedPostionprofit = get_ClosedPostionprofit(
             ClosedPostionprofit, marketpostion, last_marketpostion, buy_Fees, sell_Fees, Close, sell_sizes, last_entryprice, exitsprice)
 
         # 記錄保存位置
         ClosedPostionprofit_array[i] = ClosedPostionprofit
+            
+        # print(f"編號：{i}",orders[i],shiftorder[i],marketpostion,entryprice,exitsprice,buy_Fees)
+    
+    
+    # 計算當前入場價(並且記錄滑價)
+    # entryprice = 
+    
+    
+    return shiftorder, ClosedPostionprofit_array
 
-    return orders, ClosedPostionprofit_array
 
-
-@TimeCountMsg.record_timemsg
+@njit
 def logic_order(
         marketpostion_array: np.ndarray,
         high_array: np.ndarray,
