@@ -7,15 +7,17 @@ from Hyper_optimiza import Hyper_optimization
 from Plot_draw.Picture_Mode import Picture_maker
 import numpy as np
 
-        # sl_init_i = np.full(target_shape[1], -1, dtype=np.int_)
-        # sl_init_price = np.full(target_shape[1], np.nan, dtype=np.float_)
-        # sl_curr_i = np.full(target_shape[1], -1, dtype=np.int_)
-        # sl_curr_price = np.full(target_shape[1], np.nan, dtype=np.float_)
-        # sl_curr_stop = np.full(target_shape[1], np.nan, dtype=np.float_)
-        # sl_curr_trail = np.full(target_shape[1], False, dtype=np.bool_)
-        # tp_init_i = np.full(target_shape[1], -1, dtype=np.int_)
-        # tp_init_price = np.full(target_shape[1], np.nan, dtype=np.float_)
-        # tp_curr_stop = np.full(target_shape[1], np.nan, dtype=np.float_)
+# sl_init_i = np.full(target_shape[1], -1, dtype=np.int_)
+# sl_init_price = np.full(target_shape[1], np.nan, dtype=np.float_)
+# sl_curr_i = np.full(target_shape[1], -1, dtype=np.int_)
+# sl_curr_price = np.full(target_shape[1], np.nan, dtype=np.float_)
+# sl_curr_stop = np.full(target_shape[1], np.nan, dtype=np.float_)
+# sl_curr_trail = np.full(target_shape[1], False, dtype=np.bool_)
+# tp_init_i = np.full(target_shape[1], -1, dtype=np.int_)
+# tp_init_price = np.full(target_shape[1], np.nan, dtype=np.float_)
+# tp_curr_stop = np.full(target_shape[1], np.nan, dtype=np.float_)
+
+
 class Quantify_systeam():
     def __init__(self) -> None:
         self.strategy1 = Strategy_base(
@@ -34,35 +36,29 @@ class Quantify_systeam():
             用來計算最佳化的參數
         """
         ordermap = Np_Order_Strategy(self.strategy2)
-        inputs_parameter = {"highest_n1": np.arange(10, 500, 10, dtype=np.int16),
+        inputs_parameter = {"highest_n1": np.arange(50, 800, 20, dtype=np.int16),
                             "lowest_n2": np.arange(10, 500, 10, dtype=np.int16),
                             'ATR_short1': np.arange(10, 200, 10, dtype=np.float_),
                             'ATR_long2': np.arange(10, 200, 10, dtype=np.float_)}
 
-        all_orderinfo = ALL_order_INFO()
-        out_list=[]
+        out_list = []
         for each_parameter in tqdm(Hyper_optimization.generator_parameter(inputs_parameter)):
             ordermap.set_parameter(each_parameter)
-            ordermap.more_fast_logic_order()
-            # self.datetime_list, orders, ClosedPostionprofit_array = ordermap.more_fast_logic_order()
-            # all_orderinfo.register(ordermap.strategy_info)
-            # all_orderinfo.register_data(
-            #     self.datetime_list, orders, ClosedPostionprofit_array)
-            
-            
-            
-            # if len(all_orderinfo.order) == 0:
-            #     continue
-            # out_list.append([each_parameter, all_orderinfo.UI_indicators])
+            UI = ordermap.more_fast_logic_order()
+            if UI == 0:
+                continue
+            if UI<0:continue
+            out_list.append([each_parameter, UI])
+        
+        
 
+        print(out_list)
+        UI_list = [i[1] for i in out_list]
+        max_data = max(UI_list)
 
-        # print(out_list)
-        # UI_list = [i[1] for i in out_list]
-        # max_data = max(UI_list)
-
-        # for i in out_list:
-        #     if i[1] == max_data:
-        #         print(i)
+        for i in out_list:
+            if i[1] == max_data:
+                print(i)
 
     def Backtesting(self):
         """
@@ -71,8 +67,8 @@ class Quantify_systeam():
         ordermap = Np_Order_Strategy(self.strategy1)
         ordermap.set_parameter(
             {'highest_n1': 470, 'lowest_n2': 370, 'ATR_short1': 30, 'ATR_long2': 60})
-        pf = ordermap.more_fast_logic_order()
-        # Picture_maker(pf)
+        UI = ordermap.more_fast_logic_order()
+        print(UI)
 
     def PortfolioBacktesting(self):
         # 總回測
@@ -88,4 +84,4 @@ class Quantify_systeam():
 
 if __name__ == "__main__":
     systeam = Quantify_systeam()
-    systeam.Backtesting()
+    systeam.optimize()

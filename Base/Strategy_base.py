@@ -306,12 +306,11 @@ class Np_Order_Strategy(object):
         """
         self.highestarr = vecbot_count.max_rolling(
             self.high_array, self.highest_n1)
-        
+
         self.lowestarr = vecbot_count.min_rolling(
             self.low_array, self.lowest_n2)
-        
 
-        nb.more_fast_logic_order(
+        return nb.more_fast_logic_order(
             self.open_array,
             self.high_array,
             self.low_array,
@@ -326,8 +325,6 @@ class Np_Order_Strategy(object):
             self.ATR_short1,
             self.ATR_long2
         )
-
-        
 
     def logic_order(self):
         """_summary_
