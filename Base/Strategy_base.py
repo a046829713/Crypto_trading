@@ -24,7 +24,8 @@ class Strategy_base(object):
                  fee: float,
                  slippage: float,
                  init_cash: float = 10000.0,
-                 symobl_type: str = "Futures") -> None:
+                 symobl_type: str = "Futures",
+                 lookback_date: str = None) -> None:
         """ 
         to get strategy info msg
 
@@ -35,6 +36,7 @@ class Strategy_base(object):
             freq_time (int): _description_
             fee (float): _description_
             slippage (float): _description_
+            lookback_date (str): "2022-01-01"
         """
         self.strategy_name = strategy_name
         self.symbol_name = symbol_name
@@ -44,6 +46,8 @@ class Strategy_base(object):
         self.slippage = slippage
         self.init_cash = init_cash
         self.symobl_type = symobl_type
+        self.lookback_date = lookback_date
+
         self.data = self.simulationdata()
         self.datetimes = Event_count.get_index(self.data)
         self.array_data = self.simulationdata('array_data')
@@ -64,8 +68,12 @@ class Strategy_base(object):
             f"{self.symbol_name}-{self.symobl_type}-{self.freq_time}-Min.csv")
         self.df.set_index("Datetime", inplace=True)
 
+        if self.lookback_date:
+            self.df = self.df[self.df.index > self.lookback_date]
+
         if data_type == 'event_data':
             return self.df.to_dict("index")
+
         elif data_type == 'array_data':
             return self.df.to_numpy()
 
@@ -282,23 +290,14 @@ class Np_Order_Strategy(object):
         ATR_long = nb.get_ATR(
             self.Length, self.high_array, self.low_array, self.close_array, self.ATR_long2)
 
+        self.highestarr = vecbot_count.max_rolling(
+            self.high_array, self.highest_n1)
+
+        self.lowestarr = vecbot_count.min_rolling(
+            self.low_array, self.lowest_n2)
+
         self.marketpostion_array = nb.get_marketpostion_array(
             self.Length, self.high_array, self.low_array, self.close_array, ATR_short, ATR_long, self.highestarr, self.lowestarr)
-
-    # def vb_logic_order(self):
-    #     self.highestarr = vecbot_count.max_rolling(
-    #         self.high_array, self.highest_n1)
-    #     self.lowestarr = vecbot_count.min_rolling(
-    #         self.low_array, self.lowest_n2)
-
-    #     ATR_short = nb.get_ATR(
-    #         self.Length, self.high_array, self.low_array, self.close_array, self.ATR_short1)
-
-    #     ATR_long = nb.get_ATR(
-    #         self.Length, self.high_array, self.low_array, self.close_array, self.ATR_long2)
-
-    #     self.order_array = nb.get_order_array(
-    #         self.high_array, self.low_array, self.close_array, ATR_short, ATR_long, self.highestarr, self.lowestarr)
 
     def more_fast_logic_order(self):
         """
@@ -332,23 +331,31 @@ class Np_Order_Strategy(object):
         Returns:
             _type_: _description_
         """
-        self.main_logic()
+        self.highestarr = vecbot_count.max_rolling(
+            self.high_array, self.highest_n1)
 
-        orders, entryprice_array, buy_Fees_array, sell_Fees_array, OpenPostionprofit_array, ClosedPostionprofit_array, profit_array, Gross_profit_array, Gross_loss_array, all_Fees_array, netprofit_array = nb.logic_order(
-            self.marketpostion_array,
+        self.lowestarr = vecbot_count.min_rolling(
+            self.low_array, self.lowest_n2)
+
+        orders, marketpostion_array, entryprice_array, buy_Fees_array, sell_Fees_array, OpenPostionprofit_array, ClosedPostionprofit_array, profit_array, Gross_profit_array, Gross_loss_array, all_Fees_array, netprofit_array = nb.logic_order(
+            self.open_array,
             self.high_array,
             self.low_array,
             self.close_array,
+            self.highestarr,
+            self.lowestarr,
             self.Length,
             self.strategy_info.init_cash,
             self.strategy_info.slippage,
             self.strategy_info.size,
-            self.strategy_info.fee
+            self.strategy_info.fee,
+            self.ATR_short1,
+            self.ATR_long2
         )
 
         Order_Info = Np_Order_Info(self.datetime_list,
                                    orders,
-                                   self.marketpostion_array,
+                                   marketpostion_array,
                                    entryprice_array,
                                    buy_Fees_array,
                                    sell_Fees_array,
@@ -413,7 +420,7 @@ class PortfolioTrader(object):
                 else:
                     out_list.append(0)
 
-            strategy.df['Order'] = (out_list)
+            strategy.df['Order'] = out_list
 
     def get_data(self):
         """
@@ -444,6 +451,8 @@ class PortfolioTrader(object):
         self.time_min_scale()
         self.add_data()
         self.data = self.get_data()
+
+
         levelage = 2  # 槓桿倍數
         Portfolio_initcash = 10000  # 投資組合起始資金
         ClosedPostionprofit = [Portfolio_initcash]
@@ -462,10 +471,10 @@ class PortfolioTrader(object):
                 # 如果那個時間有資料的話 且有訂單的話
                 if each_strategy_value:
                     Order = each_strategy_value['Order']
-                    Close = each_strategy_value['Close']
+                    Open = each_strategy_value['Open']
                     if Order:
                         # 這邊開始判斷單一資訊 # 用來編寫系統權重
-                        size = ClosedPostionprofit[-1] * levelage / Close
+                        size = ClosedPostionprofit[-1] * levelage / Open
                         # size = 1
 
                         # =========================================================================================
@@ -473,21 +482,21 @@ class PortfolioTrader(object):
 
                         # 進場價格(已加滑價)
                         if Order > 0:
-                            new_value['Entryprice'] = Close * \
+                            new_value['Entryprice'] = Open * \
                                 (1 +
                                  self.strategys_maps[each_strategy_index].slippage)
 
                             new_value['buy_size'] = size
-                            new_value['buy_fee'] = Close * new_value['buy_size'] * \
+                            new_value['buy_fee'] = Open * new_value['buy_size'] * \
                                 self.strategys_maps[each_strategy_index].fee
 
                         # 出場價格(已加滑價)
                         if Order < 0:
-                            new_value['Exitsprice'] = Close * \
+                            new_value['Exitsprice'] = Open * \
                                 (1 -
                                  self.strategys_maps[each_strategy_index].slippage)
                             new_value['sell_size'] = strategy_order_info[each_strategy_index][-1]['buy_size']
-                            new_value['sell_fee'] = Close * new_value['sell_size'] * \
+                            new_value['sell_fee'] = Open * new_value['sell_size'] * \
                                 self.strategys_maps[each_strategy_index].fee
 
                         # 將資料保存下來

@@ -17,6 +17,7 @@ class Trading_systeam():
         
         
         
+        # 取得交易標的資料
         
         
         
