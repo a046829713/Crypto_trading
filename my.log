@@ -1,4 +1,6 @@
-2022-12-18 15:27 DEBUG Starting new HTTPS connection (1): api.binance.com:443
-2022-12-18 15:27 DEBUG https://api.binance.com:443 "GET /api/v3/ping HTTP/1.1" 200 2
-2022-12-18 15:27 DEBUG Starting new HTTPS connection (1): fapi.binance.com:443
-2022-12-18 15:27 DEBUG https://fapi.binance.com:443 "GET /fapi/v1/exchangeInfo HTTP/1.1" 200 None
+2022-12-30 17:17 DEBUG Traceback (most recent call last):
+  File "c:/Users/user/Desktop/程式專區/lab_vbt/Crypto_trading/Vecbot_backtest.py", line 57, in optimize
+    1/0
+ZeroDivisionError: division by zero
+
+2022-12-30 17:17 DEBUG {'highest_n1': 50, 'lowest_n2': 50, 'ATR_short1': 10.0, 'ATR_long2': 10.0}

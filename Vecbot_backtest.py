@@ -6,6 +6,7 @@ from tqdm import tqdm
 from Hyper_optimiza import Hyper_optimization
 from Plot_draw.Picture_Mode import Picture_maker
 import numpy as np
+from utils import Debug_tool
 
 # sl_init_i = np.full(target_shape[1], -1, dtype=np.int_)
 # sl_init_price = np.full(target_shape[1], np.nan, dtype=np.float_)
@@ -52,7 +53,11 @@ class Quantify_systeam():
                 all_i += 1
                 print(f"總數量{all_length},目前完成進度: {(num / all_length) * 100} %")
             ordermap.set_parameter(each_parameter)
-            UI = ordermap.more_fast_logic_order()
+            try:
+                UI = ordermap.more_fast_logic_order()
+            except:
+                Debug_tool.debug.print_info(error_msg=f"{each_parameter}")
+            
             if UI == 0:
                 continue
             if UI < 0:
