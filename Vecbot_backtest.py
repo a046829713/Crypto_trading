@@ -8,16 +8,6 @@ from Plot_draw.Picture_Mode import Picture_maker
 import numpy as np
 from utils import Debug_tool
 
-# sl_init_i = np.full(target_shape[1], -1, dtype=np.int_)
-# sl_init_price = np.full(target_shape[1], np.nan, dtype=np.float_)
-# sl_curr_i = np.full(target_shape[1], -1, dtype=np.int_)
-# sl_curr_price = np.full(target_shape[1], np.nan, dtype=np.float_)
-# sl_curr_stop = np.full(target_shape[1], np.nan, dtype=np.float_)
-# sl_curr_trail = np.full(target_shape[1], False, dtype=np.bool_)
-# tp_init_i = np.full(target_shape[1], -1, dtype=np.int_)
-# tp_init_price = np.full(target_shape[1], np.nan, dtype=np.float_)
-# tp_curr_stop = np.full(target_shape[1], np.nan, dtype=np.float_)
-
 
 class Quantify_systeam():
     def __init__(self) -> None:
@@ -53,11 +43,8 @@ class Quantify_systeam():
                 all_i += 1
                 print(f"總數量{all_length},目前完成進度: {(num / all_length) * 100} %")
             ordermap.set_parameter(each_parameter)
-            try:
-                UI = ordermap.more_fast_logic_order()
-            except:
-                Debug_tool.debug.print_info(error_msg=f"{each_parameter}")
-            
+            UI = ordermap.more_fast_logic_order()
+
             if UI == 0:
                 continue
             if UI < 0:
@@ -83,18 +70,49 @@ class Quantify_systeam():
         Picture_maker(pf)
 
     def PortfolioBacktesting(self):
-        # 總回測
+        """
+            投資組合模擬非正式
+        """
         app = PortfolioTrader()
         app.register(
-            self.strategy1, {'highest_n1': 490, 'lowest_n2': 370, 'ATR_short1': 90.0, 'ATR_long2': 170.0})
+            self.strategy1, {'highest_n1': 570, 'lowest_n2': 370, 'ATR_short1': 100.0, 'ATR_long2': 190.0})
         app.register(
             self.strategy2, {'highest_n1': 130, 'lowest_n2': 410, 'ATR_short1': 90.0, 'ATR_long2': 170.0})
 
-            
         pf = app.logic_order()
         Picture_maker(pf)
 
+    def Portfolio_online(self):
+        """
+            正式投資組合上線環境
+        """
+        self.Trader = PortfolioTrader()
+        self.Trader.register(
+            self.strategy1, {'highest_n1': 570, 'lowest_n2': 370, 'ATR_short1': 100.0, 'ATR_long2': 190.0})
+        self.Trader.register(
+            self.strategy2, {'highest_n1': 130, 'lowest_n2': 410, 'ATR_short1': 90.0, 'ATR_long2': 170.0})
+
+        # pf = self.Trader.logic_order()
+
+    def get_symbol_name(self) -> list:
+        """
+            to output symobol name
+            to provider Dataprovider
+        Returns:
+            list: _description_
+        """
+
+        return set([each_strategy.symbol_name for each_strategy in self.Trader.strategys])
+
+    def get_symbol_info(self) -> list:
+        """
+        Returns:
+            list: [tuple,tuple]
+        """
+
+        return [(each_strategy.strategy_name, each_strategy.symbol_name, each_strategy.freq_time) for each_strategy in self.Trader.strategys]
+
 
 if __name__ == "__main__":
-    systeam = Quantify_systeam()
-    systeam.optimize()
+    systeam=Quantify_systeam()
+    systeam.PortfolioBacktesting()

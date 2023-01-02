@@ -78,8 +78,6 @@ class DataProvider:
             self.save_data(symbol_name, original_df)
 
         new_df = self.transformer.get_tradedata(original_df, freq=freq)
-        print('產生實驗資料 DataProvider - get_symboldata')
-        new_df.to_csv(f"{symbol_name}-F-{freq}-Min.csv")
         return new_df
 
     def save_data(self, symbol_name, original_df):
@@ -126,6 +124,21 @@ class DataProvider:
 
         return out_list
 
+
+class DataProvider_online(DataProvider):
+    def get_symboldata(self, symbol_name='BTCUSDT', save=True):
+        """
+            回補原始資料 並且保存
+        """
+        original_df = self.reload_data(symbol_name)
+        if save:
+            self.save_data(symbol_name, original_df)
+
+
+
+    def get_trade_data(self):
+        new_df = self.transformer.get_tradedata(original_df, freq=freq)
+        return new_df
 
 if __name__ == "__main__":
     dataprovider = DataProvider(time_type='D')

@@ -175,8 +175,13 @@ class Np_Order_Info(object):
     def drawdown_per(self):
         """
             取得回撤百分比
+            
         """
-        return nb.get_drawdown_per(self.ClosedPostionprofit_array)
+        
+        if self.__class__.__name__ == "Portfolio_Order_Info":
+            return nb.get_drawdown_per(self.ClosedPostionprofit_array, self.Portfolio_initcash)
+        else:
+            return nb.get_drawdown_per(self.ClosedPostionprofit_array, self.strategy_info.init_cash)
 
     @property
     def UI_indicators(self):
@@ -240,7 +245,7 @@ class ALL_order_INFO(Np_Order_Info):
 
 
 class Portfolio_Order_Info(Np_Order_Info):
-    def __init__(self, datetime_list, orders, stragtegy_names, Portfolio_profit, Portfolio_ClosedPostionprofit):
+    def __init__(self, datetime_list, orders, stragtegy_names, Portfolio_profit, Portfolio_ClosedPostionprofit, Portfolio_initcash):
         self.order = pd.DataFrame(datetime_list, columns=['Datetime'])
         self.order['Order'] = orders
         self.order['StragtegyNames'] = stragtegy_names
@@ -250,6 +255,8 @@ class Portfolio_Order_Info(Np_Order_Info):
 
         self.ClosedPostionprofit_array = self.order['ClosedPostionprofit'].to_numpy(
         )
+
+        self.Portfolio_initcash = Portfolio_initcash
 
 
 class Np_Order_Strategy(object):
@@ -447,11 +454,11 @@ class PortfolioTrader(object):
         Returns:
             _type_: _description_
         """
+        strategys_count = len(self.strategys) # 策略總數
 
         self.time_min_scale()
         self.add_data()
         self.data = self.get_data()
-
 
         levelage = 2  # 槓桿倍數
         Portfolio_initcash = 10000  # 投資組合起始資金
@@ -474,9 +481,10 @@ class PortfolioTrader(object):
                     Open = each_strategy_value['Open']
                     if Order:
                         # 這邊開始判斷單一資訊 # 用來編寫系統權重
-                        size = ClosedPostionprofit[-1] * levelage / Open
+                        size = ClosedPostionprofit[-1] * levelage / Open / strategys_count
                         # size = 1
-
+                        
+                        
                         # =========================================================================================
                         new_value = copy.deepcopy(each_strategy_value)
 
@@ -498,7 +506,8 @@ class PortfolioTrader(object):
                             new_value['sell_size'] = strategy_order_info[each_strategy_index][-1]['buy_size']
                             new_value['sell_fee'] = Open * new_value['sell_size'] * \
                                 self.strategys_maps[each_strategy_index].fee
-
+                        print(each_strategy_index,new_value)
+                        
                         # 將資料保存下來
                         if each_strategy_index in strategy_order_info:
                             last_order = strategy_order_info[each_strategy_index][-1]
@@ -506,13 +515,13 @@ class PortfolioTrader(object):
                             if Order < 0 and last_order['Order'] > 0:
                                 # 取得已平倉損益(單次)
                                 profit = (
-                                    new_value['Exitsprice'] - last_order['Entryprice']) * size - last_order['buy_fee'] - new_value['sell_fee']
+                                    new_value['Exitsprice'] - last_order['Entryprice']) * new_value['sell_size'] - last_order['buy_fee'] - new_value['sell_fee']
 
                                 ClosedPostionprofit.append(
                                     ClosedPostionprofit[-1] + profit)
                             else:
                                 profit = 0
-
+                            print(each_strategy_index,profit)
                             strategy_order_info[each_strategy_index].append(
                                 new_value)
                         else:
@@ -527,5 +536,5 @@ class PortfolioTrader(object):
                         Portfolio_profit.append(profit)
 
         Order_Info = Portfolio_Order_Info(
-            datetimelist, orders, stragtegy_names, Portfolio_profit, Portfolio_ClosedPostionprofit)
+            datetimelist, orders, stragtegy_names, Portfolio_profit, Portfolio_ClosedPostionprofit, Portfolio_initcash)
         return Order_Info

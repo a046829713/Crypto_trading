@@ -70,9 +70,9 @@ def get_ATR(Length, high_array: np.array, low_array: np.array, close_array: np.a
 
 
 @njit
-def get_drawdown_per(ClosedPostionprofit: np.ndarray):
+def get_drawdown_per(ClosedPostionprofit: np.ndarray,init_cash:float):
     DD_per_array = np.empty(shape=ClosedPostionprofit.shape[0])
-    max_profit = 0
+    max_profit = init_cash
     for i in range(ClosedPostionprofit.shape[0]):
         if ClosedPostionprofit[i] > max_profit:
             max_profit = ClosedPostionprofit[i]
@@ -377,6 +377,8 @@ def more_fast_logic_order(
         (marketpostion_array - last_marketpostion_arr > 0), open_array * (1+slippage), 0)
 
     entryprice_arr = entryprice_arr[np.where(entryprice_arr > 0)]
+
+    
     # 跳過沒成交的交易
     if entryprice_arr.shape[0] == 0:
         return 0
@@ -404,7 +406,7 @@ def more_fast_logic_order(
     ClosedPostionprofit_arr = np.cumsum(
         ClosedPostionprofit_arr) + init_cash  # 已平倉損益
 
-    DD_per_array = get_drawdown_per(ClosedPostionprofit_arr)
+    DD_per_array = get_drawdown_per(ClosedPostionprofit_arr,init_cash)
     sumallDD = np.sum(DD_per_array**2)
     ROI = (ClosedPostionprofit_arr[-1] / init_cash)-1
     ui_ = (ROI*100) / ((sumallDD / exitsprice_arr.shape[0])**0.5)
