@@ -21,7 +21,7 @@ class Quantify_systeam():
             "BTCUSDT-2K-OB", "BTCUSDT", 2, 1.0, 0.002, 0.0025, lookback_date='2021-01-01')
 
         # 創建即時交易模組
-        self.Trader = PortfolioOnline()
+        # self.Trader = PortfolioOnline()
         
     def optimize(self):
         """
@@ -117,4 +117,4 @@ class Quantify_systeam():
 
 if __name__ == "__main__":
     systeam=Quantify_systeam()
-    systeam.PortfolioBacktesting()
+    systeam.optimize()

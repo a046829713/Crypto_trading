@@ -48,11 +48,10 @@ class Strategy_base(object):
         self.symobl_type = symobl_type
         self.lookback_date = lookback_date
 
-        self.data = self.simulationdata()
+        self.data, self.array_data = self.simulationdata()
         self.datetimes = Event_count.get_index(self.data)
-        self.array_data = self.simulationdata('array_data')
 
-    def simulationdata(self, data_type: str = 'event_data'):
+    def simulationdata(self):
         """
 
         Args:
@@ -71,11 +70,8 @@ class Strategy_base(object):
         if self.lookback_date:
             self.df = self.df[self.df.index > self.lookback_date]
 
-        if data_type == 'event_data':
-            return self.df.to_dict("index")
+        return self.df.to_dict("index"),self.df.to_numpy()
 
-        elif data_type == 'array_data':
-            return self.df.to_numpy()
 
 
 class Np_Order_Info(object):
@@ -175,9 +171,9 @@ class Np_Order_Info(object):
     def drawdown_per(self):
         """
             取得回撤百分比
-            
+
         """
-        
+
         if self.__class__.__name__ == "Portfolio_Order_Info":
             return nb.get_drawdown_per(self.ClosedPostionprofit_array, self.Portfolio_initcash)
         else:
@@ -454,8 +450,8 @@ class PortfolioTrader(object):
         Returns:
             _type_: _description_
         """
-        strategys_count = len(self.strategys) # 策略總數
-        
+        strategys_count = len(self.strategys)  # 策略總數
+
         # 當資料流入並改變時
         self.time_min_scale()
         self.add_data()
@@ -482,10 +478,10 @@ class PortfolioTrader(object):
                     Open = each_strategy_value['Open']
                     if Order:
                         # 這邊開始判斷單一資訊 # 用來編寫系統權重
-                        size = ClosedPostionprofit[-1] * levelage / Open / strategys_count
+                        size = ClosedPostionprofit[-1] * \
+                            levelage / Open / strategys_count
                         # size = 1
-                        
-                        
+
                         # =========================================================================================
                         new_value = copy.deepcopy(each_strategy_value)
 
@@ -507,8 +503,8 @@ class PortfolioTrader(object):
                             new_value['sell_size'] = strategy_order_info[each_strategy_index][-1]['buy_size']
                             new_value['sell_fee'] = Open * new_value['sell_size'] * \
                                 self.strategys_maps[each_strategy_index].fee
-                        print(each_strategy_index,new_value)
-                        
+                        print(each_strategy_index, new_value)
+
                         # 將資料保存下來
                         if each_strategy_index in strategy_order_info:
                             last_order = strategy_order_info[each_strategy_index][-1]
@@ -522,7 +518,7 @@ class PortfolioTrader(object):
                                     ClosedPostionprofit[-1] + profit)
                             else:
                                 profit = 0
-                            print(each_strategy_index,profit)
+                            print(each_strategy_index, profit)
                             strategy_order_info[each_strategy_index].append(
                                 new_value)
                         else:
@@ -541,14 +537,12 @@ class PortfolioTrader(object):
         return Order_Info
 
 
-
-
 class PortfolioOnline(object):
     """
         即時交易系統
         將資料傳入並且運算出最後委託單是否與現在不想同
         進而判斷送出委託單
-        
+
     Args:
         object (_type_): _description_
     """
