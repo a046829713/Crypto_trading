@@ -455,7 +455,8 @@ class PortfolioTrader(object):
             _type_: _description_
         """
         strategys_count = len(self.strategys) # 策略總數
-
+        
+        # 當資料流入並改變時
         self.time_min_scale()
         self.add_data()
         self.data = self.get_data()
@@ -538,3 +539,16 @@ class PortfolioTrader(object):
         Order_Info = Portfolio_Order_Info(
             datetimelist, orders, stragtegy_names, Portfolio_profit, Portfolio_ClosedPostionprofit, Portfolio_initcash)
         return Order_Info
+
+
+
+
+class PortfolioOnline(object):
+    """
+        即時交易系統
+        將資料傳入並且運算出最後委託單是否與現在不想同
+        進而判斷送出委託單
+        
+    Args:
+        object (_type_): _description_
+    """

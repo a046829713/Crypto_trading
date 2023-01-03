@@ -17,24 +17,34 @@ class Trading_systeam():
         # print(example)
 
         # 取得交易標的(頻率不需要太頻繁 一個月一次即可)
+        
+        # 取得回測參數
+        # vecbot_backtest
+        
+        # 交易之前應該要先
+        # 全部回補完成之後再進入迴圈
+        
+        
         self.engine.Portfolio_online()
         print("取得交易標的資料")
         symbol_name: list = self.engine.get_symbol_name()
         print(symbol_name)
-        for name in symbol_name:
-            
+        for name in symbol_name:            
             original_df = self.dataprovider_online.get_symboldata(name,save=False)
-            self.symbol_map.update({symbol_name, original_df})
+            self.symbol_map.update({symbol_name: original_df})
 
-        # info = self.engine.get_symbol_info()
-        # for strategy_name, symbol_name, freq_time in info:
-            
-        #     print(strategy_name, symbol_name, freq_time)
-            # 取得回測參數
-            # vecbot_backtest
-
+        info = self.engine.get_symbol_info()
+        for strategy_name, symbol_name, freq_time in info:
+            # taketradedata 
+            # orderout = app.asin(taketradedata)
             # 取得投資組合
             # 進行交易
             # online output
+            # trader_send_oout(orderout)
+        
+
+
+
+
 if __name__ == '__main__':
     systeam = Trading_systeam()

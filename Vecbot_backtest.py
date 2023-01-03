@@ -20,13 +20,14 @@ class Quantify_systeam():
         self.strategy3 = Strategy_base(
             "BTCUSDT-2K-OB", "BTCUSDT", 2, 1.0, 0.002, 0.0025, lookback_date='2021-01-01')
 
-        # ordermap3 = Np_Order_Strategy(strategy3)
-
+        # 創建即時交易模組
+        self.Trader = PortfolioOnline()
+        
     def optimize(self):
         """
             用來計算最佳化的參數
         """
-        ordermap = Np_Order_Strategy(self.strategy1)
+        ordermap = Np_Order_Strategy(self.strategy2)
         inputs_parameter = {"highest_n1": np.arange(50, 800, 20, dtype=np.int16),
                             "lowest_n2": np.arange(50, 800, 20, dtype=np.int16),
                             'ATR_short1': np.arange(10, 200, 10, dtype=np.float_),
@@ -77,7 +78,7 @@ class Quantify_systeam():
         app.register(
             self.strategy1, {'highest_n1': 570, 'lowest_n2': 370, 'ATR_short1': 100.0, 'ATR_long2': 190.0})
         app.register(
-            self.strategy2, {'highest_n1': 130, 'lowest_n2': 410, 'ATR_short1': 90.0, 'ATR_long2': 170.0})
+            self.strategy2, {'highest_n1': 570, 'lowest_n2': 470, 'ATR_short1': 50.0, 'ATR_long2': 160.0})
 
         pf = app.logic_order()
         Picture_maker(pf)
@@ -86,13 +87,14 @@ class Quantify_systeam():
         """
             正式投資組合上線環境
         """
-        self.Trader = PortfolioTrader()
+        
         self.Trader.register(
             self.strategy1, {'highest_n1': 570, 'lowest_n2': 370, 'ATR_short1': 100.0, 'ATR_long2': 190.0})
         self.Trader.register(
-            self.strategy2, {'highest_n1': 130, 'lowest_n2': 410, 'ATR_short1': 90.0, 'ATR_long2': 170.0})
+            self.strategy2, {'highest_n1': 570, 'lowest_n2': 470, 'ATR_short1': 50.0, 'ATR_long2': 160.0})
 
         # pf = self.Trader.logic_order()
+        
 
     def get_symbol_name(self) -> list:
         """
