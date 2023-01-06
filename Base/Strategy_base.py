@@ -537,7 +537,7 @@ class PortfolioTrader(object):
         return Order_Info
 
 
-class PortfolioOnline(object):
+class PortfolioOnline(PortfolioTrader):
     """
         即時交易系統
         將資料傳入並且運算出最後委託單是否與現在不想同

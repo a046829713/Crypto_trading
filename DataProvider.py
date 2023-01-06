@@ -20,7 +20,7 @@ class DataProvider:
         self.transformer = Datatransformer()
         self.time_type = time_type
 
-    def reload_data(self, symbol_name='BTCUSDT'):
+    def reload_data(self, symbol_name='BTCUSDT', iflower=True):
         # 先檢查是否有相關資料 取得目前所有列
         symbol_name_list = self.SQL.get_db_data('show tables;')
         symbol_name_list = [y[0] for y in symbol_name_list]
@@ -30,7 +30,9 @@ class DataProvider:
         else:
             tb_symbol_name = symbol_name + '-F'
 
-        print(tb_symbol_name)
+        if iflower:
+            tb_symbol_name = tb_symbol_name.lower()
+
         if tb_symbol_name in symbol_name_list:
             print(f'{tb_symbol_name}-已經有存在的資料')
             df = self.SQL.read_Dateframe(tb_symbol_name)
@@ -64,6 +66,7 @@ class DataProvider:
             catch_time = '1m'
 
         # 這邊的資料為原始的UTC資料 無任何加工
+        print("進入時的df", df)
         original_df = Data.custom.BinanceDate.download(
             df, f"{symbol_name}", catch_time)
 
@@ -141,7 +144,23 @@ class DataProvider_online(DataProvider):
 
         return original_df
 
-    def get_trade_data(self):
+    def reload_data_online(self, df: pd.DataFrame, symbol_name):
+        if self.time_type == 'D':
+            catch_time = '1d'
+        else:
+            catch_time = '1m'
+
+        df.reset_index(inplace=True)
+        df['Datetime'] = df['Datetime'].astype(str)
+        
+        
+        # 這邊的資料為原始的UTC資料 無任何加工
+        original_df = Data.custom.BinanceDate.download(
+            df, f"{symbol_name}", catch_time)
+        
+        return original_df
+
+    def get_trade_data(self,original_df,freq):
         new_df = self.transformer.get_tradedata(original_df, freq=freq)
         return new_df
 

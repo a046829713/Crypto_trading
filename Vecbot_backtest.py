@@ -2,6 +2,7 @@ from Base.Strategy_base import Strategy_base
 from Base.Strategy_base import Np_Order_Strategy
 from Base.Strategy_base import PortfolioTrader
 from Base.Strategy_base import ALL_order_INFO
+from Base.Strategy_base import PortfolioOnline
 from tqdm import tqdm
 from Hyper_optimiza import Hyper_optimization
 from Plot_draw.Picture_Mode import Picture_maker
@@ -21,7 +22,7 @@ class Quantify_systeam():
             "BTCUSDT-2K-OB", "BTCUSDT", 2, 1.0, 0.002, 0.0025, lookback_date='2021-01-01')
 
         # 創建即時交易模組
-        # self.Trader = PortfolioOnline()
+        self.Trader = PortfolioOnline()
         
     def optimize(self):
         """
