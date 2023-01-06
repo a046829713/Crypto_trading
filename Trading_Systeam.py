@@ -17,6 +17,10 @@ class Trading_systeam():
         # print(example)
 
         # 取得交易標的(頻率不需要太頻繁 一個月一次即可)
+        ['btcdomusdt-f-d', 0.061946189785725636], ['xmrusdt-f-d', 0.055462536626203374], ['btcstusdt-f-d', 0.0]
+        
+        
+        
         
         # 取得回測參數
         # vecbot_backtest
@@ -33,8 +37,9 @@ class Trading_systeam():
             original_df = self.dataprovider_online.get_symboldata(name,save=False)
             self.symbol_map.update({symbol_name: original_df})
 
-        info = self.engine.get_symbol_info()
-        for strategy_name, symbol_name, freq_time in info:
+        # print(self.symbol_map)
+        # info = self.engine.get_symbol_info()
+        # for strategy_name, symbol_name, freq_time in info:
             # taketradedata 
             # orderout = app.asin(taketradedata)
             # 取得投資組合

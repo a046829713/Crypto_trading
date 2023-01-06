@@ -80,7 +80,7 @@ class DataProvider:
         new_df = self.transformer.get_tradedata(original_df, freq=freq)
         return new_df
 
-    def save_data(self, symbol_name, original_df):
+    def save_data(self, symbol_name, original_df, iflower=True):
         """
             保存資料到SQL
         """
@@ -88,6 +88,9 @@ class DataProvider:
             tb_symbol_name = symbol_name + '-F-D'
         else:
             tb_symbol_name = symbol_name + '-F'
+
+        if iflower:
+            tb_symbol_name = tb_symbol_name.lower()
 
         self.SQL.write_Dateframe(original_df, tb_symbol_name)
         print(f"{tb_symbol_name}寫入完成")
@@ -101,7 +104,7 @@ class DataProvider:
             original_df = self.reload_data(symbol_name)
             self.save_data(symbol_name, original_df)
 
-    def get_symbols_history_data(self) -> list:
+    def get_symbols_history_data(self, iflower=True) -> list:
         """
             讀取所有日線資料 用來分析和排序
 
@@ -119,6 +122,8 @@ class DataProvider:
                 tb_symbol_name = symbol_name + '-F-D'
             else:
                 tb_symbol_name = symbol_name + '-F'
+            if iflower:
+                tb_symbol_name = tb_symbol_name.lower()
             each_df = self.SQL.read_Dateframe(tb_symbol_name)
             out_list.append([tb_symbol_name, each_df])
 
@@ -134,13 +139,15 @@ class DataProvider_online(DataProvider):
         if save:
             self.save_data(symbol_name, original_df)
 
-
+        return original_df
 
     def get_trade_data(self):
         new_df = self.transformer.get_tradedata(original_df, freq=freq)
         return new_df
 
+
 if __name__ == "__main__":
-    dataprovider = DataProvider(time_type='D')
+    # dataprovider = DataProvider(time_type='D')
+    dataprovider = DataProvider()
     # print(dataprovider.get_symboldata("DEFIUSDT", 2))
     dataprovider.reload_all_data()
