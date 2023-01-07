@@ -16,6 +16,7 @@ import time
 from utils.Date_time import parser_time
 import time
 
+
 class BinanceDate(object):
     """
         'pip install python-binance'
@@ -186,12 +187,10 @@ class BinanceDate(object):
         else:
             new_df = data
 
-
         new_df.set_index('Datetime', inplace=True)
         # duplicated >> 重複 True 代表重複了
         new_df = new_df[~new_df.index.duplicated(keep='last')]
-        
-        
+
         print('商品資料回補完成!')
         new_df = new_df.astype(float)
         return new_df
@@ -220,7 +219,7 @@ class Binance_server(object):
             self.client = Client(account, passwd)
         else:
             self.client = Client()
-        
+
     def getaccount(self) -> dict:
         """ 回傳保證金帳戶
         Returns:
@@ -253,7 +252,7 @@ class Binance_server(object):
         Returns:
             list: _description_
         """
-        data = self.getfuturesinfo()        
+        data = self.getfuturesinfo()
         out_list = []
         for key in data.keys():
             if key == 'symbols':
@@ -267,3 +266,16 @@ class Binance_server(object):
                                 if each_data['symbol'] not in out_list:
                                     out_list.append(each_data['symbol'])
         return out_list
+
+    def getfutures_account_positions(self):
+        """
+            取得合約部位 >> 裡面還可以看到其他資訊
+        """
+        data = self.client.futures_account()
+        out_put = {}
+        for i in data['positions']:
+            if i['initialMargin'] == '0':
+                continue
+            out_put.update({i['symbol']: i['positionAmt']})
+
+        return out_put

@@ -7,6 +7,7 @@ from collections import namedtuple
 import copy
 import talib
 import time
+import typing
 
 
 class Strategy_base(object):
@@ -70,8 +71,64 @@ class Strategy_base(object):
         if self.lookback_date:
             self.df = self.df[self.df.index > self.lookback_date]
 
-        return self.df.to_dict("index"),self.df.to_numpy()
+        return self.df.to_dict("index"), self.df.to_numpy()
 
+
+class Strategy_atom(object):
+    """ 
+    取得策略的基本訊息
+    Args:
+        object (_type_): _description_
+    """
+
+    def __init__(self,
+                 strategy_name: str,
+                 symbol_name: str,
+                 freq_time: int,
+                 size: float,
+                 fee: float,
+                 slippage: float,
+                 init_cash: float = 10000.0,
+                 symobl_type: str = "Futures",
+                 lookback_date: str = None) -> None:
+        """ 
+        to get strategy info msg
+
+        Args:
+            strategy_name (str): distinguish symbol 
+            symbol_name (int): _description_
+                like : BTCUSDT
+            freq_time (int): _description_
+            fee (float): _description_
+            slippage (float): _description_
+            lookback_date (str): "2022-01-01"
+        """
+        self.strategy_name = strategy_name
+        self.symbol_name = symbol_name
+        self.freq_time = freq_time
+        self.size = size
+        self.fee = fee
+        self.slippage = slippage
+        self.init_cash = init_cash
+        self.symobl_type = symobl_type
+        self.lookback_date = lookback_date
+
+    def simulationdata(self):
+        """
+
+        Args:
+            data_type (str, optional): _description_. Defaults to 'event_data'.
+
+        Returns:
+            _type_: _description_
+        """
+        if self.symobl_type == 'Futures':
+            self.symobl_type = "F"
+
+        if self.lookback_date:
+            self.df = self.df[self.df.index > self.lookback_date]
+
+        return self.df.to_dict("index"), self.df.to_numpy()
 
 
 class Np_Order_Info(object):
@@ -241,18 +298,31 @@ class ALL_order_INFO(Np_Order_Info):
 
 
 class Portfolio_Order_Info(Np_Order_Info):
-    def __init__(self, datetime_list, orders, stragtegy_names, Portfolio_profit, Portfolio_ClosedPostionprofit, Portfolio_initcash):
+    def __init__(self, datetime_list, orders, stragtegy_names, Portfolio_profit, Portfolio_ClosedPostionprofit, Portfolio_initcash, sizes):
         self.order = pd.DataFrame(datetime_list, columns=['Datetime'])
         self.order['Order'] = orders
         self.order['StragtegyNames'] = stragtegy_names
         self.order['Profit'] = Portfolio_profit
         self.order['ClosedPostionprofit'] = Portfolio_ClosedPostionprofit
+        self.order['sizes'] = sizes
         self.order.set_index("Datetime", inplace=True)
 
         self.ClosedPostionprofit_array = self.order['ClosedPostionprofit'].to_numpy(
         )
-
         self.Portfolio_initcash = Portfolio_initcash
+        self.norepeat_stragtegy_names = set(stragtegy_names)
+
+    def get_last_status(self):
+        last_status = {}
+        for each_stragtegy_name in self.norepeat_stragtegy_names:
+            each_df = self.order[self.order['StragtegyNames']
+                                 == each_stragtegy_name]
+            current_marketpostion = each_df['Order'].sum()
+            current_size = each_df['sizes'].iloc[-1]
+            last_status.update(
+                {each_stragtegy_name: [current_marketpostion, current_size]})
+
+        return last_status
 
 
 class Np_Order_Strategy(object):
@@ -381,7 +451,7 @@ class PortfolioTrader(object):
         self.strategys_maps = {}
         self.strategys_parameter = {}
 
-    def register(self, strategy_info: Strategy_base, parameter: dict):
+    def register(self, strategy_info, parameter: dict):
         """
             將所有的商品資訊 合併做總回測
 
@@ -399,7 +469,6 @@ class PortfolioTrader(object):
     def time_min_scale(self):
         all_datetimes = []
         for strategy in self.strategys:
-            strategy: Strategy_base
             all_datetimes.extend(strategy.datetimes)
 
         self.min_scale = list(set(all_datetimes))
@@ -410,7 +479,6 @@ class PortfolioTrader(object):
             將訂單的買賣方向匯入
         """
         for strategy in self.strategys:
-            strategy: Strategy_base
             ordermap = Np_Order_Strategy(strategy)
             ordermap.set_parameter(
                 self.strategys_parameter[strategy.strategy_name])
@@ -422,7 +490,7 @@ class PortfolioTrader(object):
                     out_list.append(pf.order['Order'][datetime_])
                 else:
                     out_list.append(0)
-
+            strategy.df = strategy.df.copy()
             strategy.df['Order'] = out_list
 
     def get_data(self):
@@ -431,9 +499,8 @@ class PortfolioTrader(object):
 
         """
         data = {}
-        strategy: Strategy_base
         for strategy in self.strategys:
-            dict_data = strategy.df.to_dict('index')
+            dict_data = strategy.df.to_dict('index')  # 這邊的DF 已經含有order了
             for each_time in self.min_scale:
                 if each_time in data:
                     data[each_time].update(
@@ -467,7 +534,7 @@ class PortfolioTrader(object):
         stragtegy_names = []  # 保存策略名稱
         Portfolio_ClosedPostionprofit = []  # 保存已平倉損益
         Portfolio_profit = []  # 保存單次已平倉損益
-
+        sizes = []  # 用來買入部位
         # 單次已平倉損益init
         profit = 0
         for each_index, each_row in self.data.items():
@@ -478,8 +545,15 @@ class PortfolioTrader(object):
                     Open = each_strategy_value['Open']
                     if Order:
                         # 這邊開始判斷單一資訊 # 用來編寫系統權重
-                        size = ClosedPostionprofit[-1] * \
-                            levelage / Open / strategys_count
+                        if Order > 0:
+                            # 當 ClosedPostionprofit[-1] 為負數時 給予最低委託單位
+                            if ClosedPostionprofit[-1] < 0:
+                                size = 1 * levelage / Open / strategys_count
+                            else:
+                                size = ClosedPostionprofit[-1] * \
+                                    levelage / Open / strategys_count
+                        else:
+                            size = 0
                         # size = 1
 
                         # =========================================================================================
@@ -503,7 +577,6 @@ class PortfolioTrader(object):
                             new_value['sell_size'] = strategy_order_info[each_strategy_index][-1]['buy_size']
                             new_value['sell_fee'] = Open * new_value['sell_size'] * \
                                 self.strategys_maps[each_strategy_index].fee
-                        print(each_strategy_index, new_value)
 
                         # 將資料保存下來
                         if each_strategy_index in strategy_order_info:
@@ -518,7 +591,6 @@ class PortfolioTrader(object):
                                     ClosedPostionprofit[-1] + profit)
                             else:
                                 profit = 0
-                            print(each_strategy_index, profit)
                             strategy_order_info[each_strategy_index].append(
                                 new_value)
                         else:
@@ -531,9 +603,11 @@ class PortfolioTrader(object):
                         Portfolio_ClosedPostionprofit.append(
                             ClosedPostionprofit[-1])
                         Portfolio_profit.append(profit)
+                        sizes.append(size)
 
         Order_Info = Portfolio_Order_Info(
-            datetimelist, orders, stragtegy_names, Portfolio_profit, Portfolio_ClosedPostionprofit, Portfolio_initcash)
+            datetimelist, orders, stragtegy_names, Portfolio_profit, Portfolio_ClosedPostionprofit, Portfolio_initcash, sizes)
+
         return Order_Info
 
 
@@ -546,3 +620,24 @@ class PortfolioOnline(PortfolioTrader):
     Args:
         object (_type_): _description_
     """
+
+    def __init__(self) -> None:
+        self.strategys = []
+        self.strategys_maps = {}
+        self.strategys_parameter = {}
+
+    def register(self, strategy_info: Strategy_atom, parameter: dict):
+        """
+            將所有的商品資訊 合併做總回測
+
+        Args:
+            strategy_info (Strategy_atom): 策略基本資料
+
+        """
+        self.strategys.append(strategy_info)
+
+        self.strategys_maps.update(
+            {strategy_info.strategy_name: strategy_info})
+
+        self.strategys_parameter.update(
+            {strategy_info.strategy_name: parameter})

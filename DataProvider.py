@@ -14,8 +14,8 @@ class DataProvider:
         和資料轉換
     """
 
-    def __init__(self, time_type: Optional[str] = None):
-        self.app = Data.custom.Binance_server()
+    def __init__(self, time_type: Optional[str] = None, formal=False):
+        self.app = Data.custom.Binance_server(formal)
         self.SQL = SQL_operate.DB_operate()
         self.transformer = Datatransformer()
         self.time_type = time_type
@@ -66,7 +66,6 @@ class DataProvider:
             catch_time = '1m'
 
         # 這邊的資料為原始的UTC資料 無任何加工
-        print("進入時的df", df)
         original_df = Data.custom.BinanceDate.download(
             df, f"{symbol_name}", catch_time)
 
@@ -152,15 +151,14 @@ class DataProvider_online(DataProvider):
 
         df.reset_index(inplace=True)
         df['Datetime'] = df['Datetime'].astype(str)
-        
-        
+
         # 這邊的資料為原始的UTC資料 無任何加工
         original_df = Data.custom.BinanceDate.download(
             df, f"{symbol_name}", catch_time)
-        
+
         return original_df
 
-    def get_trade_data(self,original_df,freq):
+    def get_trade_data(self, original_df, freq):
         new_df = self.transformer.get_tradedata(original_df, freq=freq)
         return new_df
 
