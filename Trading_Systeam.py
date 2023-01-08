@@ -27,23 +27,25 @@ class Trading_systeam():
         symbol_name: list = self.engine.get_symbol_name()
 
         # 先將資料從DB撈取出來
-        
         for name in symbol_name:
             original_df = self.dataprovider_online.get_symboldata(
                 name, save=False)
             self.symbol_map.update({name: original_df})
-
+            
         
-        
+        print("資料讀取結束")
         # 透過迴圈回補資料
         while True:
+            # 需要個別去計算每個loop所耗費的時間
+            
             begin_time = time.time()
             # 取得原始資料
             for name, each_df in self.symbol_map.items():
                 original_df = self.dataprovider_online.reload_data_online(
                     each_df, name)
-                self.symbol_map.update({name: original_df})
-
+                self.symbol_map.update({name: original_df})            
+            print("時間差",time.time() - begin_time)
+            
             info = self.engine.get_symbol_info()
             for strategy_name, symbol_name, freq_time in info:
                 # 取得可交易之資料
@@ -54,6 +56,9 @@ class Trading_systeam():
 
                 # 將資料注入
                 self.engine.register_data(strategy_name, trade_data)
+
+
+
 
             print("開始進入回測")
             # 註冊完資料之後進入回測

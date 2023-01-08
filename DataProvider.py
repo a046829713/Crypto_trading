@@ -20,7 +20,7 @@ class DataProvider:
         self.transformer = Datatransformer()
         self.time_type = time_type
 
-    def reload_data(self, symbol_name='BTCUSDT', iflower=True):
+    def reload_data(self, symbol_name='BTCUSDT', iflower=False):
         # 先檢查是否有相關資料 取得目前所有列
         symbol_name_list = self.SQL.get_db_data('show tables;')
         symbol_name_list = [y[0] for y in symbol_name_list]
@@ -35,7 +35,13 @@ class DataProvider:
 
         if tb_symbol_name in symbol_name_list:
             print(f'{tb_symbol_name}-已經有存在的資料')
-            df = self.SQL.read_Dateframe(tb_symbol_name)
+            # 當實時交易的時候減少 讀取數量
+            if self.__class__.__name__ == 'DataProvider_online':
+                df = self.SQL.read_Dateframe(f'SELECT * FROM `{tb_symbol_name}` where Datetime > "2022-09-26"')
+            else:
+                df = self.SQL.read_Dateframe(tb_symbol_name)
+            
+            
             df['Datetime'] = df['Datetime'].astype(str)
         else:
             print('創建資料')
@@ -82,7 +88,7 @@ class DataProvider:
         new_df = self.transformer.get_tradedata(original_df, freq=freq)
         return new_df
 
-    def save_data(self, symbol_name, original_df, iflower=True):
+    def save_data(self, symbol_name, original_df, iflower=False):
         """
             保存資料到SQL
         """
@@ -106,7 +112,7 @@ class DataProvider:
             original_df = self.reload_data(symbol_name)
             self.save_data(symbol_name, original_df)
 
-    def get_symbols_history_data(self, iflower=True) -> list:
+    def get_symbols_history_data(self, iflower=False) -> list:
         """
             讀取所有日線資料 用來分析和排序
 
@@ -165,6 +171,6 @@ class DataProvider_online(DataProvider):
 
 if __name__ == "__main__":
     # dataprovider = DataProvider(time_type='D')
-    dataprovider = DataProvider()
-    # print(dataprovider.get_symboldata("DEFIUSDT", 2))
-    dataprovider.reload_all_data()
+    dataprovider = DataProvider_online()
+    print(dataprovider.get_symboldata("ETHUSDT", save =True))
+    # dataprovider.reload_all_data()

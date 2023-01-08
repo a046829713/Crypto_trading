@@ -1,5 +1,11 @@
+from Database import SQL_operate
+# import
 
-a = {'BTCUSDT-15K-OB','ETHUSDT-15K-OB'}
+SQL = SQL_operate.DB_operate()
 
-for i in a:
-    print(i)
+
+df = SQL.read_Dateframe('SELECT * FROM `BTCUSDT-F` where Datetime > "2022-09-26"')
+print(df)
+
+
+
