@@ -209,7 +209,8 @@ class Binance_server(object):
 
     def get_clinet(self, formal=False):
         if formal:
-            with open(r"/home/abcd/bi.txt", 'r') as file:
+            # with open(r"/home/abcd/bi.txt", 'r') as file:
+            with open(r"C:/bi_.txt", 'r') as file:
                 data = file.read()
                 account = data.split("\n")[0]
                 passwd = data.split("\n")[1]

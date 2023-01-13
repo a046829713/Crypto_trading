@@ -154,4 +154,4 @@ class Quantify_systeam_online(object):
 
 if __name__ == "__main__":
     systeam = Quantify_systeam()
-    systeam.optimize()
+    systeam.PortfolioBacktesting()

@@ -1,3 +1,6 @@
+# 暫時使用 tkinter 來實作GUI的功能 未來可以轉換
+
+
 from DataProvider import DataProvider, DataProvider_online
 from Major.Symbol_filter import get_symobl_filter_useful
 from Vecbot_backtest import Quantify_systeam_online
