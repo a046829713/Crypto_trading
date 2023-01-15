@@ -71,9 +71,14 @@ class Trading_systeam():
             print('目前交易狀態', last_status)
             print("最後資料表*************************************")
 
+            current_size = self.dataprovider_online.Binanceapp.getfutures_account_positions()
+            print("目前binance交易所內的部位狀態:",current_size)
+            
             # >>比對目前binance 內的部位狀態 進行交易
-            print("目前binance交易所內的部位狀態:",
-                  self.dataprovider_online.app.getfutures_account_positions())
+            order_finally = self.dataprovider_online.transformer.calculation_size(last_status,current_size)
+            print("差異單",order_finally)
+            if order_finally:
+                self.dataprovider_online.Binanceapp.execute_orders(order_finally)
             
             
             

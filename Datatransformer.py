@@ -7,7 +7,7 @@ class Datatransformer:
         """
             將binance 的UTC 資料做轉換 變成可以交易的資料
             採用biance 官方向前機制
-            
+
             # 如果是使用Mulitcharts 會變成向後機制
 
         Args:
@@ -25,16 +25,20 @@ class Datatransformer:
         df["Datetime"] = df['Datetime'].apply(parser_time.changetime)
         df.set_index("Datetime", inplace=True, drop=False)
         df = self.drop_colunms(df)
-        
+
         # 採用biance 向前機制
         new_df = pd.DataFrame()
-        new_df['Open'] = df['Open'].resample(rule=f'{freq}min', label="left").first()
-        new_df['High'] = df['High'].resample(rule=f'{freq}min', label="left").max()
-        new_df['Low'] = df['Low'].resample(rule=f'{freq}min', label="left").min()
-        new_df['Close'] = df['Close'].resample(rule=f'{freq}min', label="left").last()
-        new_df['Volume'] = df['Volume'].resample(rule=f'{freq}min', label="left").sum()
+        new_df['Open'] = df['Open'].resample(
+            rule=f'{freq}min', label="left").first()
+        new_df['High'] = df['High'].resample(
+            rule=f'{freq}min', label="left").max()
+        new_df['Low'] = df['Low'].resample(
+            rule=f'{freq}min', label="left").min()
+        new_df['Close'] = df['Close'].resample(
+            rule=f'{freq}min', label="left").last()
+        new_df['Volume'] = df['Volume'].resample(
+            rule=f'{freq}min', label="left").sum()
         return new_df
-
 
     def drop_colunms(self, df: pd.DataFrame):
         """
@@ -47,3 +51,43 @@ class Datatransformer:
                 df = df.drop(columns=[key])
 
         return df
+
+    def calculation_size(self, systeam_size: dict, true_size: dict) -> dict:
+        """
+        用來比較 系統部位 和 Binance 交易所的實際部位
+
+        Args:
+            systeam_size (dict): example :{'BTCUSDT-15K-OB': [1.0, 0.37385995823410634], 'ETHUSDT-15K-OB': [1.0, 5.13707471134965],'BTCUSDT-30K-OB': [1.0, 0.995823410634], 'ETHUSDT-17K-OB': [1.0, 2.13707471134965]}
+            true_size (dict): example :{'ETHUSDT': '10.980', 'BTCUSDT': '0.420'} 
+
+        Returns:
+            dict: {'BTCUSDT': 0.9496833688681066, 'ETHUSDT': -3.7058505773006996}
+
+
+            當計算出來的結果 + 就是要買 - 就是要賣
+
+        """
+
+        combin_dict = {}
+        for name_key, status in systeam_size.items():
+            combin_symobl = name_key.split('-')[0]
+            if combin_symobl in combin_dict:
+                combin_dict.update(
+                    {combin_symobl: combin_dict[combin_symobl] + (status[0] * status[1])})
+            else:
+                combin_dict.update({combin_symobl: status[0] * status[1]})
+
+        diff_map = {}
+        for symbol_name, postition_size in combin_dict.items():
+            if true_size.get(symbol_name, None) is None:
+                diff_map.update({symbol_name: postition_size})
+            else:
+                diff_map.update(
+                    {symbol_name: postition_size - float(true_size[symbol_name])})
+                
+        # 如果已經不再系統裡面 就需要去close
+        for symbol_name, postition_size in true_size.items():
+            if symbol_name not in combin_dict:
+                diff_map.update({symbol_name: - float(postition_size)})
+                
+        return diff_map

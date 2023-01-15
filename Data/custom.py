@@ -5,6 +5,7 @@
 """
 from binance.client import Client
 from binance.enums import HistoricalKlinesType
+from binance.enums import SIDE_BUY, ORDER_TYPE_MARKET, ORDER_TYPE_LIMIT, SIDE_SELL
 from binance.helpers import interval_to_milliseconds, convert_ts_str
 import pandas as pd
 import json
@@ -209,8 +210,8 @@ class Binance_server(object):
 
     def get_clinet(self, formal=False):
         if formal:
-            # with open(r"/home/abcd/bi.txt", 'r') as file:
-            with open(r"C:/bi_.txt", 'r') as file:
+            with open(r"/home/abcd/bi.txt", 'r') as file:
+                # with open(r"C:/bi_.txt", 'r') as file:
                 data = file.read()
                 account = data.split("\n")[0]
                 passwd = data.split("\n")[1]
@@ -280,3 +281,77 @@ class Binance_server(object):
             out_put.update({i['symbol']: i['positionAmt']})
 
         return out_put
+
+    def execute_orders(self, order_finally: dict, model=ORDER_TYPE_MARKET):
+        """
+            Execute orders to Binance.
+            use for futures 
+            to develop data = 2023-1-15
+            note i can't find create_test_order by futures. 
+
+
+            To place a futures limit order:
+            binance_client.futures_create_order(
+                symbol='BTCUSDT',
+                type='LIMIT',
+                timeInForce='GTC',  # Can be changed - see link to API doc below
+                price=30000,  # The price at which you wish to buy/sell, float
+                side='BUY',  # Direction ('BUY' / 'SELL'), string
+                quantity=0.001  # Number of coins you wish to buy / sell, float
+            )
+
+            To place a futures market order:
+            binance_client.futures_create_order(
+                symbol='BTCUSDT',
+                type='MARKET',
+                timeInForce='GTC',
+                side='BUY',
+                quantity=0.001
+            )
+
+            2. 生效時間
+            有效時間表示您的訂單在執行或過期之前將保持有效的時間。這樣可以讓您對時間參數更加具體，您可以在下單時自定義時間。
+            在幣安，您可以下 GTC（取消前有效）、IOC（立即取消或取消）或 FOK（執行或終止）訂單：
+            GTC (Good-Till-Cancel)：訂單將持續到完成或您取消為止。
+            IOC (Immediate-Or-Cancel)：訂單將嘗試以可用的價格和數量立即執行全部或部分訂單，然後取消訂單中任何剩餘的、未完成的部分。如果您下單時所選價格沒有數量可用，將立即取消。請注意，不支持冰山訂單。
+            FOK (Fill-Or-Kill)：指示訂單立即全額執行（filled），否則將被取消（kill）。請注意，不支持冰山訂單。
+        """
+
+        # binance_client.futures_change_leverage(symbol='BTCUSDT', 槓桿=1)
+        print(f"進入下單,目前下單模式:{model}")
+
+        for symbol, ready_to_order_size in order_finally.items():
+            # 先將各式各樣的參數準備好
+
+            # 取得下單模式
+            if model == 'MARKET':
+                order_type = ORDER_TYPE_MARKET
+            else:
+                order_type = ORDER_TYPE_LIMIT
+
+            # 取得 side 買賣方向
+            if ready_to_order_size > 0:
+                order_side = SIDE_BUY
+            else:
+                order_side = SIDE_SELL
+
+            # 取得 quantity數量
+            order_quantity = round(abs(ready_to_order_size), 2)
+
+            if model == 'MARKET':
+                order_timeInForce = 'IOC'
+            else:
+                order_timeInForce = 'GTC'  # 這邊要在注意
+
+            print(dict(side=order_side,
+                 type=order_type,
+                 symbol=symbol,
+                 timeInForce=order_timeInForce,
+                 quantity=order_quantity))
+
+            
+            # 丟入最後create 單裡面
+
+            # self.client.futures_create_order(
+            #     symbol
+            # )

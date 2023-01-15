@@ -15,12 +15,12 @@ class DataProvider:
     """
 
     def __init__(self, time_type: Optional[str] = None, formal=False):
-        self.app = Data.custom.Binance_server(formal)
+        self.Binanceapp = Data.custom.Binance_server(formal)
         self.SQL = SQL_operate.DB_operate()
         self.transformer = Datatransformer()
         self.time_type = time_type
 
-    def reload_data(self, symbol_name='BTCUSDT', iflower=True):
+    def reload_data(self, symbol_name='BTCUSDT', iflower=False):
         # 先檢查是否有相關資料 取得目前所有列
         symbol_name_list = self.SQL.get_db_data('show tables;')
         symbol_name_list = [y[0] for y in symbol_name_list]
@@ -88,7 +88,7 @@ class DataProvider:
         new_df = self.transformer.get_tradedata(original_df, freq=freq)
         return new_df
 
-    def save_data(self, symbol_name, original_df, iflower=True):
+    def save_data(self, symbol_name, original_df, iflower=False):
         """
             保存資料到SQL
         """
@@ -108,11 +108,11 @@ class DataProvider:
             用來回補所有symbol的歷史資料
 
         """
-        for symbol_name in self.app.get_targetsymobls():
+        for symbol_name in self.Binanceapp.get_targetsymobls():
             original_df = self.reload_data(symbol_name)
             self.save_data(symbol_name, original_df)
 
-    def get_symbols_history_data(self, iflower=True) -> list:
+    def get_symbols_history_data(self, iflower=False) -> list:
         """
             讀取所有日線資料 用來分析和排序
 
@@ -125,7 +125,7 @@ class DataProvider:
         """
 
         out_list = []
-        for symbol_name in self.app.get_targetsymobls():
+        for symbol_name in self.Binanceapp.get_targetsymobls():
             if self.time_type == 'D':
                 tb_symbol_name = symbol_name + '-F-D'
             else:
