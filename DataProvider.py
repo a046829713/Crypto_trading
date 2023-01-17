@@ -20,7 +20,7 @@ class DataProvider:
         self.transformer = Datatransformer()
         self.time_type = time_type
 
-    def reload_data(self, symbol_name='BTCUSDT', iflower=False):
+    def reload_data(self, symbol_name='BTCUSDT', iflower=True):
         # 先檢查是否有相關資料 取得目前所有列
         symbol_name_list = self.SQL.get_db_data('show tables;')
         symbol_name_list = [y[0] for y in symbol_name_list]
@@ -88,7 +88,7 @@ class DataProvider:
         new_df = self.transformer.get_tradedata(original_df, freq=freq)
         return new_df
 
-    def save_data(self, symbol_name, original_df, iflower=False):
+    def save_data(self, symbol_name, original_df, iflower=True):
         """
             保存資料到SQL
         """
@@ -112,7 +112,7 @@ class DataProvider:
             original_df = self.reload_data(symbol_name)
             self.save_data(symbol_name, original_df)
 
-    def get_symbols_history_data(self, iflower=False) -> list:
+    def get_symbols_history_data(self, iflower=True) -> list:
         """
             讀取所有日線資料 用來分析和排序
 

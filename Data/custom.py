@@ -207,11 +207,12 @@ class Binance_server(object):
 
     def __init__(self, formal=False) -> None:
         self.get_clinet(formal)
+        self.trade_count = 0
 
     def get_clinet(self, formal=False):
         if formal:
-            with open(r"/home/abcd/bi.txt", 'r') as file:
-                # with open(r"C:/bi_.txt", 'r') as file:
+            # with open(r"/home/abcd/bi.txt", 'r') as file:
+            with open(r"C:/bi_.txt", 'r') as file:
                 data = file.read()
                 account = data.split("\n")[0]
                 passwd = data.split("\n")[1]
@@ -317,7 +318,8 @@ class Binance_server(object):
             FOK (Fill-Or-Kill)：指示訂單立即全額執行（filled），否則將被取消（kill）。請注意，不支持冰山訂單。
         """
 
-        # binance_client.futures_change_leverage(symbol='BTCUSDT', 槓桿=1)
+        self.trade_count += 1
+        print('目前交易次數', self.trade_count)
         print(f"進入下單,目前下單模式:{model}")
 
         for symbol, ready_to_order_size in order_finally.items():
@@ -344,14 +346,12 @@ class Binance_server(object):
                 order_timeInForce = 'GTC'  # 這邊要在注意
 
             print(dict(side=order_side,
-                 type=order_type,
-                 symbol=symbol,
-                 timeInForce=order_timeInForce,
-                 quantity=order_quantity))
+                       type=order_type,
+                       symbol=symbol,
+                       timeInForce=order_timeInForce,
+                       quantity=order_quantity))
 
-            
             # 丟入最後create 單裡面
-
-            # self.client.futures_create_order(
-            #     symbol
-            # )
+            self.client.futures_create_order(
+                position_side = Client.POSITION_SIDE_ISOLATED
+            )
