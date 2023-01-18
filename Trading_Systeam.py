@@ -3,6 +3,11 @@ from Major.Symbol_filter import get_symobl_filter_useful
 from Vecbot_backtest import Quantify_systeam_online
 import time
 from datetime import datetime
+
+
+from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QMenu, QHBoxLayout
+from PyQt6.QtGui import QIcon, QFont
+from PyQt6.QtCore import QSize
 import sys
 
 
@@ -46,7 +51,7 @@ class Trading_systeam():
         while True:
             print(datetime.now().minute)
             if datetime.now().minute != last_min or last_min is None:
-            # if True:
+                # if True:
                 # 需要個別去計算每個loop所耗費的時間
 
                 begin_time = time.time()
@@ -97,5 +102,25 @@ class Trading_systeam():
                 sys.exit()
 
         # 如果程式執行結束時 需要將data 回存給DB
+
+
+# class Window(QWidget):
+#     def __init__(self) -> None:
+#         super().__init__()
+#         self.setGeometry(200, 200, 700, 400)
+#         self.setWindowTitle('Binance trade systeam')
+#         self.setWindowIcon(QIcon("DownImage\圖標.png"))
+
+#         hbox = QHBoxLayout()
+#         save_btn = QPushButton('保存資料')
+#         save_btn.setFont(QFont("Times", 15))
+#         save_btn.setStyleSheet("background-color:#047C51")
+
+#         hbox.addWidget(save_btn)
+
+#         self.setLayout(hbox)
+
+
 if __name__ == '__main__':
     systeam = Trading_systeam()
+
