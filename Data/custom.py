@@ -354,9 +354,10 @@ class Binance_server(object):
             order_quantity = round(abs(ready_to_order_size), 2)
 
             # 判斷是否足夠下單
-            print("下單數量", order_quantity)
-            print("下單限制", MinimumQuantity[symbol])
-            print("下單數量測試:", divmod(order_quantity, float(MinimumQuantity[symbol]))[0])
+            if divmod(order_quantity, float(MinimumQuantity[symbol]))[0] == 0:
+                debug.record_msg(
+                    f"this {symbol}  is to small ,order_quantity:{order_quantity} and MinimumQuantity:{float(MinimumQuantity[symbol])}")
+                return
 
             if model == 'MARKET':
                 order_timeInForce = 'IOC'

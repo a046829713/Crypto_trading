@@ -5,9 +5,10 @@ import time
 from datetime import datetime
 import sys
 
-# 尚缺委託刻度(API) 
+
 # 下單物件未完成測試
 # 實際測試
+# GUI閃退問題
 
 class Trading_systeam():
     def __init__(self) -> None:
@@ -15,7 +16,6 @@ class Trading_systeam():
         self.engine = Quantify_systeam_online()
         # formal正式啟動環境
         self.dataprovider_online = DataProvider_online(formal=True)
-        
 
     def get_target_symbol(self):
         dataprovider = DataProvider(time_type='D')
@@ -66,7 +66,6 @@ class Trading_systeam():
                         self.symbol_map[symbol_name], freq_time)
 
                     # ! 判斷是否要將trade_data資料減少
-
                     # 將資料注入
                     self.engine.register_data(strategy_name, trade_data)
 
