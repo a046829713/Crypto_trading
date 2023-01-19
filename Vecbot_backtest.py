@@ -113,10 +113,7 @@ class Quantify_systeam_online(object):
                 each_strategy.df = trade_data
                 each_strategy.data, each_strategy.array_data = each_strategy.simulationdata()
                 each_strategy.datetimes = Event_count.get_index(each_strategy.data)
-                print("*******************register_data***********************************")
-                print(each_strategy.df)
-                print("*******************register_data***********************************")
-            
+
     def Portfolio_online_register(self):
         """
             正式投資組合上線環境

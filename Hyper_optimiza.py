@@ -19,6 +19,7 @@ class Hyper_optimization(object):
                 Returns:
                     list: [...{'sma1': 300, 'sma2': 130}, {'sma1': 300, 'sma2': 140}, {'sma1': 300, 'sma2': 150}, {'sma1': 300, 'sma2': 160}, {'sma1': 300, 'sma2': 170}, {'sma1': 300, 'sma2': 180}, {'sma1': 300, 'sma2': 190}, {'sma1': 300, 'sma2': 200}, {'sma1': 300, 'sma2': 210}, {'sma1': 300, 'sma2': 220}, {'sma1': 300, 'sma2': 230}, {'sma1': 300, 'sma2': 240}, {'sma1': 300, 'sma2': 250}, {'sma1': 300, 'sma2': 260}, {'sma1': 300, 'sma2': 270}, {'sma1': 300, 'sma2': 280}, {'sma1': 300, 'sma2': 290}, {'sma1': 300, 'sma2': 300}]
         """
+        
         if not variables:
             return []
         enumeration_name =[]

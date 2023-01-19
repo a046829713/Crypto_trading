@@ -1,13 +1,15 @@
 
+# import json
 
-def get_info(*args):
-    out_str = ''
-    for i in args:
-        out_str += str(i)+" "
-    return out_str
+# with open('test.txt', 'r') as file:
+#     data = json.loads(file.read())
+
+#     out_dict = {}
+#     for symbol in data['symbols']:
+#         out_dict.update({symbol['symbol']: symbol['filters'][2]['minQty']})
+
+#     print(out_dict)
+# ETHUSDT
 
 
-print(get_info([1, 2, 3], 4, 5, 7, "lewis"))
-
-
-# print([1, 2, 3], 4, 5, 7, "lewis")
+print(divmod(1, 2))

@@ -8,13 +8,14 @@ from binance.enums import HistoricalKlinesType
 from binance.enums import SIDE_BUY, ORDER_TYPE_MARKET, ORDER_TYPE_LIMIT, SIDE_SELL
 from binance.helpers import interval_to_milliseconds, convert_ts_str
 import pandas as pd
-import json
 from dateutil import parser
 import math
-from datetime import timedelta, datetime, timezone
+from datetime import timedelta, datetime
 import re
 import time
+import json
 from utils.Date_time import parser_time
+from utils.Debug_tool import debug
 import time
 
 
@@ -217,8 +218,6 @@ class Binance_server(object):
                 account = data.split("\n")[0]
                 passwd = data.split("\n")[1]
 
-            print(account)
-            print(passwd)
             self.client = Client(account, passwd)
         else:
             self.client = Client()
@@ -237,6 +236,17 @@ class Binance_server(object):
             _type_: _description_
         """
         return self.client.futures_exchange_info()
+
+    def getMinimumOrderQuantity(self):
+        """
+            取得最小下單數量限制
+        """
+        data = self.client.futures_exchange_info()
+        out_dict = {}
+        for symbol in data['symbols']:
+            out_dict.update({symbol['symbol']: symbol['filters'][2]['minQty']})
+
+        return out_dict
 
     def get_symbolinfo(self, symbol: str):
         """ 回傳想要查詢的商品資料
@@ -322,6 +332,9 @@ class Binance_server(object):
         print('目前交易次數', self.trade_count)
         print(f"進入下單,目前下單模式:{model}")
 
+        # 取得最小單位限制
+        MinimumQuantity = self.getMinimumOrderQuantity()
+
         for symbol, ready_to_order_size in order_finally.items():
             # 先將各式各樣的參數準備好
 
@@ -340,6 +353,11 @@ class Binance_server(object):
             # 取得 quantity數量
             order_quantity = round(abs(ready_to_order_size), 2)
 
+            # 判斷是否足夠下單
+            print("下單數量", order_quantity)
+            print("下單限制", MinimumQuantity[symbol])
+            print("下單數量測試:", divmod(order_quantity, float(MinimumQuantity[symbol]))[0])
+
             if model == 'MARKET':
                 order_timeInForce = 'IOC'
             else:
@@ -352,6 +370,6 @@ class Binance_server(object):
                        quantity=order_quantity))
 
             # 丟入最後create 單裡面
-            self.client.futures_create_order(
-                position_side = Client.POSITION_SIDE_ISOLATED
-            )
+            # self.client.futures_create_order(
+            #     position_side = Client.POSITION_SIDE_ISOLATED
+            # )

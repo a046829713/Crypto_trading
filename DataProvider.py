@@ -172,5 +172,5 @@ class DataProvider_online(DataProvider):
 if __name__ == "__main__":
     # dataprovider = DataProvider(time_type='D')
     dataprovider = DataProvider_online()
-    print(dataprovider.get_symboldata("ETHUSDT", save =True))
+    dataprovider.get_symboldata("ETHUSDT", save =True)
     # dataprovider.reload_all_data()

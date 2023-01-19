@@ -67,7 +67,6 @@ class Datatransformer:
             當計算出來的結果 + 就是要買 - 就是要賣
 
         """
-
         combin_dict = {}
         for name_key, status in systeam_size.items():
             combin_symobl = name_key.split('-')[0]
@@ -80,14 +79,16 @@ class Datatransformer:
         diff_map = {}
         for symbol_name, postition_size in combin_dict.items():
             if true_size.get(symbol_name, None) is None:
+                if postition_size == 0:
+                    continue
                 diff_map.update({symbol_name: postition_size})
             else:
                 diff_map.update(
                     {symbol_name: postition_size - float(true_size[symbol_name])})
-                
+
         # 如果已經不再系統裡面 就需要去close
         for symbol_name, postition_size in true_size.items():
             if symbol_name not in combin_dict:
                 diff_map.update({symbol_name: - float(postition_size)})
-                
+
         return diff_map

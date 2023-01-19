@@ -3,13 +3,11 @@ from Major.Symbol_filter import get_symobl_filter_useful
 from Vecbot_backtest import Quantify_systeam_online
 import time
 from datetime import datetime
-
-
-from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QMenu, QHBoxLayout
-from PyQt6.QtGui import QIcon, QFont
-from PyQt6.QtCore import QSize
 import sys
 
+# 尚缺委託刻度(API) 
+# 下單物件未完成測試
+# 實際測試
 
 class Trading_systeam():
     def __init__(self) -> None:
@@ -17,7 +15,7 @@ class Trading_systeam():
         self.engine = Quantify_systeam_online()
         # formal正式啟動環境
         self.dataprovider_online = DataProvider_online(formal=True)
-        self.main()
+        
 
     def get_target_symbol(self):
         dataprovider = DataProvider(time_type='D')
@@ -60,7 +58,6 @@ class Trading_systeam():
                     original_df = self.dataprovider_online.reload_data_online(
                         each_df, name)
                     self.symbol_map.update({name: original_df})
-                print("時間差", time.time() - begin_time)
 
                 info = self.engine.get_symbol_info()
                 for strategy_name, symbol_name, freq_time in info:
@@ -101,26 +98,7 @@ class Trading_systeam():
                 print("緊急狀況處理-交易次數過多")
                 sys.exit()
 
-        # 如果程式執行結束時 需要將data 回存給DB
-
-
-# class Window(QWidget):
-#     def __init__(self) -> None:
-#         super().__init__()
-#         self.setGeometry(200, 200, 700, 400)
-#         self.setWindowTitle('Binance trade systeam')
-#         self.setWindowIcon(QIcon("DownImage\圖標.png"))
-
-#         hbox = QHBoxLayout()
-#         save_btn = QPushButton('保存資料')
-#         save_btn.setFont(QFont("Times", 15))
-#         save_btn.setStyleSheet("background-color:#047C51")
-
-#         hbox.addWidget(save_btn)
-
-#         self.setLayout(hbox)
-
 
 if __name__ == '__main__':
     systeam = Trading_systeam()
-
+    systeam.main()
