@@ -59,11 +59,7 @@ class Ui_Form(object):
         self.trade_info.setPlaceholderText(_translate("Form", "程序尚未運行..."))
         self.btn_savedata.setText(_translate("Form", "關閉程序"))
 
-    def click_save_data(self):
-        """ 保存資料並關閉程序 注意不能使用replace 資料長短問題"""
-        for name, each_df in self.systeam.symbol_map.items():
-            self.systeam.dataprovider_online.save_data(
-                symbol_name=name, original_df=each_df)
+
 
 
 

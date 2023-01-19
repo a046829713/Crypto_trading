@@ -45,6 +45,8 @@ class Ui_Form(object):
         self.btn_savedata.setStyleSheet("background-color: rgb(238, 119, 133);\n"
                                         "color: rgb(255, 255, 255);")
         self.btn_savedata.setObjectName("btn_savedata")
+        self.btn_savedata.clicked.connect(self.click_save_data)
+
         self.verticalLayout.addWidget(self.btn_savedata)
         self.btn_reloaddata = QtWidgets.QPushButton(self.widget)
         font = QtGui.QFont()
@@ -94,6 +96,13 @@ class Ui_Form(object):
             out_str += str(i)+" "
             print("GUI測試進入", out_str)
             self.trade_info.append(out_str)
+
+    def click_save_data(self):
+        """ 保存資料並關閉程序 注意不能使用replace 資料長短問題"""
+        for name, each_df in self.systeam.symbol_map.items():
+            pass
+            # self.systeam.dataprovider_online.save_data(
+            #     symbol_name=name, original_df=each_df)
 
 
 if __name__ == "__main__":
