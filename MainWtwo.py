@@ -7,19 +7,24 @@
 
 
 from PyQt6 import QtCore, QtGui, QtWidgets
-from Trading_Systeam import Trading_systeam
-import threading
-import sys
-from utils.Debug_tool import debug
-import time
+
 
 
 class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
-        Form.resize(1083, 662)
-        self.btn_trade = QtWidgets.QPushButton(Form)
-        self.btn_trade.setGeometry(QtCore.QRect(30, 30, 141, 91))
+        Form.resize(1134, 805)
+        self.trade_info = QtWidgets.QTextEdit(Form)
+        self.trade_info.setGeometry(QtCore.QRect(260, 20, 831, 491))
+        self.trade_info.setReadOnly(True)
+        self.trade_info.setObjectName("trade_info")
+        self.layoutWidget = QtWidgets.QWidget(Form)
+        self.layoutWidget.setGeometry(QtCore.QRect(30, 20, 200, 301))
+        self.layoutWidget.setObjectName("layoutWidget")
+        self.verticalLayout = QtWidgets.QVBoxLayout(self.layoutWidget)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.btn_trade = QtWidgets.QPushButton(self.layoutWidget)
         font = QtGui.QFont()
         font.setPointSize(16)
         font.setBold(True)
@@ -27,14 +32,10 @@ class Ui_Form(object):
         self.btn_trade.setStyleSheet("background-color: rgb(140, 215, 144);\n"
                                      "color: rgb(255, 255, 255);")
         self.btn_trade.setObjectName("btn_trade")
+        self.verticalLayout.addWidget(self.btn_trade)
         self.btn_trade.clicked.connect(self.click_btn_trade)
 
-        self.trade_info = QtWidgets.QTextEdit(Form)
-        self.trade_info.setGeometry(QtCore.QRect(190, 30, 871, 601))
-        self.trade_info.setReadOnly(True)
-        self.trade_info.setObjectName("trade_info")
-        self.btn_savedata = QtWidgets.QPushButton(Form)
-        self.btn_savedata.setGeometry(QtCore.QRect(30, 140, 141, 91))
+        self.btn_savedata = QtWidgets.QPushButton(self.layoutWidget)
         font = QtGui.QFont()
         font.setPointSize(14)
         font.setBold(True)
@@ -42,7 +43,36 @@ class Ui_Form(object):
         self.btn_savedata.setStyleSheet("background-color: rgb(238, 119, 133);\n"
                                         "color: rgb(255, 255, 255);")
         self.btn_savedata.setObjectName("btn_savedata")
-        self.btn_savedata.clicked.connect(self.click_save_data)
+        self.verticalLayout.addWidget(self.btn_savedata)
+        self.btn_reloaddata = QtWidgets.QPushButton(self.layoutWidget)
+        font = QtGui.QFont()
+        font.setPointSize(14)
+        font.setBold(True)
+        self.btn_reloaddata.setFont(font)
+        self.btn_reloaddata.setStyleSheet("color: rgb(255, 255, 255);\n"
+                                          "background-color: rgb(191, 200, 234);")
+        self.btn_reloaddata.setObjectName("btn_reloaddata")
+        self.verticalLayout.addWidget(self.btn_reloaddata)
+        self.btn_reloaddata.clicked.connect(self.reload_data_day)
+
+        self.pushButton = QtWidgets.QPushButton(self.layoutWidget)
+        font = QtGui.QFont()
+        font.setPointSize(14)
+        font.setBold(True)
+        self.pushButton.setFont(font)
+        self.pushButton.setStyleSheet("color: rgb(255, 255, 255);\n"
+                                      "background-color: rgb(85, 170, 127);")
+        self.pushButton.setObjectName("pushButton")
+        self.verticalLayout.addWidget(self.pushButton)
+        self.btn_Portfolio = QtWidgets.QPushButton(self.layoutWidget)
+        font = QtGui.QFont()
+        font.setPointSize(14)
+        font.setBold(True)
+        self.btn_Portfolio.setFont(font)
+        self.btn_Portfolio.setStyleSheet("color: rgb(255, 255, 255);\n"
+                                         "background-color: rgb(102, 139, 196);")
+        self.btn_Portfolio.setObjectName("btn_Portfolio")
+        self.verticalLayout.addWidget(self.btn_Portfolio)
 
         self.retranslateUi(Form)
         QtCore.QMetaObject.connectSlotsByName(Form)
@@ -50,17 +80,17 @@ class Ui_Form(object):
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Binance trade systeam"))
-        self.btn_trade.setText(_translate("Form", "啟動程序"))
         self.trade_info.setHtml(_translate("Form", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
                                            "<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
                                            "p, li { white-space: pre-wrap; }\n"
                                            "</style></head><body style=\" font-family:\'Microsoft JhengHei UI\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
                                            "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>"))
         self.trade_info.setPlaceholderText(_translate("Form", "程序尚未運行..."))
-        self.btn_savedata.setText(_translate("Form", "關閉程序"))
-
-
-
+        self.btn_trade.setText(_translate("Form", "啟動程序"))
+        self.btn_savedata.setText(_translate("Form", "保存資料"))
+        self.btn_reloaddata.setText(_translate("Form", "重新回補所有日資料"))
+        self.pushButton.setText(_translate("Form", "重新回補所有分鐘資料"))
+        self.btn_Portfolio.setText(_translate("Form", "投資組合回測"))
 
 
 

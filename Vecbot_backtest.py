@@ -15,13 +15,13 @@ from Count.Base import Event_count
 class Quantify_systeam(object):
     def __init__(self) -> None:
         self.strategy1 = Strategy_base(
-            "BTCUSDT-15K-OB", "BTCUSDT", 15, 1.0, 0.002, 0.0025, lookback_date='2021-01-01')
+            "BTCUSDT-15K-OB", "BTCUSDT", 15, 1.0, 0.002, 0.0025, lookback_date='2020-01-01')
 
         self.strategy2 = Strategy_base(
-            "ETHUSDT-15K-OB", "ETHUSDT", 15, 1.0, 0.002, 0.0025, lookback_date='2021-01-01')
+            "ETHUSDT-15K-OB", "ETHUSDT", 15, 1.0, 0.002, 0.0025, lookback_date='2020-01-01')
 
         self.strategy3 = Strategy_base(
-            "BTCUSDT-2K-OB", "BTCUSDT", 2, 1.0, 0.002, 0.0025, lookback_date='2021-01-01')
+            "BTCUSDT-2K-OB", "BTCUSDT", 2, 1.0, 0.002, 0.0025, lookback_date='2020-01-01')
 
     def optimize(self):
         """

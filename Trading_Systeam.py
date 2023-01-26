@@ -10,7 +10,7 @@ import sys
 # 實際測試
 # GUI閃退問題
 # 資料保存覆蓋問題
-
+# 修改系統口數及 實際部位校正問題
 class Trading_systeam():
     def __init__(self) -> None:
         self.symbol_map = {}
@@ -54,7 +54,6 @@ class Trading_systeam():
         self.printfunc("資料讀取結束")
         # 透過迴圈回補資料
         while True:
-            self.printfunc(datetime.now().minute)
             if datetime.now().minute != last_min or last_min is None:
                 # if True:
                 # 需要個別去計算每個loop所耗費的時間
@@ -90,7 +89,10 @@ class Trading_systeam():
                 # >>比對目前binance 內的部位狀態 進行交易
                 order_finally = self.dataprovider_online.transformer.calculation_size(
                     last_status, current_size)
+                
                 self.printfunc("差異單", order_finally)
+                
+                
                 if order_finally:
                     self.dataprovider_online.Binanceapp.execute_orders(
                         order_finally)
@@ -119,4 +121,4 @@ class GUI_Trading_systeam(Trading_systeam):
 
 if __name__ == '__main__':
     systeam = Trading_systeam()
-    systeam.main()
+    print(systeam.get_target_symbol())

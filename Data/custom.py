@@ -351,7 +351,7 @@ class Binance_server(object):
                 order_side = SIDE_SELL
 
             # 取得 quantity數量
-            order_quantity = round(abs(ready_to_order_size), 2)
+            order_quantity = abs(ready_to_order_size)
 
             # 判斷是否足夠下單
             if divmod(order_quantity, float(MinimumQuantity[symbol]))[0] == 0:
@@ -372,5 +372,9 @@ class Binance_server(object):
 
             # 丟入最後create 單裡面
             # self.client.futures_create_order(
-            #     position_side = Client.POSITION_SIDE_ISOLATED
+            #     side=order_side,
+            #     type=order_type,
+            #     symbol=symbol,
+            #     timeInForce=order_timeInForce,
+            #     quantity=order_quantity
             # )

@@ -76,6 +76,10 @@ class Datatransformer:
             else:
                 combin_dict.update({combin_symobl: status[0] * status[1]})
 
+        # 下單四捨五入
+        for each_symbol, each_value in combin_dict.items():
+            combin_dict[each_symbol] = round(combin_dict[each_symbol], 2)
+
         diff_map = {}
         for symbol_name, postition_size in combin_dict.items():
             if true_size.get(symbol_name, None) is None:

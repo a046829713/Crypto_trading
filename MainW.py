@@ -10,23 +10,25 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 import sys
 from Trading_Systeam import GUI_Trading_systeam
 from PyQt6.QtCore import QThread
+from DataProvider import DataProvider
+import pandas as pd
 
 
 class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
-        Form.resize(1083, 662)
+        Form.resize(1134, 805)
         self.trade_info = QtWidgets.QTextEdit(Form)
-        self.trade_info.setGeometry(QtCore.QRect(170, 40, 871, 601))
+        self.trade_info.setGeometry(QtCore.QRect(260, 20, 831, 491))
         self.trade_info.setReadOnly(True)
         self.trade_info.setObjectName("trade_info")
-        self.widget = QtWidgets.QWidget(Form)
-        self.widget.setGeometry(QtCore.QRect(20, 20, 131, 301))
-        self.widget.setObjectName("widget")
-        self.verticalLayout = QtWidgets.QVBoxLayout(self.widget)
+        self.layoutWidget = QtWidgets.QWidget(Form)
+        self.layoutWidget.setGeometry(QtCore.QRect(30, 20, 200, 301))
+        self.layoutWidget.setObjectName("layoutWidget")
+        self.verticalLayout = QtWidgets.QVBoxLayout(self.layoutWidget)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.btn_trade = QtWidgets.QPushButton(self.widget)
+        self.btn_trade = QtWidgets.QPushButton(self.layoutWidget)
         font = QtGui.QFont()
         font.setPointSize(16)
         font.setBold(True)
@@ -34,10 +36,10 @@ class Ui_Form(object):
         self.btn_trade.setStyleSheet("background-color: rgb(140, 215, 144);\n"
                                      "color: rgb(255, 255, 255);")
         self.btn_trade.setObjectName("btn_trade")
+        self.verticalLayout.addWidget(self.btn_trade)
         self.btn_trade.clicked.connect(self.click_btn_trade)
 
-        self.verticalLayout.addWidget(self.btn_trade)
-        self.btn_savedata = QtWidgets.QPushButton(self.widget)
+        self.btn_savedata = QtWidgets.QPushButton(self.layoutWidget)
         font = QtGui.QFont()
         font.setPointSize(14)
         font.setBold(True)
@@ -45,19 +47,30 @@ class Ui_Form(object):
         self.btn_savedata.setStyleSheet("background-color: rgb(238, 119, 133);\n"
                                         "color: rgb(255, 255, 255);")
         self.btn_savedata.setObjectName("btn_savedata")
+        self.verticalLayout.addWidget(self.btn_savedata)
         self.btn_savedata.clicked.connect(self.click_save_data)
 
-        self.verticalLayout.addWidget(self.btn_savedata)
-        self.btn_reloaddata = QtWidgets.QPushButton(self.widget)
+        self.btn_reloaddataday = QtWidgets.QPushButton(self.layoutWidget)
         font = QtGui.QFont()
         font.setPointSize(14)
         font.setBold(True)
-        self.btn_reloaddata.setFont(font)
-        self.btn_reloaddata.setStyleSheet("color: rgb(255, 255, 255);\n"
-                                          "background-color: rgb(191, 200, 234);")
-        self.btn_reloaddata.setObjectName("btn_reloaddata")
-        self.verticalLayout.addWidget(self.btn_reloaddata)
-        self.btn_Portfolio = QtWidgets.QPushButton(self.widget)
+        self.btn_reloaddataday.setFont(font)
+        self.btn_reloaddataday.setStyleSheet("color: rgb(255, 255, 255);\n"
+                                             "background-color: rgb(191, 200, 234);")
+        self.btn_reloaddataday.setObjectName("btn_reloaddataday")
+        self.verticalLayout.addWidget(self.btn_reloaddataday)
+        self.btn_reloaddataday.clicked.connect(self.reload_data_day)
+
+        self.btn_reloaddatamin = QtWidgets.QPushButton(self.layoutWidget)
+        font = QtGui.QFont()
+        font.setPointSize(14)
+        font.setBold(True)
+        self.btn_reloaddatamin.setFont(font)
+        self.btn_reloaddatamin.setStyleSheet("color: rgb(255, 255, 255);\n"
+                                             "background-color: rgb(85, 170, 127);")
+        self.btn_reloaddatamin.setObjectName("btn_reloaddatamin")
+        self.verticalLayout.addWidget(self.btn_reloaddatamin)
+        self.btn_Portfolio = QtWidgets.QPushButton(self.layoutWidget)
         font = QtGui.QFont()
         font.setPointSize(14)
         font.setBold(True)
@@ -80,8 +93,9 @@ class Ui_Form(object):
                                            "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>"))
         self.trade_info.setPlaceholderText(_translate("Form", "程序尚未運行..."))
         self.btn_trade.setText(_translate("Form", "啟動程序"))
-        self.btn_savedata.setText(_translate("Form", "關閉程序"))
-        self.btn_reloaddata.setText(_translate("Form", "重新回補"))
+        self.btn_savedata.setText(_translate("Form", "保存資料"))
+        self.btn_reloaddataday.setText(_translate("Form", "重新回補所有日資料"))
+        self.btn_reloaddatamin.setText(_translate("Form", "重新回補所有分鐘資料"))
         self.btn_Portfolio.setText(_translate("Form", "投資組合回測"))
 
     def click_btn_trade(self):
@@ -95,14 +109,53 @@ class Ui_Form(object):
         for i in args:
             out_str += str(i)+" "
             print("GUI測試進入", out_str)
-            self.trade_info.append(out_str)
+            # self.trade_info.append(out_str)
 
     def click_save_data(self):
         """ 保存資料並關閉程序 注意不能使用replace 資料長短問題"""
-        for name, each_df in self.systeam.symbol_map.items():
-            pass
-            # self.systeam.dataprovider_online.save_data(
-            #     symbol_name=name, original_df=each_df)
+
+        def mergefunc():
+            self.dataprovider = DataProvider()
+
+            for name, each_df in self.systeam.symbol_map.items():
+                print('目前商品', name)
+                each_df.reset_index(inplace=True)
+                print(each_df)
+
+                # 先將資料從DB撈取出來
+                tb_symbol_name = name + '-F'
+                tb_symbol_name = tb_symbol_name.lower()
+                db_df = self.systeam.dataprovider_online.SQL.read_Dateframe(
+                    tb_symbol_name)
+
+                print(db_df)
+                db_df['Datetime'] = pd.to_datetime(db_df['Datetime'])
+                db_df.set_index('Datetime', inplace=True)
+                db_df = db_df.astype(float)
+                db_df.reset_index(inplace=True)
+                merge_df = pd.concat([db_df, each_df])
+
+                # duplicated >> 重複 True 代表重複了
+                merge_df = merge_df[~merge_df.index.duplicated(keep='last')]
+                merge_df.to_csv("test123.csv")
+                print(merge_df)
+
+                print('商品資料回補完成!')
+                print('*'*120)
+                self.systeam.dataprovider_online.save_data(
+                    symbol_name=name, original_df=merge_df)
+
+            sys.exit()
+
+        self.save_data_Thread = QThread()
+        self.save_data_Thread.run = mergefunc
+        self.save_data_Thread.start()
+
+    def reload_data_day(self):
+        self.dataprovider = DataProvider(time_type='D')
+        self.data_Thread = QThread()
+        self.data_Thread.run = self.dataprovider.reload_all_data
+        self.data_Thread.start()
 
 
 if __name__ == "__main__":
@@ -110,6 +163,5 @@ if __name__ == "__main__":
     Form = QtWidgets.QWidget()
     ui = Ui_Form()
     ui.setupUi(Form)
-
     Form.show()
     sys.exit(app.exec())

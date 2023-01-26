@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1083</width>
-    <height>662</height>
+    <width>1134</width>
+    <height>805</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,10 +16,10 @@
   <widget class="QTextEdit" name="trade_info">
    <property name="geometry">
     <rect>
-     <x>170</x>
-     <y>40</y>
-     <width>871</width>
-     <height>601</height>
+     <x>260</x>
+     <y>20</y>
+     <width>831</width>
+     <height>491</height>
     </rect>
    </property>
    <property name="readOnly">
@@ -36,12 +36,12 @@ p, li { white-space: pre-wrap; }
     <string>程序尚未運行...</string>
    </property>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>20</x>
+     <x>30</x>
      <y>20</y>
-     <width>131</width>
+     <width>200</width>
      <height>301</height>
     </rect>
    </property>
@@ -76,12 +76,12 @@ color: rgb(255, 255, 255);</string>
 color: rgb(255, 255, 255);</string>
       </property>
       <property name="text">
-       <string>關閉程序</string>
+       <string>保存資料</string>
       </property>
      </widget>
     </item>
     <item>
-     <widget class="QPushButton" name="btn_reloaddata">
+     <widget class="QPushButton" name="btn_reloaddataday">
       <property name="font">
        <font>
         <pointsize>14</pointsize>
@@ -93,7 +93,24 @@ color: rgb(255, 255, 255);</string>
 background-color: rgb(191, 200, 234);</string>
       </property>
       <property name="text">
-       <string>重新回補</string>
+       <string>重新回補所有日資料</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="btn_reloaddatamin">
+      <property name="font">
+       <font>
+        <pointsize>14</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: rgb(255, 255, 255);
+background-color: rgb(85, 170, 127);</string>
+      </property>
+      <property name="text">
+       <string>重新回補所有分鐘資料</string>
       </property>
      </widget>
     </item>
