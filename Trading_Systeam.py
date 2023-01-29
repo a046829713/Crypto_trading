@@ -9,8 +9,8 @@ import sys
 # 下單物件未完成測試
 # 實際測試
 # GUI閃退問題
-# 資料保存覆蓋問題
-# 修改系統口數及 實際部位校正問題
+
+
 class Trading_systeam():
     def __init__(self) -> None:
         self.symbol_map = {}
@@ -25,7 +25,11 @@ class Trading_systeam():
         return example
 
         # 取得交易標的(頻率不需要太頻繁 一個月一次即可)
-        # ['btcdomusdt-f-d', 0.061946189785725636], ['xmrusdt-f-d', 0.055462536626203374], ['btcstusdt-f-d', 0.0]
+        # ['solusdt-f-d', 1.517890576242979],
+        # ['avaxusdt-f-d', 0.8844715966080059],
+        # ['compusdt-f-d', 0.8142903121982619],
+        # ['aaveusdt-f-d', 0.5655210439257492],
+        # ['defiusdt-f-d', 0.5171522556390977]
 
     def printfunc(self, *args):
         out_str = ''

@@ -70,6 +70,8 @@ class Ui_Form(object):
                                              "background-color: rgb(85, 170, 127);")
         self.btn_reloaddatamin.setObjectName("btn_reloaddatamin")
         self.verticalLayout.addWidget(self.btn_reloaddatamin)
+        self.btn_reloaddatamin.clicked.connect(self.reload_data_min)
+
         self.btn_Portfolio = QtWidgets.QPushButton(self.layoutWidget)
         font = QtGui.QFont()
         font.setPointSize(14)
@@ -115,12 +117,16 @@ class Ui_Form(object):
         """ 保存資料並關閉程序 注意不能使用replace 資料長短問題"""
 
         def mergefunc():
-            self.dataprovider = DataProvider()
-
             for name, each_df in self.systeam.symbol_map.items():
                 print('目前商品', name)
                 each_df.reset_index(inplace=True)
+
+                print(
+                    '**********************************原始資料*****************************')
+                print(each_df.dtypes)
                 print(each_df)
+                print(
+                    '**********************************原始資料*****************************')
 
                 # 先將資料從DB撈取出來
                 tb_symbol_name = name + '-F'
@@ -128,20 +134,39 @@ class Ui_Form(object):
                 db_df = self.systeam.dataprovider_online.SQL.read_Dateframe(
                     tb_symbol_name)
 
-                print(db_df)
                 db_df['Datetime'] = pd.to_datetime(db_df['Datetime'])
                 db_df.set_index('Datetime', inplace=True)
                 db_df = db_df.astype(float)
                 db_df.reset_index(inplace=True)
-                merge_df = pd.concat([db_df, each_df])
 
-                # duplicated >> 重複 True 代表重複了
-                merge_df = merge_df[~merge_df.index.duplicated(keep='last')]
-                merge_df.to_csv("test123.csv")
+                print(
+                    "*****************************資料庫資料******************************************")
+                print(db_df.dtypes)
+                print(db_df)
+                print(
+                    "*****************************資料庫資料******************************************")
+                merge_df = pd.concat([db_df, each_df], ignore_index=True)
+                print(
+                    "*****************************合併資料前******************************************")
                 print(merge_df)
 
-                print('商品資料回補完成!')
-                print('*'*120)
+                print(
+                    "*****************************合併資料前******************************************")
+                if 'index' in merge_df.columns:
+                    print('刪除')
+                    merge_df.drop(columns=['index'], inplace=True)
+                    
+                # duplicated >> 重複 True 代表重複了
+                merge_df.set_index('Datetime', inplace=True)
+                merge_df = merge_df[~merge_df.index.duplicated(keep='last')]
+                print(
+                    "*****************************合併資料******************************************")
+                print(merge_df)
+                print(
+                    "*****************************合併資料******************************************")
+
+                print(
+                    '********************************商品資料回補完成!*************************************')
                 self.systeam.dataprovider_online.save_data(
                     symbol_name=name, original_df=merge_df)
 
@@ -153,6 +178,12 @@ class Ui_Form(object):
 
     def reload_data_day(self):
         self.dataprovider = DataProvider(time_type='D')
+        self.data_Thread = QThread()
+        self.data_Thread.run = self.dataprovider.reload_all_data
+        self.data_Thread.start()
+
+    def reload_data_min(self):
+        self.dataprovider = DataProvider()
         self.data_Thread = QThread()
         self.data_Thread.run = self.dataprovider.reload_all_data
         self.data_Thread.start()
