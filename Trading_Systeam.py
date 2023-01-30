@@ -8,8 +8,6 @@ import sys
 
 # 下單物件未完成測試
 # 實際測試
-# GUI閃退問題
-
 
 class Trading_systeam():
     def __init__(self) -> None:

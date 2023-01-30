@@ -12,8 +12,12 @@ from utils import Debug_tool
 import pandas as pd
 from Count.Base import Event_count
 
+
 class Quantify_systeam(object):
     def __init__(self) -> None:
+        """
+            設定基礎時間跟基本資訊
+        """
         self.strategy1 = Strategy_base(
             "BTCUSDT-15K-OB", "BTCUSDT", 15, 1.0, 0.002, 0.0025, lookback_date='2020-01-01')
 
@@ -21,13 +25,13 @@ class Quantify_systeam(object):
             "ETHUSDT-15K-OB", "ETHUSDT", 15, 1.0, 0.002, 0.0025, lookback_date='2020-01-01')
 
         self.strategy3 = Strategy_base(
-            "BTCUSDT-2K-OB", "BTCUSDT", 2, 1.0, 0.002, 0.0025, lookback_date='2020-01-01')
+            "SOLUSDT-15K-OB", "SOLUSDT", 15, 1.0, 0.002, 0.0025, lookback_date='2020-01-01')
 
     def optimize(self):
         """
             用來計算最佳化的參數
         """
-        ordermap = Np_Order_Strategy(self.strategy2)
+        ordermap = Np_Order_Strategy(self.strategy3)
         inputs_parameter = {"highest_n1": np.arange(50, 800, 20, dtype=np.int16),
                             "lowest_n2": np.arange(50, 800, 20, dtype=np.int16),
                             'ATR_short1': np.arange(10, 200, 10, dtype=np.float_),
@@ -64,7 +68,7 @@ class Quantify_systeam(object):
         """
             普通回測模式
         """
-        ordermap = Np_Order_Strategy(self.strategy2)
+        ordermap = Np_Order_Strategy(self.strategy3)
         ordermap.set_parameter(
             {'highest_n1': 490, 'lowest_n2': 370, 'ATR_short1': 90.0, 'ATR_long2': 170.0})
         pf = ordermap.logic_order()
@@ -79,6 +83,8 @@ class Quantify_systeam(object):
             self.strategy1, {'highest_n1': 570, 'lowest_n2': 370, 'ATR_short1': 100.0, 'ATR_long2': 190.0})
         app.register(
             self.strategy2, {'highest_n1': 570, 'lowest_n2': 470, 'ATR_short1': 50.0, 'ATR_long2': 160.0})
+        app.register(
+            self.strategy3, {'highest_n1': 490, 'lowest_n2': 290, 'ATR_short1': 100.0, 'ATR_long2': 60.0})
 
         pf = app.logic_order()
         Picture_maker(pf)
@@ -91,6 +97,9 @@ class Quantify_systeam_online(object):
     """
 
     def __init__(self) -> None:
+        """
+            這邊的lookback_date 是指策略最早的接收日期，如果資料讀取沒有這麼多不影響
+        """
         self.strategy1 = Strategy_atom(
             "BTCUSDT-15K-OB", "BTCUSDT", 15, 1.0, 0.002, 0.0025, lookback_date='2021-01-01')
 
@@ -108,11 +117,12 @@ class Quantify_systeam_online(object):
             將每一次更新的資料傳入 個別的策略當中
         """
         for each_strategy in self.Trader.strategys:
-            each_strategy:Strategy_atom
+            each_strategy: Strategy_atom
             if strategy_name == each_strategy.strategy_name:
                 each_strategy.df = trade_data
                 each_strategy.data, each_strategy.array_data = each_strategy.simulationdata()
-                each_strategy.datetimes = Event_count.get_index(each_strategy.data)
+                each_strategy.datetimes = Event_count.get_index(
+                    each_strategy.data)
 
     def Portfolio_online_register(self):
         """
@@ -129,7 +139,7 @@ class Quantify_systeam_online(object):
     def Portfolio_online_start(self):
         pf = self.Trader.logic_order()
         return pf
-    
+
     def get_symbol_name(self) -> list:
         """
             to output symobol name

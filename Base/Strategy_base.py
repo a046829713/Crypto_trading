@@ -3,11 +3,12 @@ from Count.Base import Event_count, vecbot_count
 import numpy as np
 import pandas as pd
 from Count import nb
-from collections import namedtuple
 import copy
 import talib
 import time
 import typing
+from Database.SQL_operate import DB_operate
+from Datatransformer import Datatransformer
 
 
 class Strategy_base(object):
@@ -64,10 +65,16 @@ class Strategy_base(object):
         if self.symobl_type == 'Futures':
             self.symobl_type = "F"
 
-        self.df = pd.read_csv(
-            f"{self.symbol_name}-{self.symobl_type}-{self.freq_time}-Min.csv")
+        # self.df = pd.read_csv(
+        #     f"{self.symbol_name}-{self.symobl_type}-{self.freq_time}-Min.csv")
+
+        self.df = DB_operate().read_Dateframe(
+            f"select Datetime, Open, High, Low, Close, Volume from `{self.symbol_name.lower()}-{self.symobl_type.lower()}`;")
+
         self.df.set_index("Datetime", inplace=True)
 
+        self.df = Datatransformer().get_tradedata(original_df=self.df, freq=self.freq_time)
+        self.df.index =  self.df.index.astype(str)    
         if self.lookback_date:
             self.df = self.df[self.df.index > self.lookback_date]
 
@@ -376,6 +383,8 @@ class Np_Order_Strategy(object):
         """
             用來創造閹割版的快速回測
         """
+        
+        # 有些比較難使用向量化完成
         self.highestarr = vecbot_count.max_rolling(
             self.high_array, self.highest_n1)
 
@@ -501,6 +510,7 @@ class PortfolioTrader(object):
         data = {}
         for strategy in self.strategys:
             dict_data = strategy.df.to_dict('index')  # 這邊的DF 已經含有order了
+            
             for each_time in self.min_scale:
                 if each_time in data:
                     data[each_time].update(
@@ -508,6 +518,7 @@ class PortfolioTrader(object):
                 else:
                     data[each_time] = {
                         strategy.strategy_name: dict_data.get(each_time, None)}
+        
         return data
 
     def logic_order(self):

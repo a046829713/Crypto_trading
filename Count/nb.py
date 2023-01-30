@@ -7,6 +7,7 @@ from numpy.lib.stride_tricks import sliding_window_view
 from utils.TimeCountMsg import TimeCountMsg
 
 
+
 @njit
 def get_marketpostion_array(Length, high_array, low_array, close_array, ATR_short, ATR_long, highest_price, lowest_price):
     marketpostion_array = np.empty(shape=Length)
@@ -70,7 +71,7 @@ def get_ATR(Length, high_array: np.array, low_array: np.array, close_array: np.a
 
 
 @njit
-def get_drawdown_per(ClosedPostionprofit: np.ndarray,init_cash:float):
+def get_drawdown_per(ClosedPostionprofit: np.ndarray, init_cash: float):
     DD_per_array = np.empty(shape=ClosedPostionprofit.shape[0])
     max_profit = init_cash
     for i in range(ClosedPostionprofit.shape[0]):
@@ -350,17 +351,14 @@ def more_fast_logic_order(
     ATR_long = get_ATR(
         Length, high_array, low_array, close_array, ATR_long2)
 
-    # 取得order單為當前主要目的
-    trends = np.where((high_array - highestarr > 0) &
-                      (ATR_short-ATR_long > 0), 1, 0)
-    orders = np.where((low_array - lowestarr) < 0, -1, trends)
-    shiftorder = np.roll(orders, 1)
-    shiftorder[0] = 0
+    # 取得order單為當前主要目的 將需要判斷的方向放入 這邊是選擇策略的主要地方
+
+    shiftorder = TurtleStrategy(
+        high_array, highestarr, ATR_short, ATR_long, low_array, lowestarr)
 
     # 主循環區域
     for i in range(Length):
         current_order = shiftorder[i]  # 實際送出訂單位置
-        # ==============================================================
         # 主邏輯區段
         if current_order == 1:
             marketpostion = 1
@@ -378,7 +376,6 @@ def more_fast_logic_order(
 
     entryprice_arr = entryprice_arr[np.where(entryprice_arr > 0)]
 
-    
     # 跳過沒成交的交易
     if entryprice_arr.shape[0] == 0:
         return 0
@@ -406,7 +403,8 @@ def more_fast_logic_order(
     ClosedPostionprofit_arr = np.cumsum(
         ClosedPostionprofit_arr) + init_cash  # 已平倉損益
 
-    DD_per_array = get_drawdown_per(ClosedPostionprofit_arr,init_cash)
+    # 指標優化區
+    DD_per_array = get_drawdown_per(ClosedPostionprofit_arr, init_cash)
     sumallDD = np.sum(DD_per_array**2)
     ROI = (ClosedPostionprofit_arr[-1] / init_cash)-1
     ui_ = (ROI*100) / ((sumallDD / exitsprice_arr.shape[0])**0.5)
@@ -476,11 +474,8 @@ def logic_order(
         Length, high_array, low_array, close_array, ATR_long2)
 
     # 取得order單為當前主要目的
-    trends = np.where((high_array - highestarr > 0) &
-                      (ATR_short-ATR_long > 0), 1, 0)
-    orders = np.where((low_array - lowestarr) < 0, -1, trends)
-    shiftorder = np.roll(orders, 1)
-    shiftorder[0] = 0
+    shiftorder = TurtleStrategy(
+            high_array, highestarr, ATR_short, ATR_long, low_array, lowestarr)
 
     # 主循環區域
     for i in range(Length):
@@ -557,7 +552,7 @@ def logic_order(
     # for i in range(Length):
     #     print("部位:", marketpostion_array[i], "進場價格:", entryprice_array[i],
     #           "買入手續費", buy_Fees_array[i], "賣出手續費:", sell_Fees_array[i])
-    
+
     neworders = get_order(marketpostion_array)
     return neworders, marketpostion_array, entryprice_array, buy_Fees_array, sell_Fees_array, OpenPostionprofit_array, ClosedPostionprofit_array, profit_array, Gross_profit_array, Gross_loss_array, all_Fees_array, netprofit_array
 
@@ -597,3 +592,13 @@ def logic_order(
 #     orders = np.array(get_order(marketpostion_array))
 
 #     return orders, entryprice_array, buy_Fees_array, sell_Fees_array, OpenPostionprofit_array, ClosedPostionprofit_array, profit_array, Gross_profit_array, Gross_loss_array, all_Fees_array, netprofit_array
+
+
+@njit
+def TurtleStrategy(high_array, highestarr, ATR_short, ATR_long, low_array, lowestarr):
+    trends = np.where((high_array - highestarr > 0) &
+                      (ATR_short-ATR_long > 0), 1, 0)
+    orders = np.where((low_array - lowestarr) < 0, -1, trends)
+    shiftorder = np.roll(orders, 1)
+    shiftorder[0] = 0
+    return shiftorder
