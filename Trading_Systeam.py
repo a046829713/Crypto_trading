@@ -9,6 +9,7 @@ import sys
 # 下單物件未完成測試
 # 實際測試
 
+
 class Trading_systeam():
     def __init__(self) -> None:
         self.symbol_map = {}
@@ -23,11 +24,7 @@ class Trading_systeam():
         return example
 
         # 取得交易標的(頻率不需要太頻繁 一個月一次即可)
-        # ['solusdt-f-d', 1.517890576242979],
-        # ['avaxusdt-f-d', 0.8844715966080059],
-        # ['compusdt-f-d', 0.8142903121982619],
-        # ['aaveusdt-f-d', 0.5655210439257492],
-        # ['defiusdt-f-d', 0.5171522556390977]
+        # ['SOLUSDT', 1.517890576242979], ['AVAXUSDT', 0.8844715966080059], ['COMPUSDT', 0.8142903121982619], ['AAVEUSDT', 0.5655210439257492], ['DEFIUSDT', 0.5171522556390977]
 
     def printfunc(self, *args):
         out_str = ''

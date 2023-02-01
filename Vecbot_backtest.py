@@ -19,7 +19,7 @@ class Quantify_systeam(object):
             設定基礎時間跟基本資訊
         """
         self.strategy1 = Strategy_base(
-            "BTCUSDT-15K-OB", "BTCUSDT", 15, 1.0, 0.002, 0.0025, lookback_date='2020-01-01')
+            "AVAXUSDT-15K-OB", "AVAXUSDT", 15, 1.0, 0.002, 0.0025, lookback_date='2020-01-01')
 
         self.strategy2 = Strategy_base(
             "ETHUSDT-15K-OB", "ETHUSDT", 15, 1.0, 0.002, 0.0025, lookback_date='2020-01-01')
@@ -31,7 +31,7 @@ class Quantify_systeam(object):
         """
             用來計算最佳化的參數
         """
-        ordermap = Np_Order_Strategy(self.strategy3)
+        ordermap = Np_Order_Strategy(self.strategy1)
         inputs_parameter = {"highest_n1": np.arange(50, 800, 20, dtype=np.int16),
                             "lowest_n2": np.arange(50, 800, 20, dtype=np.int16),
                             'ATR_short1': np.arange(10, 200, 10, dtype=np.float_),
@@ -128,6 +128,7 @@ class Quantify_systeam_online(object):
         """
             正式投資組合上線環境
             先將基本資訊註冊
+            並放入策略參數
         """
 
         self.Trader.register(
@@ -161,4 +162,4 @@ class Quantify_systeam_online(object):
 
 if __name__ == "__main__":
     systeam = Quantify_systeam()
-    systeam.PortfolioBacktesting()
+    systeam.optimize()

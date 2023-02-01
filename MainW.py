@@ -12,7 +12,7 @@ from Trading_Systeam import GUI_Trading_systeam
 from PyQt6.QtCore import QThread
 from DataProvider import DataProvider
 import pandas as pd
-
+import LINE_Alert
 
 class Ui_Form(object):
     def setupUi(self, Form):
@@ -101,6 +101,10 @@ class Ui_Form(object):
         self.btn_Portfolio.setText(_translate("Form", "投資組合回測"))
 
     def click_btn_trade(self):
+        self.LINE_Thread = QThread()
+        self.LINE_Thread.run = LINE_Alert.req_line_alert("正式交易啟動")
+        self.LINE_Thread.start()
+        
         self.systeam = GUI_Trading_systeam(self)
         self.Trading_systeam_Thread = QThread()
         self.Trading_systeam_Thread.run = self.systeam.main
