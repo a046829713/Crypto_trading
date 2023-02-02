@@ -118,7 +118,11 @@ class GUI_Trading_systeam(Trading_systeam):
         self.line_alert = LINE_Alert()
 
     def printfunc(self, *args):
-        self.GUI.print_info(*args)
+        out_str = ''
+        for i in args:
+            out_str += str(i)+" "
+            print("GUI測試進入", out_str)
+            self.GUI.trade_info.append(out_str)
 
 
 if __name__ == '__main__':
