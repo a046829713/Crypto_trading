@@ -4,7 +4,7 @@ from Vecbot_backtest import Quantify_systeam_online
 import time
 from datetime import datetime
 import sys
-import LINE_Alert
+from LINE_Alert import LINE_Alert
 
 # 下單物件未完成測試
 # 實際測試
@@ -16,6 +16,7 @@ class Trading_systeam():
         self.engine = Quantify_systeam_online()
         # formal正式啟動環境
         self.dataprovider_online = DataProvider_online(formal=True)
+        self.line_alert = LINE_Alert()
 
     def get_target_symbol(self):
         dataprovider = DataProvider(time_type='D')
@@ -34,6 +35,7 @@ class Trading_systeam():
 
     def main(self):
         self.printfunc("開始交易!!!")
+        self.line_alert.req_line_alert('Crypto_trading 正式交易啟動')
         self.engine.Portfolio_online_register()
         symbol_name: list = self.engine.get_symbol_name()
 
@@ -86,14 +88,15 @@ class Trading_systeam():
                 self.printfunc("目前binance交易所內的部位狀態:", current_size)
 
                 # >>比對目前binance 內的部位狀態 進行交易
-                order_finally = self.dataprovider_online.transformer.calculation_size(
-                    last_status, current_size)
+                # order_finally = self.dataprovider_online.transformer.calculation_size(
+                #     last_status, current_size)
+                order_finally = {'BTCUSDT': 0.9496833688681066}
 
                 self.printfunc("差異單", order_finally)
 
                 if order_finally:
                     self.dataprovider_online.Binanceapp.execute_orders(
-                        order_finally)
+                        order_finally, self.line_alert)
 
                 self.printfunc("時間差", time.time() - begin_time)
                 last_min = datetime.now().minute
@@ -112,6 +115,7 @@ class GUI_Trading_systeam(Trading_systeam):
         # formal正式啟動環境
         self.dataprovider_online = DataProvider_online(formal=True)
         self.GUI = GUI
+        self.line_alert = LINE_Alert()
 
     def printfunc(self, *args):
         self.GUI.print_info(*args)

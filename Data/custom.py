@@ -293,7 +293,7 @@ class Binance_server(object):
 
         return out_put
 
-    def execute_orders(self, order_finally: dict, model=ORDER_TYPE_MARKET):
+    def execute_orders(self, order_finally: dict, line_alert, model=ORDER_TYPE_MARKET):
         """
             Execute orders to Binance.
             use for futures 
@@ -326,6 +326,9 @@ class Binance_server(object):
             GTC (Good-Till-Cancel)：訂單將持續到完成或您取消為止。
             IOC (Immediate-Or-Cancel)：訂單將嘗試以可用的價格和數量立即執行全部或部分訂單，然後取消訂單中任何剩餘的、未完成的部分。如果您下單時所選價格沒有數量可用，將立即取消。請注意，不支持冰山訂單。
             FOK (Fill-Or-Kill)：指示訂單立即全額執行（filled），否則將被取消（kill）。請注意，不支持冰山訂單。
+
+
+            line_alert: to send msg to LINE
         """
 
         self.trade_count += 1
@@ -363,6 +366,9 @@ class Binance_server(object):
                 order_timeInForce = 'IOC'
             else:
                 order_timeInForce = 'GTC'  # 這邊要在注意
+
+            line_alert.req_line_alert(
+                f"商品:{symbol}\n買賣別:{order_side}\n委託單:{order_type}\n委託類別:{order_timeInForce}\n委託數量:{order_quantity}")
 
             print(dict(side=order_side,
                        type=order_type,
