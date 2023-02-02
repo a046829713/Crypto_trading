@@ -12,6 +12,8 @@ from Trading_Systeam import GUI_Trading_systeam
 from PyQt6.QtCore import QThread
 from DataProvider import DataProvider
 import pandas as pd
+import time
+import threading
 
 
 class Ui_Form(object):
@@ -22,6 +24,7 @@ class Ui_Form(object):
         self.trade_info.setGeometry(QtCore.QRect(260, 20, 831, 491))
         self.trade_info.setReadOnly(True)
         self.trade_info.setObjectName("trade_info")
+
         self.layoutWidget = QtWidgets.QWidget(Form)
         self.layoutWidget.setGeometry(QtCore.QRect(30, 20, 200, 301))
         self.layoutWidget.setObjectName("layoutWidget")
@@ -103,15 +106,14 @@ class Ui_Form(object):
     def click_btn_trade(self):
         self.systeam = GUI_Trading_systeam(self)
         self.Trading_systeam_Thread = QThread()
+        self.Trading_systeam_Thread.setObjectName = "trade"
         self.Trading_systeam_Thread.run = self.systeam.main
         self.Trading_systeam_Thread.start()
 
-    def print_info(self, *args):
-        out_str = ''
-        for i in args:
-            out_str += str(i)+" "
-            print("GUI測試進入", out_str)
-            # self.trade_info.append(out_str)
+        self.checkthread = QThread()
+        self.checkthread.setObjectName = "check"
+        self.checkthread.run = self.check_all_thread
+        self.checkthread.start()
 
     def click_save_data(self):
         """ 保存資料並關閉程序 注意不能使用replace 資料長短問題"""
@@ -155,7 +157,7 @@ class Ui_Form(object):
                 if 'index' in merge_df.columns:
                     print('刪除')
                     merge_df.drop(columns=['index'], inplace=True)
-                    
+
                 # duplicated >> 重複 True 代表重複了
                 merge_df.set_index('Datetime', inplace=True)
                 merge_df = merge_df[~merge_df.index.duplicated(keep='last')]
@@ -187,6 +189,14 @@ class Ui_Form(object):
         self.data_Thread = QThread()
         self.data_Thread.run = self.dataprovider.reload_all_data
         self.data_Thread.start()
+
+    def check_all_thread(self):
+        while True:
+            for t in threading.enumerate():
+
+                print(t.name)
+            print("*"*120)
+            time.sleep(5)
 
 
 if __name__ == "__main__":

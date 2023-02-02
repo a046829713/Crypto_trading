@@ -375,7 +375,7 @@ class Binance_server(object):
                        symbol=symbol,
                        timeInForce=order_timeInForce,
                        quantity=order_quantity))
-
+            # {'side': 'BUY', 'type': 'MARKET', 'symbol': 'ETHUSDT', 'timeInForce': 'IOC', 'quantity': 0.001}
             # 丟入最後create 單裡面
             # self.client.futures_create_order(
             #     side=order_side,

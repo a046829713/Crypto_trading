@@ -5,6 +5,8 @@ import time
 from datetime import datetime
 import sys
 from LINE_Alert import LINE_Alert
+import threading
+
 
 # 下單物件未完成測試
 # 實際測試
@@ -90,7 +92,8 @@ class Trading_systeam():
                 # >>比對目前binance 內的部位狀態 進行交易
                 # order_finally = self.dataprovider_online.transformer.calculation_size(
                 #     last_status, current_size)
-                order_finally = {'BTCUSDT': 0.9496833688681066}
+
+                order_finally = {'ETHUSDT': 0.001}
 
                 self.printfunc("差異單", order_finally)
 
@@ -114,15 +117,25 @@ class GUI_Trading_systeam(Trading_systeam):
         self.engine = Quantify_systeam_online()
         # formal正式啟動環境
         self.dataprovider_online = DataProvider_online(formal=True)
-        self.GUI = GUI
         self.line_alert = LINE_Alert()
 
+        self.GUI = GUI
+        # 用來保存所有的文字檔 並且判斷容量用
+        self.all_msg = []
+
     def printfunc(self, *args):
+
         out_str = ''
         for i in args:
             out_str += str(i)+" "
-            print("GUI測試進入", out_str)
-            self.GUI.trade_info.append(out_str)
+            
+        print(threading.current_thread().name, out_str)
+        self.all_msg.append(out_str)
+        # self.GUI.trade_info.append(out_str)
+
+        # if len(self.all_msg) >20:
+        #     self.all_msg = []
+        #     self.GUI.trade_info.clear()
 
 
 if __name__ == '__main__':
