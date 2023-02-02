@@ -4,7 +4,7 @@ from Vecbot_backtest import Quantify_systeam_online
 import time
 from datetime import datetime
 import sys
-
+import LINE_Alert
 
 # 下單物件未完成測試
 # 實際測試
@@ -88,10 +88,9 @@ class Trading_systeam():
                 # >>比對目前binance 內的部位狀態 進行交易
                 order_finally = self.dataprovider_online.transformer.calculation_size(
                     last_status, current_size)
-                
+
                 self.printfunc("差異單", order_finally)
-                
-                
+
                 if order_finally:
                     self.dataprovider_online.Binanceapp.execute_orders(
                         order_finally)

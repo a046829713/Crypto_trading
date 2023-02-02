@@ -19,5 +19,11 @@ def req_line_alert(str_msg):
     # 執行傳送測試文字
     # 使用post方法
     print('發送訊息')
-    r = requests.post("https://notify-api.line.me/api/notify",
-                      headers=headers, params=params)
+
+    try:
+        r = requests.post("https://notify-api.line.me/api/notify",
+                          headers=headers, params=params)
+
+        return r.status_code
+    except:
+        return "訊息無法傳送"
