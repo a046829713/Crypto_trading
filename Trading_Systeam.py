@@ -124,18 +124,16 @@ class GUI_Trading_systeam(Trading_systeam):
         self.all_msg = []
 
     def printfunc(self, *args):
-
         out_str = ''
         for i in args:
             out_str += str(i)+" "
-            
-        print(threading.current_thread().name, out_str)
-        self.all_msg.append(out_str)
-        # self.GUI.trade_info.append(out_str)
 
-        # if len(self.all_msg) >20:
-        #     self.all_msg = []
-        #     self.GUI.trade_info.clear()
+        self.all_msg.append(out_str)
+        self.GUI.update_trade_info_signal.emit(out_str)
+
+        if len(self.all_msg) > 20:
+            self.all_msg = []
+            self.GUI.clear_info_signal()
 
 
 if __name__ == '__main__':

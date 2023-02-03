@@ -41,4 +41,4 @@ if __name__ == "__main__":
     thread.started.connect(worker.work)
     thread.start()
 
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

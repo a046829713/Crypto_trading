@@ -8,12 +8,6 @@
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 import sys
-from Trading_Systeam import GUI_Trading_systeam
-from PyQt6.QtCore import QThread
-from DataProvider import DataProvider
-import pandas as pd
-import time
-import threading
 
 
 class Ui_Form(object):
@@ -103,106 +97,11 @@ class Ui_Form(object):
         self.btn_reloaddatamin.setText(_translate("Form", "重新回補所有分鐘資料"))
         self.btn_Portfolio.setText(_translate("Form", "投資組合回測"))
 
-    def click_btn_trade(self):
-        self.systeam = GUI_Trading_systeam(self)
-        self.Trading_systeam_Thread = QThread()
-        self.Trading_systeam_Thread.setObjectName = "trade"
-        self.Trading_systeam_Thread.run = self.systeam.main
-        self.Trading_systeam_Thread.start()
 
-        self.checkthread = QThread()
-        self.checkthread.setObjectName = "check"
-        self.checkthread.run = self.check_all_thread
-        self.checkthread.start()
-
-    def click_save_data(self):
-        """ 保存資料並關閉程序 注意不能使用replace 資料長短問題"""
-
-        def mergefunc():
-            for name, each_df in self.systeam.symbol_map.items():
-                print('目前商品', name)
-                each_df.reset_index(inplace=True)
-
-                print(
-                    '**********************************原始資料*****************************')
-                print(each_df.dtypes)
-                print(each_df)
-                print(
-                    '**********************************原始資料*****************************')
-
-                # 先將資料從DB撈取出來
-                tb_symbol_name = name + '-F'
-                tb_symbol_name = tb_symbol_name.lower()
-                db_df = self.systeam.dataprovider_online.SQL.read_Dateframe(
-                    tb_symbol_name)
-
-                db_df['Datetime'] = pd.to_datetime(db_df['Datetime'])
-                db_df.set_index('Datetime', inplace=True)
-                db_df = db_df.astype(float)
-                db_df.reset_index(inplace=True)
-
-                print(
-                    "*****************************資料庫資料******************************************")
-                print(db_df.dtypes)
-                print(db_df)
-                print(
-                    "*****************************資料庫資料******************************************")
-                merge_df = pd.concat([db_df, each_df], ignore_index=True)
-                print(
-                    "*****************************合併資料前******************************************")
-                print(merge_df)
-
-                print(
-                    "*****************************合併資料前******************************************")
-                if 'index' in merge_df.columns:
-                    print('刪除')
-                    merge_df.drop(columns=['index'], inplace=True)
-
-                # duplicated >> 重複 True 代表重複了
-                merge_df.set_index('Datetime', inplace=True)
-                merge_df = merge_df[~merge_df.index.duplicated(keep='last')]
-                print(
-                    "*****************************合併資料******************************************")
-                print(merge_df)
-                print(
-                    "*****************************合併資料******************************************")
-
-                print(
-                    '********************************商品資料回補完成!*************************************')
-                self.systeam.dataprovider_online.save_data(
-                    symbol_name=name, original_df=merge_df)
-
-            sys.exit()
-
-        self.save_data_Thread = QThread()
-        self.save_data_Thread.run = mergefunc
-        self.save_data_Thread.start()
-
-    def reload_data_day(self):
-        self.dataprovider = DataProvider(time_type='D')
-        self.data_Thread = QThread()
-        self.data_Thread.run = self.dataprovider.reload_all_data
-        self.data_Thread.start()
-
-    def reload_data_min(self):
-        self.dataprovider = DataProvider()
-        self.data_Thread = QThread()
-        self.data_Thread.run = self.dataprovider.reload_all_data
-        self.data_Thread.start()
-
-    def check_all_thread(self):
-        while True:
-            for t in threading.enumerate():
-
-                print(t.name)
-            print("*"*120)
-            time.sleep(5)
-
-
-if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-    Form = QtWidgets.QWidget()
-    ui = Ui_Form()
-    ui.setupUi(Form)
-    Form.show()
-    sys.exit(app.exec())
+# if __name__ == "__main__":
+#     app = QtWidgets.QApplication(sys.argv)
+#     Form = QtWidgets.QWidget()
+#     ui = Ui_Form()
+#     ui.setupUi(Form)
+#     Form.show()
+#     sys.exit(app.exec())
