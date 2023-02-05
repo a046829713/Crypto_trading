@@ -11,6 +11,7 @@ import numpy as np
 from utils import Debug_tool
 import pandas as pd
 from Count.Base import Event_count
+from AppSetting import AppSetting
 
 
 class Quantify_systeam(object):
@@ -18,14 +19,35 @@ class Quantify_systeam(object):
         """
             設定基礎時間跟基本資訊
         """
+
+        self.setting = AppSetting.get_setting()['Quantify_systeam']['history']
+        Attributes_data = self.setting['Attributes']
+
+        # ///////////////////////////////////////////////////
+        strategyName1 = "AVAXUSDT-15K-OB"
+        strategyAt_Data1 = Attributes_data[strategyName1]
+
         self.strategy1 = Strategy_base(
-            "AVAXUSDT-15K-OB", "AVAXUSDT", 15, 1.0, 0.002, 0.0025, lookback_date='2020-01-01')
+            strategyName1, strategyAt_Data1['symbol'], strategyAt_Data1['freq_time'], strategyAt_Data1['size'], strategyAt_Data1['fee'], strategyAt_Data1['slippage'], lookback_date=strategyAt_Data1['lookback_date'])
+
+        # ///////////////////////////////////////////////////
+        strategyName2 = "ETHUSDT-15K-OB"
+        strategyAt_Data2 = Attributes_data[strategyName2]
 
         self.strategy2 = Strategy_base(
-            "ETHUSDT-15K-OB", "ETHUSDT", 15, 1.0, 0.002, 0.0025, lookback_date='2020-01-01')
+            strategyName2, strategyAt_Data2['symbol'], strategyAt_Data2['freq_time'], strategyAt_Data2['size'], strategyAt_Data2['fee'], strategyAt_Data2['slippage'], lookback_date=strategyAt_Data2['lookback_date'])
+
+        # ///////////////////////////////////////////////////
+        strategyName3 = "SOLUSDT-15K-OB"
+        strategyAt_Data3 = Attributes_data[strategyName3]
 
         self.strategy3 = Strategy_base(
-            "SOLUSDT-15K-OB", "SOLUSDT", 15, 1.0, 0.002, 0.0025, lookback_date='2020-01-01')
+            strategyName3, strategyAt_Data3['symbol'], strategyAt_Data3['freq_time'], strategyAt_Data3['size'], strategyAt_Data3['fee'], strategyAt_Data3['slippage'], lookback_date=strategyAt_Data3['lookback_date'])
+
+        parameter_data = self.setting['parameter']
+        self.strategypa1 = parameter_data[strategyName1]
+        self.strategypa2 = parameter_data[strategyName2]
+        self.strategypa3 = parameter_data[strategyName3]
 
     def optimize(self):
         """
@@ -68,9 +90,8 @@ class Quantify_systeam(object):
         """
             普通回測模式
         """
-        ordermap = Np_Order_Strategy(self.strategy3)
-        ordermap.set_parameter(
-            {'highest_n1': 490, 'lowest_n2': 370, 'ATR_short1': 90.0, 'ATR_long2': 170.0})
+        ordermap = Np_Order_Strategy(self.strategy1)
+        ordermap.set_parameter(self.strategypa1)
         pf = ordermap.logic_order()
         Picture_maker(pf)
 
@@ -80,11 +101,9 @@ class Quantify_systeam(object):
         """
         app = PortfolioTrader()
         app.register(
-            self.strategy1, {'highest_n1': 570, 'lowest_n2': 370, 'ATR_short1': 100.0, 'ATR_long2': 190.0})
+            self.strategy1, self.strategypa1)
         app.register(
-            self.strategy2, {'highest_n1': 570, 'lowest_n2': 470, 'ATR_short1': 50.0, 'ATR_long2': 160.0})
-        app.register(
-            self.strategy3, {'highest_n1': 490, 'lowest_n2': 290, 'ATR_short1': 100.0, 'ATR_long2': 60.0})
+            self.strategy3, self.strategypa3)
 
         pf = app.logic_order()
         Picture_maker(pf)
@@ -162,4 +181,4 @@ class Quantify_systeam_online(object):
 
 if __name__ == "__main__":
     systeam = Quantify_systeam()
-    systeam.optimize()
+    systeam.PortfolioBacktesting()
