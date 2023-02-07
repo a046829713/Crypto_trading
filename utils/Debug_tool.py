@@ -17,6 +17,7 @@ class debug():
 
     @staticmethod
     def record_msg(error_msg: str, log_level=logging.debug):
+        print(error_msg)
         log_level(f'{error_msg}')
 
     @staticmethod

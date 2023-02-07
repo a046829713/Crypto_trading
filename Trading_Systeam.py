@@ -8,9 +8,11 @@ from LINE_Alert import LINE_Alert
 import threading
 
 
-# 下單物件未完成測試
-# 實際測試
 
+# 實際測試
+# 最後權益數的實際問題
+# log完善問題
+# 修正合約平倉
 
 class Trading_systeam():
     def __init__(self) -> None:
@@ -90,14 +92,16 @@ class Trading_systeam():
                 self.printfunc("目前binance交易所內的部位狀態:", current_size)
 
                 # >>比對目前binance 內的部位狀態 進行交易
-                # order_finally = self.dataprovider_online.transformer.calculation_size(
-                #     last_status, current_size)
+                order_finally = self.dataprovider_online.transformer.calculation_size(
+                    last_status, current_size)
 
-                order_finally = {'ETHUSDT': 0.001}
-
+                # 將order_finally 跟下單最小單位相比
+                order_finally = self.dataprovider_online.Binanceapp.change_min_postion(order_finally)
+                
                 self.printfunc("差異單", order_finally)
-
+                
                 if order_finally:
+                    print(order_finally)
                     self.dataprovider_online.Binanceapp.execute_orders(
                         order_finally, self.line_alert)
 

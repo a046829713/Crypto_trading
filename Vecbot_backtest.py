@@ -31,7 +31,7 @@ class Quantify_systeam(object):
             strategyName1, strategyAt_Data1['symbol'], strategyAt_Data1['freq_time'], strategyAt_Data1['size'], strategyAt_Data1['fee'], strategyAt_Data1['slippage'], lookback_date=strategyAt_Data1['lookback_date'])
 
         # ///////////////////////////////////////////////////
-        strategyName2 = "ETHUSDT-15K-OB"
+        strategyName2 = "COMPUSDT-15K-OB"
         strategyAt_Data2 = Attributes_data[strategyName2]
 
         self.strategy2 = Strategy_base(
@@ -44,16 +44,32 @@ class Quantify_systeam(object):
         self.strategy3 = Strategy_base(
             strategyName3, strategyAt_Data3['symbol'], strategyAt_Data3['freq_time'], strategyAt_Data3['size'], strategyAt_Data3['fee'], strategyAt_Data3['slippage'], lookback_date=strategyAt_Data3['lookback_date'])
 
+        # ///////////////////////////////////////////////////
+        strategyName4 = "AAVEUSDT-15K-OB"
+        strategyAt_Data4 = Attributes_data[strategyName4]
+
+        self.strategy4 = Strategy_base(
+            strategyName4, strategyAt_Data4['symbol'], strategyAt_Data4['freq_time'], strategyAt_Data4['size'], strategyAt_Data4['fee'], strategyAt_Data4['slippage'], lookback_date=strategyAt_Data4['lookback_date'])
+        
+        # ///////////////////////////////////////////////////
+        strategyName5 = "DEFIUSDT-15K-OB"
+        strategyAt_Data5 = Attributes_data[strategyName5]
+
+        self.strategy5 = Strategy_base(
+            strategyName5, strategyAt_Data5['symbol'], strategyAt_Data5['freq_time'], strategyAt_Data5['size'], strategyAt_Data5['fee'], strategyAt_Data5['slippage'], lookback_date=strategyAt_Data5['lookback_date'])
+
         parameter_data = self.setting['parameter']
         self.strategypa1 = parameter_data[strategyName1]
         self.strategypa2 = parameter_data[strategyName2]
         self.strategypa3 = parameter_data[strategyName3]
+        self.strategypa4 = parameter_data[strategyName4]
+        self.strategypa5 = parameter_data[strategyName5]
 
     def optimize(self):
         """
             用來計算最佳化的參數
         """
-        ordermap = Np_Order_Strategy(self.strategy1)
+        ordermap = Np_Order_Strategy(self.strategy5)
         inputs_parameter = {"highest_n1": np.arange(50, 800, 20, dtype=np.int16),
                             "lowest_n2": np.arange(50, 800, 20, dtype=np.int16),
                             'ATR_short1': np.arange(10, 200, 10, dtype=np.float_),
@@ -103,7 +119,13 @@ class Quantify_systeam(object):
         app.register(
             self.strategy1, self.strategypa1)
         app.register(
+            self.strategy2, self.strategypa2)
+        app.register(
             self.strategy3, self.strategypa3)
+        app.register(
+            self.strategy4, self.strategypa4)
+        app.register(
+            self.strategy5, self.strategypa5)
 
         pf = app.logic_order()
         Picture_maker(pf)
@@ -120,7 +142,7 @@ class Quantify_systeam_online(object):
             這邊的lookback_date 是指策略最早的接收日期，如果資料讀取沒有這麼多不影響
         """
         self.strategy1 = Strategy_atom(
-            "BTCUSDT-15K-OB", "BTCUSDT", 15, 1.0, 0.002, 0.0025, lookback_date='2021-01-01')
+            "SOLUSDT-15K-OB", "SOLUSDT", 15, 1.0, 0.002, 0.0025, lookback_date='2021-01-01')
 
         self.strategy2 = Strategy_atom(
             "ETHUSDT-15K-OB", "ETHUSDT", 15, 1.0, 0.002, 0.0025, lookback_date='2021-01-01')

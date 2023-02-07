@@ -616,6 +616,9 @@ class PortfolioTrader(object):
                         Portfolio_profit.append(profit)
                         sizes.append(size)
 
+        
+        print(Portfolio_ClosedPostionprofit)
+        
         Order_Info = Portfolio_Order_Info(
             datetimelist, orders, stragtegy_names, Portfolio_profit, Portfolio_ClosedPostionprofit, Portfolio_initcash, sizes)
 

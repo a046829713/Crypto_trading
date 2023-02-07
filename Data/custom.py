@@ -17,6 +17,7 @@ import json
 from utils.Date_time import parser_time
 from utils.Debug_tool import debug
 import time
+from Database import SQL_operate
 
 
 class BinanceDate(object):
@@ -293,7 +294,35 @@ class Binance_server(object):
 
         return out_put
 
-    def execute_orders(self, order_finally: dict, line_alert, model=ORDER_TYPE_MARKET):
+    def change_min_postion(self, order_finally: dict):
+        """
+            {"SOLUSDT": 1.35}
+            SOLUSDT 最小下單數量 1
+
+        """
+        # 取得最小單位限制
+        MinimumQuantity = self.getMinimumOrderQuantity()
+
+        out_dict = {}
+        for symbol, ready_to_order_size in order_finally.items():
+            # 取得 quantity數量
+            order_quantity = abs(ready_to_order_size)
+
+            if divmod(order_quantity, float(MinimumQuantity[symbol]))[0] == 0:
+                debug.record_msg(
+                    f"this {symbol}  is to small ,order_quantity:{order_quantity} and MinimumQuantity:{float(MinimumQuantity[symbol])}")
+
+            else:
+                filter_size = int(
+                    order_quantity / float(MinimumQuantity[symbol])) * float(MinimumQuantity[symbol])
+
+                # 依然要還原方向
+                out_dict.update({symbol: filter_size if order_quantity ==
+                                ready_to_order_size else -1 * filter_size})
+
+        return out_dict
+
+    def execute_orders(self, order_finally: dict, line_alert, model=ORDER_TYPE_MARKET, formal=False):
         """
             Execute orders to Binance.
             use for futures 
@@ -335,12 +364,7 @@ class Binance_server(object):
         print('目前交易次數', self.trade_count)
         print(f"進入下單,目前下單模式:{model}")
 
-        # 取得最小單位限制
-        MinimumQuantity = self.getMinimumOrderQuantity()
-
         for symbol, ready_to_order_size in order_finally.items():
-            # 先將各式各樣的參數準備好
-
             # 取得下單模式
             if model == 'MARKET':
                 order_type = ORDER_TYPE_MARKET
@@ -356,12 +380,6 @@ class Binance_server(object):
             # 取得 quantity數量
             order_quantity = abs(ready_to_order_size)
 
-            # 判斷是否足夠下單
-            if divmod(order_quantity, float(MinimumQuantity[symbol]))[0] == 0:
-                debug.record_msg(
-                    f"this {symbol}  is to small ,order_quantity:{order_quantity} and MinimumQuantity:{float(MinimumQuantity[symbol])}")
-                return
-
             if model == 'MARKET':
                 order_timeInForce = 'IOC'
             else:
@@ -370,17 +388,68 @@ class Binance_server(object):
             line_alert.req_line_alert(
                 f"商品:{symbol}\n買賣別:{order_side}\n委託單:{order_type}\n委託類別:{order_timeInForce}\n委託數量:{order_quantity}")
 
-            print(dict(side=order_side,
-                       type=order_type,
-                       symbol=symbol,
-                       timeInForce=order_timeInForce,
-                       quantity=order_quantity))
-            # {'side': 'BUY', 'type': 'MARKET', 'symbol': 'ETHUSDT', 'timeInForce': 'IOC', 'quantity': 0.001}
-            # 丟入最後create 單裡面
-            # self.client.futures_create_order(
-            #     side=order_side,
-            #     type=order_type,
-            #     symbol=symbol,
-            #     timeInForce=order_timeInForce,
-            #     quantity=order_quantity
-            # )
+            args = dict(side=order_side,
+                        type=order_type,
+                        symbol=symbol,
+                        quantity=order_quantity)
+
+            print(args)
+            if formal:
+                # 丟入最後create 單裡面
+                result = self.client.futures_create_order(**args)
+
+                # 將來這邊要拿掉
+                try:
+                    self.save_order_result(result)
+                except:
+                    debug.print_info(error_msg="保存系統order單錯誤")
+
+            else:
+                print("警告:,下單功能被關閉,若目前處於正式交易請重新開啟系統")
+
+    def save_order_result(self, order_data: dict):
+        """
+            下單完成之後伺服器會回傳一串dict
+            保存至本地磚資料夾
+
+        Args:
+            order_data (dict): # {'orderId': 22019361762, 'symbol': 'SOLUSDT', 'status': 'NEW', 'clientOrderId': 'yfobvBPbosaT0Zz38XNxHv', 'price': '0', 'avgPrice': '0.0000', 'origQty': '1', 'executedQty': '0', 'cumQty': '0', 'cumQuote': '0', 'timeInForce': 'GTC', 'type': 'MARKET', 'reduceOnly': False, 'closePosition': False, 'side': 'BUY', 'positionSide': 'BOTH', 'stopPrice': '0', 'workingType': 'CONTRACT_PRICE', 'priceProtect': False, 'origType': 'MARKET', 'updateTime': 1675580975203}
+        """
+        SQL = SQL_operate.DB_operate()
+        getAllTablesName = SQL.get_db_data('show tables;')
+        getAllTablesName = [y[0] for y in getAllTablesName]
+
+        if 'orderresult' not in getAllTablesName:
+            SQL.change_db_data(
+                """
+                    CREATE TABLE `crypto_data`.`orderresult`(
+                    `orderId` BIGINT NOT NULL,
+                    `symbol` varchar(255) NOT NULL,
+                    `status` varchar(255) NOT NULL,
+                    `clientOrderId` varchar(255) NOT NULL,
+                    `price` varchar(255) NOT NULL,
+                    `avgPrice` varchar(255) NOT NULL,
+                    `origQty` varchar(255) NOT NULL,
+                    `executedQty` varchar(255) NOT NULL,
+                    `cumQty` varchar(255) NOT NULL,
+                    `cumQuote` varchar(255) NOT NULL,
+                    `timeInForce` varchar(255) NOT NULL,
+                    `type` varchar(255) NOT NULL,
+                    `reduceOnly` BOOLEAN NOT NULL,
+                    `closePosition` BOOLEAN NOT NULL,
+                    `side` varchar(255) NOT NULL,
+                    `positionSide` varchar(255) NOT NULL,
+                    `stopPrice` varchar(255) NOT NULL,
+                    `workingType` varchar(255) NOT NULL,
+                    `priceProtect` BOOLEAN NOT NULL,
+                    `origType` varchar(255) NOT NULL,
+                    `updateTime` BIGINT NOT NULL,
+                    PRIMARY KEY(`orderId`)
+                    );
+                """
+            )
+
+        data = list(order_data.keys())
+        out_data = str(tuple([order_data[each_key] for each_key in data]))
+        SQL.change_db_data(
+            f""" INSERT INTO `orderresult` VALUES {out_data};""")
