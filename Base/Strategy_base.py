@@ -73,8 +73,9 @@ class Strategy_base(object):
 
         self.df.set_index("Datetime", inplace=True)
 
-        self.df = Datatransformer().get_tradedata(original_df=self.df, freq=self.freq_time)
-        self.df.index =  self.df.index.astype(str)    
+        self.df = Datatransformer().get_tradedata(
+            original_df=self.df, freq=self.freq_time)
+        self.df.index = self.df.index.astype(str)
         if self.lookback_date:
             self.df = self.df[self.df.index > self.lookback_date]
 
@@ -383,7 +384,7 @@ class Np_Order_Strategy(object):
         """
             用來創造閹割版的快速回測
         """
-        
+
         # 有些比較難使用向量化完成
         self.highestarr = vecbot_count.max_rolling(
             self.high_array, self.highest_n1)
@@ -510,7 +511,7 @@ class PortfolioTrader(object):
         data = {}
         for strategy in self.strategys:
             dict_data = strategy.df.to_dict('index')  # 這邊的DF 已經含有order了
-            
+
             for each_time in self.min_scale:
                 if each_time in data:
                     data[each_time].update(
@@ -518,7 +519,7 @@ class PortfolioTrader(object):
                 else:
                     data[each_time] = {
                         strategy.strategy_name: dict_data.get(each_time, None)}
-        
+
         return data
 
     def logic_order(self):
@@ -616,9 +617,9 @@ class PortfolioTrader(object):
                         Portfolio_profit.append(profit)
                         sizes.append(size)
 
-        
-        print(Portfolio_ClosedPostionprofit)
-        
+        # 系統資金校正 當差異值來到10% 發出賴通知
+        self.last_trade_money = Portfolio_ClosedPostionprofit[-1]
+
         Order_Info = Portfolio_Order_Info(
             datetimelist, orders, stragtegy_names, Portfolio_profit, Portfolio_ClosedPostionprofit, Portfolio_initcash, sizes)
 
@@ -639,6 +640,7 @@ class PortfolioOnline(PortfolioTrader):
         self.strategys = []
         self.strategys_maps = {}
         self.strategys_parameter = {}
+         
 
     def register(self, strategy_info: Strategy_atom, parameter: dict):
         """

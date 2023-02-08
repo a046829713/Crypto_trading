@@ -37,7 +37,7 @@ class DataProvider:
             print(f'{tb_symbol_name}-已經有存在的資料')
             # 當實時交易的時候減少 讀取數量
             if self.__class__.__name__ == 'DataProvider_online':
-                df = self.SQL.read_Dateframe(f'SELECT * FROM `{tb_symbol_name}` where Datetime > "2022-09-26"')
+                df = self.SQL.read_Dateframe(f'SELECT * FROM `{tb_symbol_name}` where Datetime > "2022-10-26"')
             else:
                 df = self.SQL.read_Dateframe(tb_symbol_name)
             

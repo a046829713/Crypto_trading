@@ -397,12 +397,7 @@ class Binance_server(object):
             if formal:
                 # 丟入最後create 單裡面
                 result = self.client.futures_create_order(**args)
-
-                # 將來這邊要拿掉
-                try:
-                    self.save_order_result(result)
-                except:
-                    debug.print_info(error_msg="保存系統order單錯誤")
+                self.save_order_result(result)
 
             else:
                 print("警告:,下單功能被關閉,若目前處於正式交易請重新開啟系統")
@@ -415,41 +410,49 @@ class Binance_server(object):
         Args:
             order_data (dict): # {'orderId': 22019361762, 'symbol': 'SOLUSDT', 'status': 'NEW', 'clientOrderId': 'yfobvBPbosaT0Zz38XNxHv', 'price': '0', 'avgPrice': '0.0000', 'origQty': '1', 'executedQty': '0', 'cumQty': '0', 'cumQuote': '0', 'timeInForce': 'GTC', 'type': 'MARKET', 'reduceOnly': False, 'closePosition': False, 'side': 'BUY', 'positionSide': 'BOTH', 'stopPrice': '0', 'workingType': 'CONTRACT_PRICE', 'priceProtect': False, 'origType': 'MARKET', 'updateTime': 1675580975203}
         """
-        SQL = SQL_operate.DB_operate()
-        getAllTablesName = SQL.get_db_data('show tables;')
-        getAllTablesName = [y[0] for y in getAllTablesName]
+        try:
+            SQL = SQL_operate.DB_operate()
+            getAllTablesName = SQL.get_db_data('show tables;')
+            getAllTablesName = [y[0] for y in getAllTablesName]
 
-        if 'orderresult' not in getAllTablesName:
+            if 'orderresult' not in getAllTablesName:
+                SQL.change_db_data(
+                    """
+                        CREATE TABLE `crypto_data`.`orderresult`(
+                        `orderId` BIGINT NOT NULL,
+                        `symbol` varchar(255) NOT NULL,
+                        `status` varchar(255) NOT NULL,
+                        `clientOrderId` varchar(255) NOT NULL,
+                        `price` varchar(255) NOT NULL,
+                        `avgPrice` varchar(255) NOT NULL,
+                        `origQty` varchar(255) NOT NULL,
+                        `executedQty` varchar(255) NOT NULL,
+                        `cumQty` varchar(255) NOT NULL,
+                        `cumQuote` varchar(255) NOT NULL,
+                        `timeInForce` varchar(255) NOT NULL,
+                        `type` varchar(255) NOT NULL,
+                        `reduceOnly` BOOLEAN NOT NULL,
+                        `closePosition` BOOLEAN NOT NULL,
+                        `side` varchar(255) NOT NULL,
+                        `positionSide` varchar(255) NOT NULL,
+                        `stopPrice` varchar(255) NOT NULL,
+                        `workingType` varchar(255) NOT NULL,
+                        `priceProtect` BOOLEAN NOT NULL,
+                        `origType` varchar(255) NOT NULL,
+                        `updateTime` BIGINT NOT NULL,
+                        PRIMARY KEY(`orderId`)
+                        );
+                    """
+                )
+
+            data = list(order_data.keys())
+            out_data = str(tuple([order_data[each_key] for each_key in data]))
             SQL.change_db_data(
-                """
-                    CREATE TABLE `crypto_data`.`orderresult`(
-                    `orderId` BIGINT NOT NULL,
-                    `symbol` varchar(255) NOT NULL,
-                    `status` varchar(255) NOT NULL,
-                    `clientOrderId` varchar(255) NOT NULL,
-                    `price` varchar(255) NOT NULL,
-                    `avgPrice` varchar(255) NOT NULL,
-                    `origQty` varchar(255) NOT NULL,
-                    `executedQty` varchar(255) NOT NULL,
-                    `cumQty` varchar(255) NOT NULL,
-                    `cumQuote` varchar(255) NOT NULL,
-                    `timeInForce` varchar(255) NOT NULL,
-                    `type` varchar(255) NOT NULL,
-                    `reduceOnly` BOOLEAN NOT NULL,
-                    `closePosition` BOOLEAN NOT NULL,
-                    `side` varchar(255) NOT NULL,
-                    `positionSide` varchar(255) NOT NULL,
-                    `stopPrice` varchar(255) NOT NULL,
-                    `workingType` varchar(255) NOT NULL,
-                    `priceProtect` BOOLEAN NOT NULL,
-                    `origType` varchar(255) NOT NULL,
-                    `updateTime` BIGINT NOT NULL,
-                    PRIMARY KEY(`orderId`)
-                    );
-                """
-            )
+                f""" INSERT INTO `orderresult` VALUES {out_data};""")
+        except:
+            debug.print_info(error_msg="保存系統order單錯誤")
 
-        data = list(order_data.keys())
-        out_data = str(tuple([order_data[each_key] for each_key in data]))
-        SQL.change_db_data(
-            f""" INSERT INTO `orderresult` VALUES {out_data};""")
+    def get_futuresaccountbalance(self) -> float:
+        for i in self.client.futures_account_balance():
+            if i['asset'] == 'USDT':
+                return float(i['balance'])

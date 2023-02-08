@@ -10,7 +10,7 @@ import threading
 
 # 實際測試
 # 最後權益數的實際問題
-# log完善問題
+# 系統斷線通知
 
 
 class Trading_systeam():
@@ -29,6 +29,12 @@ class Trading_systeam():
 
         # 取得交易標的(頻率不需要太頻繁 一個月一次即可)
         # ['SOLUSDT', 1.517890576242979], ['AVAXUSDT', 0.8844715966080059], ['COMPUSDT', 0.8142903121982619], ['AAVEUSDT', 0.5655210439257492], ['DEFIUSDT', 0.5171522556390977]
+
+    def check_money_level(self):
+        last_trade_money = self.engine.Trader.last_trade_money
+        balance = self.dataprovider_online.Binanceapp.get_futuresaccountbalance()
+        if (abs(balance-last_trade_money) / last_trade_money) * 100 > 10:
+            self.line_alert.req_line_alert("警告:請校正資金水位,投資組合水位差距超過百分之10")
 
     def printfunc(self, *args):
         out_str = ''
@@ -82,6 +88,10 @@ class Trading_systeam():
                 self.printfunc("開始進入回測")
                 # 註冊完資料之後進入回測
                 pf = self.engine.Portfolio_online_start()
+
+                # 檢查資金水位
+                self.check_money_level()
+
                 self.printfunc("最後資料表*************************************")
                 last_status = pf.get_last_status()
                 self.printfunc('目前交易狀態', last_status)
@@ -101,7 +111,6 @@ class Trading_systeam():
                 self.printfunc("差異單", order_finally)
 
                 if order_finally:
-                    print(order_finally)
                     self.dataprovider_online.Binanceapp.execute_orders(
                         order_finally, self.line_alert)
 
@@ -128,16 +137,16 @@ class GUI_Trading_systeam(Trading_systeam):
         self.all_msg = []
 
     def printfunc(self, *args):
+        if len(self.all_msg) > 20:
+            self.all_msg = []
+            self.GUI.clear_info_signal.emit()
+
         out_str = ''
         for i in args:
             out_str += str(i)+" "
 
         self.all_msg.append(out_str)
         self.GUI.update_trade_info_signal.emit(out_str)
-
-        if len(self.all_msg) > 20:
-            self.all_msg = []
-            self.GUI.clear_info_signal()
 
 
 if __name__ == '__main__':

@@ -3,10 +3,7 @@ from Database import router
 from sqlalchemy import text
 from utils import Debug_tool
 import pandas as pd
-
-
 class DB_operate():
-
     def wirte_data(self, quoteSymbol: str, out_list: list):
         """
         將商品資料寫入資料庫
@@ -22,7 +19,6 @@ class DB_operate():
                 )
         except Exception as e:
             Debug_tool.debug.print_info()
-            return e
 
     def get_db_data(self, text_msg: str) -> list:
         """
