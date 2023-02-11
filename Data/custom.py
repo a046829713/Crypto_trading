@@ -196,7 +196,7 @@ class BinanceDate(object):
 
         print('商品資料回補完成!')
         new_df = new_df.astype(float)
-        return new_df
+        return new_df, data
 
 
 class Binance_server(object):

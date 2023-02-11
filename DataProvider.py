@@ -37,11 +37,11 @@ class DataProvider:
             print(f'{tb_symbol_name}-已經有存在的資料')
             # 當實時交易的時候減少 讀取數量
             if self.__class__.__name__ == 'DataProvider_online':
-                df = self.SQL.read_Dateframe(f'SELECT * FROM `{tb_symbol_name}` where Datetime > "2022-10-26"')
+                df = self.SQL.read_Dateframe(
+                    f'SELECT * FROM `{tb_symbol_name}` where Datetime > "2022-10-26"')
             else:
                 df = self.SQL.read_Dateframe(tb_symbol_name)
-            
-            
+
             df['Datetime'] = df['Datetime'].astype(str)
         else:
             print('創建資料')
@@ -72,10 +72,10 @@ class DataProvider:
             catch_time = '1m'
 
         # 這邊的資料為原始的UTC資料 無任何加工
-        original_df = Data.custom.BinanceDate.download(
+        original_df, eachCatchDf = Data.custom.BinanceDate.download(
             df, f"{symbol_name}", catch_time)
 
-        return original_df
+        return original_df, eachCatchDf
 
     def get_symboldata(self, symbol_name='BTCUSDT', freq: int = 15, save=True):
         """
@@ -88,7 +88,7 @@ class DataProvider:
         new_df = self.transformer.get_tradedata(original_df, freq=freq)
         return new_df
 
-    def save_data(self, symbol_name, original_df, iflower=True):
+    def save_data(self, symbol_name, original_df, iflower=True, exists="replace"):
         """
             保存資料到SQL
         """
@@ -100,8 +100,11 @@ class DataProvider:
         if iflower:
             tb_symbol_name = tb_symbol_name.lower()
 
-        self.SQL.write_Dateframe(original_df, tb_symbol_name)
-        print(f"{tb_symbol_name}寫入完成")
+        if exists == 'replace':
+            self.SQL.write_Dateframe(original_df, tb_symbol_name)
+        else:
+            self.SQL.write_Dateframe(
+                original_df, tb_symbol_name, exists=exists)
 
     def reload_all_data(self):
         """
@@ -143,6 +146,7 @@ class DataProvider_online(DataProvider):
         """
             回補原始資料 並且保存
         """
+        print(symbol_name)
         original_df = self.reload_data(symbol_name)
         if save:
             self.save_data(symbol_name, original_df)
@@ -159,10 +163,10 @@ class DataProvider_online(DataProvider):
         df['Datetime'] = df['Datetime'].astype(str)
 
         # 這邊的資料為原始的UTC資料 無任何加工
-        original_df = Data.custom.BinanceDate.download(
+        original_df, eachCatchDf = Data.custom.BinanceDate.download(
             df, f"{symbol_name}", catch_time)
 
-        return original_df
+        return original_df, eachCatchDf
 
     def get_trade_data(self, original_df, freq):
         new_df = self.transformer.get_tradedata(original_df, freq=freq)
@@ -172,5 +176,5 @@ class DataProvider_online(DataProvider):
 if __name__ == "__main__":
     # dataprovider = DataProvider(time_type='D')
     dataprovider = DataProvider_online()
-    dataprovider.get_symboldata("ETHUSDT", save =True)
+    dataprovider.get_symboldata("ETHUSDT", save=True)
     # dataprovider.reload_all_data()

@@ -5,17 +5,19 @@ import time
 from datetime import datetime
 import sys
 from LINE_Alert import LINE_Alert
-import threading
+import pandas as pd
 
 
 # 實際測試
-# 最後權益數的實際問題
 # 系統斷線通知
-
+# 匯出requ
+# 修正保存資料 速度過慢
 
 class Trading_systeam():
     def __init__(self) -> None:
         self.symbol_map = {}
+        # 這次新產生的資料
+        self.new_symbol_map = {}
         self.engine = Quantify_systeam_online()
         # formal正式啟動環境
         self.dataprovider_online = DataProvider_online(formal=True)
@@ -36,11 +38,36 @@ class Trading_systeam():
         if (abs(balance-last_trade_money) / last_trade_money) * 100 > 10:
             self.line_alert.req_line_alert("警告:請校正資金水位,投資組合水位差距超過百分之10")
 
+    def wirte_time(self):
+        """
+            寫入保存時間
+        """
+        with open(r"Sysstatus.txt", 'w') as file:
+            file.write(str(datetime.now()))
+
     def printfunc(self, *args):
         out_str = ''
         for i in args:
             out_str += str(i)+" "
             print(out_str)
+
+    def get_catch(self, name, eachCatchDf):
+        """
+            取得當次回補的總資料並且不存在於DB之中
+
+
+        """
+        if name in self.new_symbol_map:
+            new_df = pd.concat(
+                [self.new_symbol_map[name].reset_index(), eachCatchDf])
+            new_df.set_index('Datetime', inplace=True)
+            # duplicated >> 重複 True 代表重複了
+            new_df = new_df[~new_df.index.duplicated(keep='last')]
+            
+        else:
+            eachCatchDf.set_index('Datetime', inplace=True)
+            self.new_symbol_map.update({name: eachCatchDf})
+
 
     def main(self):
         self.printfunc("開始交易!!!")
@@ -56,24 +83,24 @@ class Trading_systeam():
 
         # 先將資料從DB撈取出來
         for name in symbol_name:
-            original_df = self.dataprovider_online.get_symboldata(
+            original_df, eachCatchDf = self.dataprovider_online.get_symboldata(
                 name, save=False)
             self.symbol_map.update({name: original_df})
+            self.get_catch(name, eachCatchDf)
 
         last_min = None
         self.printfunc("資料讀取結束")
         # 透過迴圈回補資料
         while True:
             if datetime.now().minute != last_min or last_min is None:
-                # if True:
-                # 需要個別去計算每個loop所耗費的時間
-
                 begin_time = time.time()
                 # 取得原始資料
                 for name, each_df in self.symbol_map.items():
-                    original_df = self.dataprovider_online.reload_data_online(
+                    original_df, eachCatchDf = self.dataprovider_online.reload_data_online(
                         each_df, name)
+
                     self.symbol_map.update({name: original_df})
+                    self.get_catch(name, eachCatchDf)
 
                 info = self.engine.get_symbol_info()
                 for strategy_name, symbol_name, freq_time in info:
@@ -116,6 +143,7 @@ class Trading_systeam():
 
                 self.printfunc("時間差", time.time() - begin_time)
                 last_min = datetime.now().minute
+                self.wirte_time()
             else:
                 time.sleep(1)
 
@@ -127,6 +155,9 @@ class Trading_systeam():
 class GUI_Trading_systeam(Trading_systeam):
     def __init__(self, GUI) -> None:
         self.symbol_map = {}
+        # 這次新產生的資料
+        self.new_symbol_map = {}
+
         self.engine = Quantify_systeam_online()
         # formal正式啟動環境
         self.dataprovider_online = DataProvider_online(formal=True)
@@ -151,4 +182,4 @@ class GUI_Trading_systeam(Trading_systeam):
 
 if __name__ == '__main__':
     systeam = Trading_systeam()
-    print(systeam.get_target_symbol())
+    print(systeam.main())

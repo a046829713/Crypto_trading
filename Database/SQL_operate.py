@@ -3,6 +3,8 @@ from Database import router
 from sqlalchemy import text
 from utils import Debug_tool
 import pandas as pd
+
+
 class DB_operate():
     def wirte_data(self, quoteSymbol: str, out_list: list):
         """
@@ -77,7 +79,7 @@ class DB_operate():
         except:
             Debug_tool.debug.print_info()
 
-    def write_Dateframe(self, df: pd.DataFrame, symbol_name: str) -> pd.DataFrame:
+    def write_Dateframe(self, df: pd.DataFrame, symbol_name: str, exists='replace') -> pd.DataFrame:
         """
             to write pandas Dateframe
             symbol_name: 'btcusdt-f'
@@ -85,6 +87,6 @@ class DB_operate():
         try:
             self.userconn = router.Router().mysql_financialdata_conn
             with self.userconn as conn:
-                df.to_sql(symbol_name, con=conn, if_exists='replace')
+                df.to_sql(symbol_name, con=conn, if_exists=exists)
         except:
             Debug_tool.debug.print_info()

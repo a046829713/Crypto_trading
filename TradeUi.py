@@ -113,8 +113,21 @@ class TradeUI(QWidget, Ui_Form):
 
             sys.exit()
 
+        def newmerg():
+            for name, each_df in self.systeam.new_symbol_map.items():
+                print(name)
+                print(each_df)
+
+                # 不保存頭尾
+                each_df.drop([each_df.index[0],each_df.index[-1]], inplace=True)
+                if len(each_df) != 0:
+                    # 準備寫入資料庫裡面
+                    print('保存資料')
+                    self.systeam.dataprovider_online.save_data(symbol_name=name, original_df=each_df,exists="append")
+            sys.exit()
+            
         self.save_data_Thread = QThread()
-        self.save_data_Thread.run = mergefunc
+        self.save_data_Thread.run = newmerg
         self.save_data_Thread.start()
 
 
