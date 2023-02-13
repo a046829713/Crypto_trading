@@ -6,12 +6,13 @@ from datetime import datetime
 import sys
 from LINE_Alert import LINE_Alert
 import pandas as pd
-
+from utils import Debug_tool
+import logging
 
 # 實際測試
 # 系統斷線通知
-# 匯出requ
-# 修正保存資料 速度過慢
+
+
 
 class Trading_systeam():
     def __init__(self) -> None:
@@ -45,6 +46,8 @@ class Trading_systeam():
         with open(r"Sysstatus.txt", 'w') as file:
             file.write(str(datetime.now()))
 
+        self.printfunc('存活')
+        
     def printfunc(self, *args):
         out_str = ''
         for i in args:
@@ -166,6 +169,8 @@ class GUI_Trading_systeam(Trading_systeam):
         self.GUI = GUI
         # 用來保存所有的文字檔 並且判斷容量用
         self.all_msg = []
+        self.debug = Debug_tool.debug()
+        
 
     def printfunc(self, *args):
         if len(self.all_msg) > 20:
@@ -178,7 +183,7 @@ class GUI_Trading_systeam(Trading_systeam):
 
         self.all_msg.append(out_str)
         self.GUI.update_trade_info_signal.emit(out_str)
-
+        self.debug.record_msg(out_str,log_level=logging.error)
 
 if __name__ == '__main__':
     systeam = Trading_systeam()

@@ -537,7 +537,7 @@ class PortfolioTrader(object):
         self.data = self.get_data()
 
         levelage = 2  # 槓桿倍數
-        Portfolio_initcash = 10000  # 投資組合起始資金
+        Portfolio_initcash = 18000  # 投資組合起始資金
         ClosedPostionprofit = [Portfolio_initcash]
 
         strategy_order_info = {}  # 專門用來保存資料
@@ -619,7 +619,7 @@ class PortfolioTrader(object):
 
         # 系統資金校正 當差異值來到10% 發出賴通知
         self.last_trade_money = Portfolio_ClosedPostionprofit[-1]
-
+        print(self.last_trade_money)
         Order_Info = Portfolio_Order_Info(
             datetimelist, orders, stragtegy_names, Portfolio_profit, Portfolio_ClosedPostionprofit, Portfolio_initcash, sizes)
 
