@@ -81,7 +81,7 @@ class DataProvider:
         """
             取得回補完整且已經轉換過指定時間區段台灣時區之資料
         """
-        original_df = self.reload_data(symbol_name)
+        original_df, eachCatchDf = self.reload_data(symbol_name)
         if save:
             self.save_data(symbol_name, original_df)
 
@@ -112,7 +112,7 @@ class DataProvider:
 
         """
         for symbol_name in self.Binanceapp.get_targetsymobls():
-            original_df = self.reload_data(symbol_name)
+            original_df, eachCatchDf = self.reload_data(symbol_name)
             self.save_data(symbol_name, original_df)
 
     def get_symbols_history_data(self, iflower=True) -> list:
@@ -147,7 +147,7 @@ class DataProvider_online(DataProvider):
             回補原始資料 並且保存
         """
         print(symbol_name)
-        original_df = self.reload_data(symbol_name)
+        original_df, eachCatchDf = self.reload_data(symbol_name)
         if save:
             self.save_data(symbol_name, original_df)
 
