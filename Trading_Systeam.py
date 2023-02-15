@@ -10,7 +10,7 @@ from utils import Debug_tool
 import logging
 
 # 實際測試
-# 系統斷線通知
+# 修正回補速度過慢
 
 
 

@@ -5,6 +5,7 @@ import pandas as pd
 from Datatransformer import Datatransformer
 from typing import Optional
 from utils.Debug_tool import debug
+import logging
 
 
 class DataProvider:
@@ -36,6 +37,11 @@ class DataProvider:
         if tb_symbol_name in symbol_name_list:
             print(f'{tb_symbol_name}-已經有存在的資料')
             # 當實時交易的時候減少 讀取數量
+
+            # SELECT * FROM `btcusdt-f`  ORDER BY Datetime DESC LIMIT 20;
+            #             SELECT * FROM (
+            #     SELECT * FROM `btcusdt-f` ORDER BY Datetime DESC LIMIT 20
+            # ) t ORDER BY Datetime ASC;
             if self.__class__.__name__ == 'DataProvider_online':
                 df = self.SQL.read_Dateframe(
                     f'SELECT * FROM `{tb_symbol_name}` where Datetime > "2022-10-26"')
@@ -109,11 +115,20 @@ class DataProvider:
     def reload_all_data(self):
         """
             用來回補所有symbol的歷史資料
-
+            為了避免寫入過慢 更改成append
         """
         for symbol_name in self.Binanceapp.get_targetsymobls():
-            original_df, eachCatchDf = self.reload_data(symbol_name)
-            self.save_data(symbol_name, original_df)
+            try:
+                original_df, eachCatchDf = self.reload_data(symbol_name)
+                eachCatchDf.drop(
+                    [eachCatchDf.index[0], eachCatchDf.index[-1]], inplace=True)
+                if len(eachCatchDf) != 0:
+                    eachCatchDf.set_index('Datetime', inplace=True)
+                    self.save_data(symbol_name, eachCatchDf, exists="append")
+            except:
+                debug.print_info()
+                debug.record_msg(
+                    error_msg=f"symbol = {symbol_name}", log_level=logging.error)
 
     def get_symbols_history_data(self, iflower=True) -> list:
         """
@@ -146,7 +161,6 @@ class DataProvider_online(DataProvider):
         """
             回補原始資料 並且保存
         """
-        print(symbol_name)
         original_df, eachCatchDf = self.reload_data(symbol_name)
         if save:
             self.save_data(symbol_name, original_df)
@@ -173,8 +187,8 @@ class DataProvider_online(DataProvider):
         return new_df
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     # dataprovider = DataProvider(time_type='D')
-    dataprovider = DataProvider_online()
-    dataprovider.get_symboldata("ETHUSDT", save=True)
+    # dataprovider = DataProvider_online()
+    # dataprovider.get_symboldata("ETHUSDT", save=True)
     # dataprovider.reload_all_data()
