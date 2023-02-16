@@ -6,6 +6,7 @@ from Datatransformer import Datatransformer
 from typing import Optional
 from utils.Debug_tool import debug
 import logging
+import time
 
 
 class DataProvider:
@@ -21,7 +22,7 @@ class DataProvider:
         self.transformer = Datatransformer()
         self.time_type = time_type
 
-    def reload_data(self, symbol_name='BTCUSDT', iflower=True):
+    def reload_data(self, symbol_name='BTCUSDT', iflower=True, reload_type=None):
         # 先檢查是否有相關資料 取得目前所有列
         symbol_name_list = self.SQL.get_db_data('show tables;')
         symbol_name_list = [y[0] for y in symbol_name_list]
@@ -38,16 +39,16 @@ class DataProvider:
             print(f'{tb_symbol_name}-已經有存在的資料')
             # 當實時交易的時候減少 讀取數量
 
-            # SELECT * FROM `btcusdt-f`  ORDER BY Datetime DESC LIMIT 20;
-            #             SELECT * FROM (
-            #     SELECT * FROM `btcusdt-f` ORDER BY Datetime DESC LIMIT 20
-            # ) t ORDER BY Datetime ASC;
-            if self.__class__.__name__ == 'DataProvider_online':
+            if reload_type == 'History':
+                SQL_Q = f"""SELECT * FROM ( SELECT * FROM `{tb_symbol_name}` ORDER BY Datetime DESC LIMIT 20 ) t ORDER BY Datetime ASC;"""
+                df = self.SQL.read_Dateframe(SQL_Q)
+            elif reload_type == 'Online':
                 df = self.SQL.read_Dateframe(
                     f'SELECT * FROM `{tb_symbol_name}` where Datetime > "2022-10-26"')
-            else:
+            elif reload_type == 'all_data':
                 df = self.SQL.read_Dateframe(tb_symbol_name)
 
+            # 這邊竟然會出現df是None的狀態 有點匪夷所思
             df['Datetime'] = df['Datetime'].astype(str)
         else:
             print('創建資料')
@@ -87,7 +88,8 @@ class DataProvider:
         """
             取得回補完整且已經轉換過指定時間區段台灣時區之資料
         """
-        original_df, eachCatchDf = self.reload_data(symbol_name)
+        original_df, eachCatchDf = self.reload_data(
+            symbol_name, reload_type="all_data")
         if save:
             self.save_data(symbol_name, original_df)
 
@@ -119,12 +121,14 @@ class DataProvider:
         """
         for symbol_name in self.Binanceapp.get_targetsymobls():
             try:
-                original_df, eachCatchDf = self.reload_data(symbol_name)
+                original_df, eachCatchDf = self.reload_data(
+                    symbol_name, reload_type="History")
                 eachCatchDf.drop(
                     [eachCatchDf.index[0], eachCatchDf.index[-1]], inplace=True)
                 if len(eachCatchDf) != 0:
                     eachCatchDf.set_index('Datetime', inplace=True)
-                    self.save_data(symbol_name, eachCatchDf, exists="append")
+                    print(eachCatchDf)
+                    # self.save_data(symbol_name, eachCatchDf, exists="append")
             except:
                 debug.print_info()
                 debug.record_msg(
@@ -161,7 +165,8 @@ class DataProvider_online(DataProvider):
         """
             回補原始資料 並且保存
         """
-        original_df, eachCatchDf = self.reload_data(symbol_name)
+        original_df, eachCatchDf = self.reload_data(
+            symbol_name, reload_type="Online")
         if save:
             self.save_data(symbol_name, original_df)
 
@@ -187,8 +192,6 @@ class DataProvider_online(DataProvider):
         return new_df
 
 
-# if __name__ == "__main__":
-    # dataprovider = DataProvider(time_type='D')
-    # dataprovider = DataProvider_online()
-    # dataprovider.get_symboldata("ETHUSDT", save=True)
-    # dataprovider.reload_all_data()
+if __name__ == "__main__":
+    dataprovider = DataProvider()
+    dataprovider.get_symboldata("ASTRUSDT", save=True)
