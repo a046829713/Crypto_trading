@@ -13,7 +13,6 @@ import logging
 # 修正回補速度過慢
 
 
-
 class Trading_systeam():
     def __init__(self) -> None:
         self.symbol_map = {}
@@ -47,7 +46,7 @@ class Trading_systeam():
             file.write(str(datetime.now()))
 
         self.printfunc('存活')
-        
+
     def printfunc(self, *args):
         out_str = ''
         for i in args:
@@ -66,11 +65,10 @@ class Trading_systeam():
             new_df.set_index('Datetime', inplace=True)
             # duplicated >> 重複 True 代表重複了
             new_df = new_df[~new_df.index.duplicated(keep='last')]
-            
+
         else:
             eachCatchDf.set_index('Datetime', inplace=True)
             self.new_symbol_map.update({name: eachCatchDf})
-
 
     def main(self):
         self.printfunc("開始交易!!!")
@@ -142,7 +140,7 @@ class Trading_systeam():
 
                 if order_finally:
                     self.dataprovider_online.Binanceapp.execute_orders(
-                        order_finally, self.line_alert)
+                        order_finally, self.line_alert, formal=True)
 
                 self.printfunc("時間差", time.time() - begin_time)
                 last_min = datetime.now().minute
@@ -170,7 +168,6 @@ class GUI_Trading_systeam(Trading_systeam):
         # 用來保存所有的文字檔 並且判斷容量用
         self.all_msg = []
         self.debug = Debug_tool.debug()
-        
 
     def printfunc(self, *args):
         if len(self.all_msg) > 20:
@@ -183,7 +180,8 @@ class GUI_Trading_systeam(Trading_systeam):
 
         self.all_msg.append(out_str)
         self.GUI.update_trade_info_signal.emit(out_str)
-        self.debug.record_msg(out_str,log_level=logging.error)
+        self.debug.record_msg(out_str, log_level=logging.error)
+
 
 if __name__ == '__main__':
     systeam = Trading_systeam()

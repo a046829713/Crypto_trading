@@ -49,8 +49,6 @@ class DataProvider:
             elif reload_type == 'all_data':
                 df = self.SQL.read_Dateframe(tb_symbol_name)
 
-            
-            
             # 這邊竟然會出現df是None的狀態 有點匪夷所思
             # 這邊的問題是只創建未保存 所以下次會出現問題 因為測試的關係
             df['Datetime'] = df['Datetime'].astype(str)
@@ -175,7 +173,7 @@ class DataProvider_online(DataProvider):
         if save:
             self.save_data(symbol_name, original_df)
 
-        return original_df
+        return original_df, eachCatchDf
 
     def reload_data_online(self, df: pd.DataFrame, symbol_name):
         if self.time_type == 'D':
@@ -197,8 +195,10 @@ class DataProvider_online(DataProvider):
         return new_df
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     # agixusdt-f AGIXUSDT.
     # PHBUSDT
-    dataprovider = DataProvider()
-    dataprovider.get_symboldata("GMXUSDT", save=True)
+    # dataprovider = DataProvider()
+    # dataprovider.get_symboldata("DEFIUSDT", save=True)
+    #
+    #
