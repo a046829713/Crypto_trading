@@ -188,7 +188,7 @@ class BinanceDate(object):
             original_df['Datetime'] = pd.to_datetime(original_df['Datetime'])
             new_df = pd.concat([original_df, data])
         else:
-            new_df = data
+            new_df = data.copy(deep=True)
 
         new_df.set_index('Datetime', inplace=True)
         # duplicated >> 重複 True 代表重複了

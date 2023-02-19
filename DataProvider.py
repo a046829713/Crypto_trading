@@ -42,13 +42,17 @@ class DataProvider:
             if reload_type == 'History':
                 SQL_Q = f"""SELECT * FROM ( SELECT * FROM `{tb_symbol_name}` ORDER BY Datetime DESC LIMIT 20 ) t ORDER BY Datetime ASC;"""
                 df = self.SQL.read_Dateframe(SQL_Q)
+                print(df)
             elif reload_type == 'Online':
                 df = self.SQL.read_Dateframe(
                     f'SELECT * FROM `{tb_symbol_name}` where Datetime > "2022-10-26"')
             elif reload_type == 'all_data':
                 df = self.SQL.read_Dateframe(tb_symbol_name)
 
+            
+            
             # 這邊竟然會出現df是None的狀態 有點匪夷所思
+            # 這邊的問題是只創建未保存 所以下次會出現問題 因為測試的關係
             df['Datetime'] = df['Datetime'].astype(str)
         else:
             print('創建資料')
@@ -123,12 +127,13 @@ class DataProvider:
             try:
                 original_df, eachCatchDf = self.reload_data(
                     symbol_name, reload_type="History")
+
                 eachCatchDf.drop(
                     [eachCatchDf.index[0], eachCatchDf.index[-1]], inplace=True)
+
                 if len(eachCatchDf) != 0:
                     eachCatchDf.set_index('Datetime', inplace=True)
-                    print(eachCatchDf)
-                    # self.save_data(symbol_name, eachCatchDf, exists="append")
+                    self.save_data(symbol_name, eachCatchDf, exists="append")
             except:
                 debug.print_info()
                 debug.record_msg(
@@ -193,5 +198,7 @@ class DataProvider_online(DataProvider):
 
 
 if __name__ == "__main__":
+    # agixusdt-f AGIXUSDT.
+    # PHBUSDT
     dataprovider = DataProvider()
-    dataprovider.get_symboldata("ASTRUSDT", save=True)
+    dataprovider.get_symboldata("GMXUSDT", save=True)
