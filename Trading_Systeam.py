@@ -79,9 +79,11 @@ class Trading_systeam():
         # 初始化商品槓桿
         for each_symbol in symbol_name:
             Response = self.dataprovider_online.Binanceapp.client.futures_change_leverage(
-                symbol=each_symbol, leverage=20)
+                symbol=each_symbol, leverage=10)
             self.printfunc(Response)
 
+
+        
         # 先將資料從DB撈取出來
         for name in symbol_name:
             original_df, eachCatchDf = self.dataprovider_online.get_symboldata(
@@ -185,4 +187,4 @@ class GUI_Trading_systeam(Trading_systeam):
 
 if __name__ == '__main__':
     systeam = Trading_systeam()
-    print(systeam.main())
+    systeam.main()

@@ -308,11 +308,7 @@ class Binance_server(object):
             # 取得 quantity數量
             order_quantity = abs(ready_to_order_size)
 
-            if divmod(order_quantity, float(MinimumQuantity[symbol]))[0] == 0:
-                debug.record_msg(
-                    f"this {symbol}  is to small ,order_quantity:{order_quantity} and MinimumQuantity:{float(MinimumQuantity[symbol])}")
-
-            else:
+            if divmod(order_quantity, float(MinimumQuantity[symbol]))[0] != 0:
                 filter_size = int(
                     order_quantity / float(MinimumQuantity[symbol])) * float(MinimumQuantity[symbol])
 
