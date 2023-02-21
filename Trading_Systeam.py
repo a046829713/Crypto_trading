@@ -9,8 +9,7 @@ import pandas as pd
 from utils import Debug_tool
 import logging
 
-# 實際測試
-# 修正回補速度過慢
+# 修正寫入程序狀態碼位置
 
 
 class Trading_systeam():
@@ -38,14 +37,26 @@ class Trading_systeam():
         if (abs(balance-last_trade_money) / last_trade_money) * 100 > 10:
             self.line_alert.req_line_alert("警告:請校正資金水位,投資組合水位差距超過百分之10")
 
-    def wirte_time(self):
+    def timewritersql(self):
         """
             寫入保存時間
         """
         with open(r"Sysstatus.txt", 'w') as file:
             file.write(str(datetime.now()))
 
-        self.printfunc('存活')
+        getAllTablesName = self.dataprovider_online.SQL.get_db_data(
+            'show tables;')
+        getAllTablesName = [y[0] for y in getAllTablesName]
+
+        if 'sysstatus' not in getAllTablesName:
+            # 將其更改為寫入DB
+            self.dataprovider_online.SQL.change_db_data(
+                """CREATE TABLE `crypto_data`.`sysstatus`(`ID` varchar(255) NOT NULL,`systeam_datetime` varchar(255) NOT NULL,PRIMARY KEY(`ID`));""")
+            self.dataprovider_online.SQL.change_db_data(
+                """INSERT INTO `sysstatus` VALUES ('1','2023-02-21 17:07:57.184614');""")
+        else:
+            self.dataprovider_online.SQL.change_db_data(
+                f""" UPDATE `sysstatus` SET `systeam_datetime`='{str(datetime.now())}' WHERE `ID`='1';""")
 
     def printfunc(self, *args):
         out_str = ''
@@ -82,8 +93,6 @@ class Trading_systeam():
                 symbol=each_symbol, leverage=10)
             self.printfunc(Response)
 
-
-        
         # 先將資料從DB撈取出來
         for name in symbol_name:
             original_df, eachCatchDf = self.dataprovider_online.get_symboldata(
@@ -142,11 +151,11 @@ class Trading_systeam():
 
                 if order_finally:
                     self.dataprovider_online.Binanceapp.execute_orders(
-                        order_finally, self.line_alert, formal=True)
+                        order_finally, self.line_alert, formal=False)
 
                 self.printfunc("時間差", time.time() - begin_time)
                 last_min = datetime.now().minute
-                self.wirte_time()
+                self.timewritersql()
             else:
                 time.sleep(1)
 
