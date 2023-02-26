@@ -1,21 +1,21 @@
-2023-02-21 17:16 ERROR 開始交易!!! 
-2023-02-21 17:16 ERROR {'symbol': 'SOLUSDT', 'leverage': 10, 'maxNotionalValue': '1000000'} 
-2023-02-21 17:16 ERROR {'symbol': 'COMPUSDT', 'leverage': 10, 'maxNotionalValue': '100000'} 
-2023-02-21 17:16 ERROR {'symbol': 'AVAXUSDT', 'leverage': 10, 'maxNotionalValue': '1000000'} 
-2023-02-21 17:16 ERROR {'symbol': 'AAVEUSDT', 'leverage': 10, 'maxNotionalValue': '25000'} 
-2023-02-21 17:16 ERROR {'symbol': 'DEFIUSDT', 'leverage': 10, 'maxNotionalValue': '25000'} 
-2023-02-21 17:17 ERROR 資料讀取結束 
-2023-02-21 17:17 ERROR 開始進入回測 
-2023-02-21 17:17 ERROR 最後資料表************************************* 
-2023-02-21 17:17 ERROR 目前交易狀態 {'DEFIUSDT-15K-OB': [1.0, 9.191964723186372], 'AAVEUSDT-15K-OB': [1.0, 62.72404610441127], 'SOLUSDT-15K-OB': [1.0, 250.41178585467998], 'AVAXUSDT-15K-OB': [1.0, 276.0963027693562], 'COMPUSDT-15K-OB': [1.0, 104.38534592214236]} 
-2023-02-21 17:17 ERROR 最後資料表************************************* 
-2023-02-21 17:17 ERROR 目前binance交易所內的部位狀態: {'SOLUSDT': '250', 'AAVEUSDT': '62.7', 'AVAXUSDT': '276', 'DEFIUSDT': '9.190', 'COMPUSDT': '104.390'} 
-2023-02-21 17:17 ERROR 差異單 {} 
-2023-02-21 17:17 ERROR 時間差 24.036940336227417 
-2023-02-21 17:18 ERROR 開始進入回測 
-2023-02-21 17:18 ERROR 最後資料表************************************* 
-2023-02-21 17:18 ERROR 目前交易狀態 {'DEFIUSDT-15K-OB': [1.0, 9.191964723186372], 'AAVEUSDT-15K-OB': [1.0, 62.72404610441127], 'SOLUSDT-15K-OB': [1.0, 250.41178585467998], 'AVAXUSDT-15K-OB': [1.0, 276.0963027693562], 'COMPUSDT-15K-OB': [1.0, 104.38534592214236]} 
-2023-02-21 17:18 ERROR 最後資料表************************************* 
-2023-02-21 17:18 ERROR 目前binance交易所內的部位狀態: {'SOLUSDT': '250', 'AAVEUSDT': '62.7', 'AVAXUSDT': '276', 'DEFIUSDT': '9.190', 'COMPUSDT': '104.390'} 
-2023-02-21 17:18 ERROR 差異單 {} 
-2023-02-21 17:18 ERROR 時間差 19.113399505615234 
+2023-02-26 08:58 ERROR 開始交易!!! 
+2023-02-26 08:58 ERROR {'symbol': 'AVAXUSDT', 'leverage': 10, 'maxNotionalValue': '1000000'} 
+2023-02-26 08:58 ERROR {'symbol': 'AAVEUSDT', 'leverage': 10, 'maxNotionalValue': '25000'} 
+2023-02-26 08:58 ERROR {'symbol': 'DEFIUSDT', 'leverage': 10, 'maxNotionalValue': '25000'} 
+2023-02-26 08:58 ERROR {'symbol': 'SOLUSDT', 'leverage': 10, 'maxNotionalValue': '1000000'} 
+2023-02-26 08:58 ERROR {'symbol': 'COMPUSDT', 'leverage': 10, 'maxNotionalValue': '100000'} 
+2023-02-26 08:59 ERROR 資料讀取結束 
+2023-02-26 08:59 ERROR 開始進入回測 
+2023-02-26 09:00 ERROR 最後資料表************************************* 
+2023-02-26 09:00 ERROR 目前交易狀態,校正之後 {'AAVEUSDT-15K-OB': [0.0, 0.0], 'SOLUSDT-15K-OB': [0.0, 0.0], 'COMPUSDT-15K-OB': [0.0, 0.0], 'DEFIUSDT-15K-OB': [0.0, 0.0], 'AVAXUSDT-15K-OB': [0.0, 0.0]} 
+2023-02-26 09:00 ERROR 最後資料表************************************* 
+2023-02-26 09:00 ERROR 目前binance交易所內的部位狀態: {} 
+2023-02-26 09:00 ERROR 差異單 {} 
+2023-02-26 09:00 ERROR 時間差 66.53415250778198 
+2023-02-26 09:01 ERROR 開始進入回測 
+2023-02-26 09:01 ERROR 最後資料表************************************* 
+2023-02-26 09:01 ERROR 目前交易狀態,校正之後 {'AAVEUSDT-15K-OB': [0.0, 0.0], 'SOLUSDT-15K-OB': [0.0, 0.0], 'COMPUSDT-15K-OB': [0.0, 0.0], 'DEFIUSDT-15K-OB': [0.0, 0.0], 'AVAXUSDT-15K-OB': [0.0, 0.0]} 
+2023-02-26 09:01 ERROR 最後資料表************************************* 
+2023-02-26 09:01 ERROR 目前binance交易所內的部位狀態: {} 
+2023-02-26 09:01 ERROR 差異單 {} 
+2023-02-26 09:01 ERROR 時間差 19.09434461593628 

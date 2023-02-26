@@ -9,7 +9,7 @@ import pandas as pd
 from utils import Debug_tool
 import logging
 
-# 修正寫入程序狀態碼位置
+# 修正自動配比biance 內的保證金數
 
 
 class Trading_systeam():
@@ -31,19 +31,44 @@ class Trading_systeam():
         # 取得交易標的(頻率不需要太頻繁 一個月一次即可)
         # ['SOLUSDT', 1.517890576242979], ['AVAXUSDT', 0.8844715966080059], ['COMPUSDT', 0.8142903121982619], ['AAVEUSDT', 0.5655210439257492], ['DEFIUSDT', 0.5171522556390977]
 
+    def change_money(self):
+        """
+            創建一個while 來重複校正這個金額
+            並且記錄建議值於DB
+            當下校正的時候 不會更改資料
+
+        Args:
+            last_trade_money (_type_): _description_
+            balance (_type_): _description_
+        """
+        # 當系統資金過多 要減少
+        balance = self.dataprovider_online.Binanceapp.get_futuresaccountbalance()
+
+        while (abs(balance-self.engine.Trader.last_trade_money) / self.engine.Trader.last_trade_money) * 100 > 5:
+            print("測試進入", "實際金額:", balance, "系統金額",
+                  self.engine.Trader.last_trade_money)
+            if self.engine.Trader.last_trade_money - balance > 0:
+                self.engine.Trader.Portfolio_initcash = self.engine.Trader.Portfolio_initcash*0.98
+            elif self.engine.Trader.last_trade_money - balance < 0:
+                self.engine.Trader.Portfolio_initcash = self.engine.Trader.Portfolio_initcash*1.02
+            print("初始資金:", self.engine.Trader.Portfolio_initcash)
+            self.engine.Trader.logic_order()
+
     def check_money_level(self):
+        """
+            取得實時運作的資金水位 並且發出賴通知
+        """
         last_trade_money = self.engine.Trader.last_trade_money
         balance = self.dataprovider_online.Binanceapp.get_futuresaccountbalance()
         if (abs(balance-last_trade_money) / last_trade_money) * 100 > 10:
+            print('警告:請校正資金水位,投資組合水位差距超過百分之10')
             self.line_alert.req_line_alert("警告:請校正資金水位,投資組合水位差距超過百分之10")
+            self.change_money()
 
     def timewritersql(self):
         """
             寫入保存時間
         """
-        with open(r"Sysstatus.txt", 'w') as file:
-            file.write(str(datetime.now()))
-
         getAllTablesName = self.dataprovider_online.SQL.get_db_data(
             'show tables;')
         getAllTablesName = [y[0] for y in getAllTablesName]
@@ -128,12 +153,13 @@ class Trading_systeam():
                 # 註冊完資料之後進入回測
                 pf = self.engine.Portfolio_online_start()
 
+                print("校正之前:", pf.get_last_status())
                 # 檢查資金水位
                 self.check_money_level()
 
                 self.printfunc("最後資料表*************************************")
                 last_status = pf.get_last_status()
-                self.printfunc('目前交易狀態', last_status)
+                self.printfunc('目前交易狀態,校正之後', last_status)
                 self.printfunc("最後資料表*************************************")
 
                 current_size = self.dataprovider_online.Binanceapp.getfutures_account_positions()

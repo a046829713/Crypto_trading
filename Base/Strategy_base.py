@@ -456,10 +456,11 @@ class Np_Order_Strategy(object):
 
 
 class PortfolioTrader(object):
-    def __init__(self) -> None:
+    def __init__(self, Portfolio_initcash: int) -> None:
         self.strategys = []
         self.strategys_maps = {}
         self.strategys_parameter = {}
+        self.Portfolio_initcash = Portfolio_initcash  # 投資組合起始資金
 
     def register(self, strategy_info, parameter: dict):
         """
@@ -537,8 +538,7 @@ class PortfolioTrader(object):
         self.data = self.get_data()
 
         levelage = 2  # 槓桿倍數
-        Portfolio_initcash = 18000  # 投資組合起始資金
-        ClosedPostionprofit = [Portfolio_initcash]
+        ClosedPostionprofit = [self.Portfolio_initcash]
 
         strategy_order_info = {}  # 專門用來保存資料
         datetimelist = []  # 保存時間
@@ -621,7 +621,7 @@ class PortfolioTrader(object):
         self.last_trade_money = Portfolio_ClosedPostionprofit[-1]
         print(self.last_trade_money)
         Order_Info = Portfolio_Order_Info(
-            datetimelist, orders, stragtegy_names, Portfolio_profit, Portfolio_ClosedPostionprofit, Portfolio_initcash, sizes)
+            datetimelist, orders, stragtegy_names, Portfolio_profit, Portfolio_ClosedPostionprofit, self.Portfolio_initcash, sizes)
 
         return Order_Info
 
@@ -635,12 +635,6 @@ class PortfolioOnline(PortfolioTrader):
     Args:
         object (_type_): _description_
     """
-
-    def __init__(self) -> None:
-        self.strategys = []
-        self.strategys_maps = {}
-        self.strategys_parameter = {}
-         
 
     def register(self, strategy_info: Strategy_atom, parameter: dict):
         """
