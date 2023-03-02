@@ -90,3 +90,30 @@ class DB_operate():
                 df.to_sql(symbol_name, con=conn, if_exists=exists)
         except:
             Debug_tool.debug.print_info()
+
+
+class SqlSentense():
+    @staticmethod
+    def createOptimizResult() -> str:
+        sql_query = """
+        CREATE TABLE `crypto_data`.`optimizeresult` (
+                        `freq_time` INT NOT NULL,
+                        `size` DECIMAL(10, 5) NOT NULL,
+                        `fee` DECIMAL(10, 5) NOT NULL,
+                        `slippage` DECIMAL(10, 5) NOT NULL,
+                        `symbol` VARCHAR(20) NOT NULL,
+                        `Strategytype` VARCHAR(20) NOT NULL,
+                        `strategyName` VARCHAR(20) NOT NULL,
+                        `highest_n1` INT NOT NULL,
+                        `lowest_n2` INT NOT NULL,
+                        `ATR_short1` DECIMAL(10, 5) NOT NULL,
+                        `ATR_long2` DECIMAL(10, 5) NOT NULL,
+                        `updatetime` DATE NOT NULL,
+                        PRIMARY KEY (`strategyName`)
+        );
+
+        """
+        return sql_query
+
+
+

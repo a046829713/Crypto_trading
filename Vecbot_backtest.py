@@ -12,6 +12,64 @@ from utils import Debug_tool
 import pandas as pd
 from Count.Base import Event_count
 from AppSetting import AppSetting
+import copy
+from datetime import datetime
+
+
+
+class Optimizer(object):
+    def __init__(self, symbol: str) -> None:
+        self.symbol = symbol
+        self.setting = AppSetting.get_setting(
+        )['Quantify_systeam']['sharemode']['Attributes']['SHARE-15K-OB']
+        strategyName = 'SHARE-15K-OB'.replace("SHARE", symbol.upper())
+        self.strategy = Strategy_base(strategyName, symbol, self.setting['freq_time'],
+                                      self.setting['size'], self.setting['fee'], self.setting['slippage'])
+
+        self.result = copy.deepcopy(self.setting)
+
+        self.result.update(
+            {'symbol': self.symbol, "Strategytype": "TurtleStrategy", "strategyName": strategyName})
+
+    def optimize(self):
+        """
+            用來計算最佳化的參數
+        """
+        ordermap = Np_Order_Strategy(self.strategy)
+        inputs_parameter = {"highest_n1": np.arange(100, 800, 50, dtype=np.int16),
+                            "lowest_n2": np.arange(100, 800, 50, dtype=np.int16),
+                            'ATR_short1': np.arange(100, 200, 50, dtype=np.float_),
+                            'ATR_long2': np.arange(100, 200, 50, dtype=np.float_)}
+        all_parameter = Hyper_optimization.generator_parameter(
+            inputs_parameter)
+        all_length = len(all_parameter)
+        out_list = []
+        num = 0
+        all_i = 0
+        for each_parameter in all_parameter:
+            num += 1
+            if num > 500 * all_i:
+                all_i += 1
+                print(f"總數量{all_length},目前完成進度: {(num / all_length) * 100} %")
+            ordermap.set_parameter(each_parameter)
+            UI = ordermap.more_fast_logic_order()
+
+            if UI == 0:
+                continue
+            if UI < 0:
+                continue
+            out_list.append([each_parameter, UI])
+
+        UI_list = [i[1] for i in out_list]
+        max_data = max(UI_list)
+
+        for i in out_list:
+            if i[1] == max_data:
+                print(i)
+                self.result.update(i[0])
+
+        self.result.update({"updatetime": str(datetime.now()).split()[0]})
+        return self.result
 
 
 class Quantify_systeam(object):
@@ -189,7 +247,7 @@ class Quantify_systeam_online(object):
         self.strategypa5 = parameter_data[strategyName5]
 
         # 創建即時交易模組
-        self.Trader = PortfolioOnline(Portfolio_initcash=35000)
+        self.Trader = PortfolioOnline(Portfolio_initcash=16500)
 
     def register_data(self, strategy_name: str, trade_data: pd.DataFrame):
         """

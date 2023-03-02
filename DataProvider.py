@@ -131,6 +131,7 @@ class DataProvider:
 
                 if len(eachCatchDf) != 0:
                     eachCatchDf.set_index('Datetime', inplace=True)
+                    
                     self.save_data(symbol_name, eachCatchDf, exists="append")
             except:
                 debug.print_info()

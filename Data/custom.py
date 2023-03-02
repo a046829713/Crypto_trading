@@ -450,5 +450,10 @@ class Binance_server(object):
 
     def get_futuresaccountbalance(self) -> float:
         for i in self.client.futures_account_balance():
+            print(i)
             if i['asset'] == 'USDT':
                 return float(i['balance'])
+
+
+
+

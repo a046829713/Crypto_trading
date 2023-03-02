@@ -1,6 +1,6 @@
 from DataProvider import DataProvider, DataProvider_online
 from Major.Symbol_filter import get_symobl_filter_useful
-from Vecbot_backtest import Quantify_systeam_online
+from Vecbot_backtest import Quantify_systeam_online, Optimizer
 import time
 from datetime import datetime
 import sys
@@ -8,8 +8,16 @@ from LINE_Alert import LINE_Alert
 import pandas as pd
 from utils import Debug_tool
 import logging
+from Database.SQL_operate import SqlSentense
+
 
 # 修正自動配比biance 內的保證金數
+# websocket 修正資料供給
+# 修正權重模式
+# 增加總投組獲利平倉，或是單一策略平倉?
+
+
+# 建立所有商品的優化(GUI > Trading_systeam > Optimizer)
 
 
 class Trading_systeam():
@@ -21,6 +29,44 @@ class Trading_systeam():
         # formal正式啟動環境
         self.dataprovider_online = DataProvider_online(formal=True)
         self.line_alert = LINE_Alert()
+        self.checkout = False
+
+    def OptimizeAllSymbols(self):
+        """
+            取得所有交易對
+        """
+
+        all_symbols = self.dataprovider_online.Binanceapp.get_targetsymobls()
+
+        # 使用 Optimizer # 建立DB
+        for eachsymbol in all_symbols:
+
+            result = Optimizer(eachsymbol).optimize()
+            # print(result)
+
+            result = {'freq_time': 15, 'size': 1.0, 'fee': 0.002, 'slippage': 0.0025, 'symbol': 'BTCUSDT', 'Strategytype': 'TurtleStrategy',
+                      'strategyName': 'BTCUSDT-15K-OB', 'highest_n1': 500, 'lowest_n2': 600, 'ATR_short1': 100.0, 'ATR_long2': 150.0, 'updatetime': '2023-02-28'}
+
+            print()
+            getAllTablesName = self.dataprovider_online.SQL.get_db_data(
+                'show tables;')
+            getAllTablesName = [y[0] for y in getAllTablesName]
+
+            if 'optimizeresult' not in getAllTablesName:
+                self.dataprovider_online.SQL.change_db_data(
+                    SqlSentense.createOptimizResult())
+                print("成功創建")
+
+            # 先確認是否存在裡面
+
+            # if result['']
+            # self.dataprovider_online.SQL.change_db_data(
+                print(f"""
+                INSERT INTO `crypto_data`.`optimizeresult`
+                    (`freq_time`, `size`, `fee`, `slippage`, `symbol`, `Strategytype`, `strategyName`, `highest_n1`, `lowest_n2`, `ATR_short1`, `ATR_long2`, `updatetime`)
+                VALUES
+                    {tuple(result.values())};""")
+            break
 
     def get_target_symbol(self):
         dataprovider = DataProvider(time_type='D')
@@ -60,6 +106,7 @@ class Trading_systeam():
         """
         last_trade_money = self.engine.Trader.last_trade_money
         balance = self.dataprovider_online.Binanceapp.get_futuresaccountbalance()
+
         if (abs(balance-last_trade_money) / last_trade_money) * 100 > 10:
             print('警告:請校正資金水位,投資組合水位差距超過百分之10')
             self.line_alert.req_line_alert("警告:請校正資金水位,投資組合水位差距超過百分之10")
@@ -152,15 +199,14 @@ class Trading_systeam():
                 self.printfunc("開始進入回測")
                 # 註冊完資料之後進入回測
                 pf = self.engine.Portfolio_online_start()
+                if not self.checkout:
+                    # 檢查資金水位
+                    self.check_money_level()
+                    self.checkout = True
 
-                print("校正之前:", pf.get_last_status())
-                # 檢查資金水位
-                self.check_money_level()
-
-                self.printfunc("最後資料表*************************************")
+                pf = self.engine.Portfolio_online_start()
                 last_status = pf.get_last_status()
                 self.printfunc('目前交易狀態,校正之後', last_status)
-                self.printfunc("最後資料表*************************************")
 
                 current_size = self.dataprovider_online.Binanceapp.getfutures_account_positions()
                 self.printfunc("目前binance交易所內的部位狀態:", current_size)
@@ -177,7 +223,7 @@ class Trading_systeam():
 
                 if order_finally:
                     self.dataprovider_online.Binanceapp.execute_orders(
-                        order_finally, self.line_alert, formal=False)
+                        order_finally, self.line_alert, formal=True)
 
                 self.printfunc("時間差", time.time() - begin_time)
                 last_min = datetime.now().minute
@@ -200,6 +246,7 @@ class GUI_Trading_systeam(Trading_systeam):
         # formal正式啟動環境
         self.dataprovider_online = DataProvider_online(formal=True)
         self.line_alert = LINE_Alert()
+        self.checkout = False
 
         self.GUI = GUI
         # 用來保存所有的文字檔 並且判斷容量用
@@ -222,4 +269,4 @@ class GUI_Trading_systeam(Trading_systeam):
 
 if __name__ == '__main__':
     systeam = Trading_systeam()
-    systeam.main()
+    systeam.OptimizeAllSymbols()
