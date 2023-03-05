@@ -177,7 +177,7 @@ class BinanceDate(object):
         # 取得歷史資料改寫
         klines = cls.historicalklines(symbol, kline_size, oldest_point.strftime("%d %b %Y %H:%M:%S"),
                                       newest_point.strftime("%d %b %Y %H:%M:%S"), klines_type=HistoricalKlinesType.FUTURES, client=client)
-
+        
         data = pd.DataFrame(klines,
                             columns=['Datetime', 'Open', 'High', 'Low', 'Close', 'Volume', 'close_time', 'quote_av',
                                      'trades', 'tb_base_av', 'tb_quote_av', 'ignore'])
@@ -191,7 +191,8 @@ class BinanceDate(object):
             new_df = data.copy(deep=True)
 
         new_df.set_index('Datetime', inplace=True)
-        # duplicated >> 重複 True 代表重複了
+        
+        # duplicated >> 重複 True 代表重複了 # 如果在極短的時間重複抓取 會有重複的問題
         new_df = new_df[~new_df.index.duplicated(keep='last')]
 
         print('商品資料回補完成!')

@@ -8,6 +8,10 @@ from utils.Debug_tool import debug
 import logging
 import time
 
+import asyncio
+from binance import AsyncClient, BinanceSocketManager
+from datetime import datetime
+
 
 class DataProvider:
     """
@@ -131,7 +135,7 @@ class DataProvider:
 
                 if len(eachCatchDf) != 0:
                     eachCatchDf.set_index('Datetime', inplace=True)
-                    
+
                     self.save_data(symbol_name, eachCatchDf, exists="append")
             except:
                 debug.print_info()
@@ -196,10 +200,64 @@ class DataProvider_online(DataProvider):
         return new_df
 
 
-# if __name__ == "__main__":
-    # agixusdt-f AGIXUSDT.
-    # PHBUSDT
-    # dataprovider = DataProvider()
-    # dataprovider.get_symboldata("DEFIUSDT", save=True)
-    #
-    #
+class AsyncDataProvider():
+    def __init__(self) -> None:
+        self.all_data = {}
+
+    async def process_message(self, res):
+        filterdata = res['data']['k']
+        data = {"Datetime": datetime.utcfromtimestamp(filterdata["t"]/1000).strftime("%Y-%m-%d %H:%M:%S"),  # 将 Unix 时间戳转换为 datetime 格式
+                "Open": filterdata["o"],
+                "High": filterdata["h"],
+                "Low": filterdata["l"],
+                "Close": filterdata["c"],
+                "Volume": filterdata["v"],
+                "close_time": filterdata["T"],
+                "quote_av": filterdata["q"],
+                "trades": filterdata["n"],
+                "tb_base_av": filterdata["V"],
+                "tb_quote_av": filterdata["Q"],
+                "ignore": filterdata["B"]}
+
+        return data
+
+    async def subscriptionData(self, streams: set):
+        """ 用來訂閱系統資料
+
+        Args:
+            input streams :{'DEFIUSDT', 'SOLUSDT', 'COMPUSDT', 'AAVEUSDT', 'AVAXUSDT'}
+            output streams (list): ['btcusdt@kline_1m', 'ethusdt@kline_1m', 'bnbusdt@kline_1m']
+
+        Returns:
+            _type_: _description_
+        """
+
+        def changestreams(streams: set):
+            return [each_stream.lower() + "@kline_1m" for each_stream in list(streams)]
+
+        streams = changestreams(streams)
+        with open(r"C:/bi_.txt", 'r') as file:
+            data = file.read()
+            account = data.split("\n")[0]
+            passwd = data.split("\n")[1]
+
+        client = await AsyncClient.create(account, passwd)
+        bsm = BinanceSocketManager(client)
+
+        symbols = [each.split('@')[0].upper() for each in streams]
+
+        self.all_data = {symbol: {} for symbol in symbols}
+        
+        last_all = {symbol: 0 for symbol in symbols}
+        async with bsm.futures_multiplex_socket(streams) as stream:
+            while True:
+                res = await stream.recv()
+                symbol = res['stream'].split('@')[0].upper()
+                data = await self.process_message(res)
+                self.all_data[symbol].update({data['Datetime']: data})
+
+                # if len(self.all_data[symbol]) != last_all[symbol]:
+                #     print(self.all_data[symbol])
+                #     print('*' * 120)
+                #     last_all[symbol] = len(self.all_data[symbol])
+        

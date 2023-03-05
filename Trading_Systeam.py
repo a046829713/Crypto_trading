@@ -1,4 +1,4 @@
-from DataProvider import DataProvider, DataProvider_online
+from DataProvider import DataProvider, DataProvider_online, AsyncDataProvider
 from Major.Symbol_filter import get_symobl_filter_useful
 from Vecbot_backtest import Quantify_systeam_online, Optimizer
 import time
@@ -9,7 +9,9 @@ import pandas as pd
 from utils import Debug_tool
 import logging
 from Database.SQL_operate import SqlSentense
-
+import asyncio
+from Datatransformer import Datatransformer
+import threading
 
 # 修正自動配比biance 內的保證金數
 # websocket 修正資料供給
@@ -236,6 +238,96 @@ class Trading_systeam():
                 sys.exit()
 
 
+class AsyncTrading_systeam(Trading_systeam):
+    def __init__(self) -> None:
+        self.symbol_map = {}
+        # 這次新產生的資料
+        self.new_symbol_map = {}
+        self.engine = Quantify_systeam_online()
+        # formal正式啟動環境
+        self.dataprovider_online = DataProvider_online(formal=True)
+        self.line_alert = LINE_Alert()
+        self.checkout = False
+
+        self.asyncDataProvider = AsyncDataProvider()
+        self.datatransformer = Datatransformer()
+
+        # 初始化投資組合
+        self.engine.Portfolio_online_register()
+        self.symbol_name: set = self.engine.get_symbol_name()
+
+    def main(self):
+        self.line_alert.req_line_alert('Crypto_trading 正式交易啟動')
+        # 先將資料從DB撈取出來
+        for name in self.symbol_name:
+            original_df, eachCatchDf = self.dataprovider_online.get_symboldata(
+                name, save=False)
+            self.symbol_map.update({name: original_df})
+            self.get_catch(name, eachCatchDf)
+
+        last_min = None
+        self.printfunc("資料讀取結束")
+        # 透過迴圈回補資料
+        while True:
+            if datetime.now().minute != last_min or last_min is None:
+                begin_time = time.time()
+                # 取得原始資料
+                for name, each_df in self.symbol_map.items():
+                    # 這邊要進入catch裡面合併資料
+                    original_df =self.datatransformer.mergeData(name, each_df, self.asyncDataProvider.all_data)
+                    self.symbol_map.update({name: original_df})
+                    # self.get_catch(name, eachCatchDf)
+
+            #     info = self.engine.get_symbol_info()
+            #     for strategy_name, symbol_name, freq_time in info:
+            #         # 取得可交易之資料
+            #         trade_data = self.dataprovider_online.get_trade_data(
+            #             self.symbol_map[symbol_name], freq_time)
+
+            #         # ! 判斷是否要將trade_data資料減少
+            #         # 將資料注入
+            #         self.engine.register_data(strategy_name, trade_data)
+
+            #     self.printfunc("開始進入回測")
+            #     # 註冊完資料之後進入回測
+            #     pf = self.engine.Portfolio_online_start()
+            #     if not self.checkout:
+            #         # 檢查資金水位
+            #         self.check_money_level()
+            #         self.checkout = True
+
+            #     pf = self.engine.Portfolio_online_start()
+            #     last_status = pf.get_last_status()
+            #     self.printfunc('目前交易狀態,校正之後', last_status)
+
+            #     current_size = self.dataprovider_online.Binanceapp.getfutures_account_positions()
+            #     self.printfunc("目前binance交易所內的部位狀態:", current_size)
+
+            #     # >>比對目前binance 內的部位狀態 進行交易
+            #     order_finally = self.dataprovider_online.transformer.calculation_size(
+            #         last_status, current_size)
+
+            #     # 將order_finally 跟下單最小單位相比
+            #     order_finally = self.dataprovider_online.Binanceapp.change_min_postion(
+            #         order_finally)
+
+            #     self.printfunc("差異單", order_finally)
+
+            #     if order_finally:
+            #         self.dataprovider_online.Binanceapp.execute_orders(
+            #             order_finally, self.line_alert, formal=True)
+
+            #     self.printfunc("時間差", time.time() - begin_time)
+                last_min = datetime.now().minute
+            #     self.timewritersql()
+            else:
+                time.sleep(1)
+
+            # if self.dataprovider_online.Binanceapp.trade_count > 10:
+            #     self.printfunc("緊急狀況處理-交易次數過多")
+            #     sys.exit()
+
+
 class GUI_Trading_systeam(Trading_systeam):
     def __init__(self, GUI) -> None:
         self.symbol_map = {}
@@ -268,5 +360,8 @@ class GUI_Trading_systeam(Trading_systeam):
 
 
 if __name__ == '__main__':
-    systeam = Trading_systeam()
-    systeam.OptimizeAllSymbols()
+    systeam = AsyncTrading_systeam()
+    t = threading.Thread(target=systeam.main)
+    t.start()
+    asyncio.run(systeam.asyncDataProvider.subscriptionData(
+        systeam.symbol_name))

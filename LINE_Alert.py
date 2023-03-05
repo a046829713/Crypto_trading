@@ -19,8 +19,6 @@ class LINE_Alert():
 
         # 執行傳送測試文字
         # 使用post方法
-        print('發送訊息')
-
         try:
             r = requests.post("https://notify-api.line.me/api/notify",
                               headers=headers, params=params)

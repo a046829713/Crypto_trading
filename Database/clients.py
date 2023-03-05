@@ -12,8 +12,8 @@ def get_mysql_financialdata_conn() -> engine.base.Connection:
     Returns:
         engine.base.Connection: _description_
     """
-    # address = "mysql+pymysql://root:test@localhost:3306/crypto_data"
-    address = "mysql+pymysql://root:123456@localhost:3306/crypto_data"
+    address = "mysql+pymysql://root:test@localhost:3306/crypto_data"
+    # address = "mysql+pymysql://root:123456@localhost:3306/crypto_data"
     engine = create_engine(address)
     connect = engine.connect()
     return connect

@@ -219,32 +219,32 @@ class Quantify_systeam_online(object):
             strategyName2, strategyAt_Data2['symbol'], strategyAt_Data2['freq_time'], strategyAt_Data2['size'], strategyAt_Data2['fee'], strategyAt_Data2['slippage'], lookback_date=strategyAt_Data2['lookback_date'])
 
         # ///////////////////////////////////////////////////
-        strategyName3 = "SOLUSDT-15K-OB"
-        strategyAt_Data3 = Attributes_data[strategyName3]
+        # strategyName3 = "SOLUSDT-15K-OB"
+        # strategyAt_Data3 = Attributes_data[strategyName3]
 
-        self.strategy3 = Strategy_atom(
-            strategyName3, strategyAt_Data3['symbol'], strategyAt_Data3['freq_time'], strategyAt_Data3['size'], strategyAt_Data3['fee'], strategyAt_Data3['slippage'], lookback_date=strategyAt_Data3['lookback_date'])
-
-        # ///////////////////////////////////////////////////
-        strategyName4 = "AAVEUSDT-15K-OB"
-        strategyAt_Data4 = Attributes_data[strategyName4]
-
-        self.strategy4 = Strategy_atom(
-            strategyName4, strategyAt_Data4['symbol'], strategyAt_Data4['freq_time'], strategyAt_Data4['size'], strategyAt_Data4['fee'], strategyAt_Data4['slippage'], lookback_date=strategyAt_Data4['lookback_date'])
+        # self.strategy3 = Strategy_atom(
+        #     strategyName3, strategyAt_Data3['symbol'], strategyAt_Data3['freq_time'], strategyAt_Data3['size'], strategyAt_Data3['fee'], strategyAt_Data3['slippage'], lookback_date=strategyAt_Data3['lookback_date'])
 
         # ///////////////////////////////////////////////////
-        strategyName5 = "DEFIUSDT-15K-OB"
-        strategyAt_Data5 = Attributes_data[strategyName5]
+        # strategyName4 = "AAVEUSDT-15K-OB"
+        # strategyAt_Data4 = Attributes_data[strategyName4]
 
-        self.strategy5 = Strategy_atom(
-            strategyName5, strategyAt_Data5['symbol'], strategyAt_Data5['freq_time'], strategyAt_Data5['size'], strategyAt_Data5['fee'], strategyAt_Data5['slippage'], lookback_date=strategyAt_Data5['lookback_date'])
+        # self.strategy4 = Strategy_atom(
+        #     strategyName4, strategyAt_Data4['symbol'], strategyAt_Data4['freq_time'], strategyAt_Data4['size'], strategyAt_Data4['fee'], strategyAt_Data4['slippage'], lookback_date=strategyAt_Data4['lookback_date'])
+
+        # ///////////////////////////////////////////////////
+        # strategyName5 = "DEFIUSDT-15K-OB"
+        # strategyAt_Data5 = Attributes_data[strategyName5]
+
+        # self.strategy5 = Strategy_atom(
+        #     strategyName5, strategyAt_Data5['symbol'], strategyAt_Data5['freq_time'], strategyAt_Data5['size'], strategyAt_Data5['fee'], strategyAt_Data5['slippage'], lookback_date=strategyAt_Data5['lookback_date'])
 
         parameter_data = self.setting['parameter']
         self.strategypa1 = parameter_data[strategyName1]
         self.strategypa2 = parameter_data[strategyName2]
-        self.strategypa3 = parameter_data[strategyName3]
-        self.strategypa4 = parameter_data[strategyName4]
-        self.strategypa5 = parameter_data[strategyName5]
+        # self.strategypa3 = parameter_data[strategyName3]
+        # self.strategypa4 = parameter_data[strategyName4]
+        # self.strategypa5 = parameter_data[strategyName5]
 
         # 創建即時交易模組
         self.Trader = PortfolioOnline(Portfolio_initcash=16500)
@@ -272,18 +272,18 @@ class Quantify_systeam_online(object):
             self.strategy1, self.strategypa1)
         self.Trader.register(
             self.strategy2, self.strategypa2)
-        self.Trader.register(
-            self.strategy3, self.strategypa3)
-        self.Trader.register(
-            self.strategy4, self.strategypa4)
-        self.Trader.register(
-            self.strategy5, self.strategypa5)
+        # self.Trader.register(
+        #     self.strategy3, self.strategypa3)
+        # self.Trader.register(
+        #     self.strategy4, self.strategypa4)
+        # self.Trader.register(
+        #     self.strategy5, self.strategypa5)
 
     def Portfolio_online_start(self):
         pf = self.Trader.logic_order()
         return pf
 
-    def get_symbol_name(self) -> list:
+    def get_symbol_name(self) -> set:
         """
             to output symobol name
             to provider Dataprovider
