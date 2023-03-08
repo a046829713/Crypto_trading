@@ -236,6 +236,7 @@ class AsyncDataProvider():
             return [each_stream.lower() + "@kline_1m" for each_stream in list(streams)]
 
         streams = changestreams(streams)
+
         with open(r"C:/bi_.txt", 'r') as file:
             data = file.read()
             account = data.split("\n")[0]
@@ -247,7 +248,7 @@ class AsyncDataProvider():
         symbols = [each.split('@')[0].upper() for each in streams]
 
         self.all_data = {symbol: {} for symbol in symbols}
-        
+
         last_all = {symbol: 0 for symbol in symbols}
         async with bsm.futures_multiplex_socket(streams) as stream:
             while True:
@@ -260,4 +261,3 @@ class AsyncDataProvider():
                 #     print(self.all_data[symbol])
                 #     print('*' * 120)
                 #     last_all[symbol] = len(self.all_data[symbol])
-        

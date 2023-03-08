@@ -6,6 +6,7 @@ from Trading_Systeam import GUI_Trading_systeam
 from PyQt6.QtCore import QThread
 from DataProvider import DataProvider
 import pandas as pd
+import asyncio
 
 
 class TradeUI(QWidget, Ui_Form):
@@ -37,6 +38,16 @@ class TradeUI(QWidget, Ui_Form):
 
     def click_btn_trade(self):
         self.systeam = GUI_Trading_systeam(self)
+
+        def run_subscriptionData():
+            # 回補資料
+            asyncio.run(self.systeam.asyncDataProvider.subscriptionData(
+                self.systeam.symbol_name))
+
+        self.run_subscrip_Thread = QThread()
+        self.run_subscrip_Thread.run = run_subscriptionData
+        self.run_subscrip_Thread.start()
+
         self.Trading_systeam_Thread = QThread()
         self.Trading_systeam_Thread.setObjectName = "trade"
         self.Trading_systeam_Thread.run = self.systeam.main
@@ -55,21 +66,24 @@ class TradeUI(QWidget, Ui_Form):
         self.data_Thread.start()
 
     def click_save_data(self):
-        """ 保存資料並關閉程序 注意不能使用replace 資料長短問題"""
+        """ 
+        保存資料並關閉程序 注意不能使用replace 資料長短問題
+
+        """
 
         def mergefunc():
             for name, each_df in self.systeam.new_symbol_map.items():
-                print(name)
-                print(each_df)
-
-                # 不保存頭尾
+                # 不保存頭尾 # 異步模式 需要檢查這樣是否OK
                 each_df.drop(
                     [each_df.index[0], each_df.index[-1]], inplace=True)
+
+                each_df = each_df.astype(float)
                 if len(each_df) != 0:
                     # 準備寫入資料庫裡面
-                    print('保存資料')
                     self.systeam.dataprovider_online.save_data(
                         symbol_name=name, original_df=each_df, exists="append")
+
+            print("保存資料完成-退出程序")
             sys.exit()
 
         self.save_data_Thread = QThread()

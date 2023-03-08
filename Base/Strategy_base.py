@@ -191,6 +191,16 @@ class Np_Order_Info(object):
         self.strategy_info = strategy_info
 
     @property
+    def avgloss(self) -> float:
+        """ 
+            透過毛損來計算平均策略虧損
+
+        Returns:
+            _type_: _description_
+        """
+        return self.order['Gross_loss'].iloc[-1] / self.LossTrades
+
+    @property
     def TotalTrades(self) -> int:
         """ 透過訂單的長度即可判斷交易的次數
 
@@ -504,6 +514,9 @@ class PortfolioTrader(object):
             strategy.df = strategy.df.copy()
             strategy.df['Order'] = out_list
 
+            # 添加想要分析的參數
+            strategy.df['avgloss'] = pf.avgloss
+
     def get_data(self):
         """
             採用字典的方式加快處理速度
@@ -551,6 +564,7 @@ class PortfolioTrader(object):
         profit = 0
         for each_index, each_row in self.data.items():
             for each_strategy_index, each_strategy_value in each_row.items():
+                print(each_strategy_index, each_strategy_value)
                 # 如果那個時間有資料的話 且有訂單的話
                 if each_strategy_value:
                     Order = each_strategy_value['Order']
