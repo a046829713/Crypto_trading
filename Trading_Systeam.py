@@ -16,10 +16,8 @@ import threading
 # 修正自動配比biance 內的保證金數
 # 修正權重模式
 # 增加總投組獲利平倉，或是單一策略平倉?
-
-
 # 建立所有商品的優化(GUI > Trading_systeam > Optimizer)
-# 新增百分比獲利模式
+
 
 class Trading_systeam():
     def __init__(self) -> None:
@@ -41,14 +39,7 @@ class Trading_systeam():
 
         # 使用 Optimizer # 建立DB
         for eachsymbol in all_symbols:
-
             result = Optimizer(eachsymbol).optimize()
-            # print(result)
-
-            result = {'freq_time': 15, 'size': 1.0, 'fee': 0.002, 'slippage': 0.0025, 'symbol': 'BTCUSDT', 'Strategytype': 'TurtleStrategy',
-                      'strategyName': 'BTCUSDT-15K-OB', 'highest_n1': 500, 'lowest_n2': 600, 'ATR_short1': 100.0, 'ATR_long2': 150.0, 'updatetime': '2023-02-28'}
-
-            print()
             getAllTablesName = self.dataprovider_online.SQL.get_db_data(
                 'show tables;')
             getAllTablesName = [y[0] for y in getAllTablesName]
@@ -58,16 +49,34 @@ class Trading_systeam():
                     SqlSentense.createOptimizResult())
                 print("成功創建")
 
-            # 先確認是否存在裡面
+            strategydf = self.dataprovider_online.SQL.read_Dateframe(
+                "select strategyName from optimizeresult")
+            strategylist = strategydf['strategyName'].to_list()
 
-            # if result['']
-            # self.dataprovider_online.SQL.change_db_data(
-                print(f"""
+            # 先確認是否存在裡面
+            if result['strategyName'] in strategylist:
+                self.dataprovider_online.SQL.change_db_data(
+                    f"""UPDATE `crypto_data`.`optimizeresult`
+                        SET 
+                        `updatetime` = '{result['updatetime']}',
+                        `freq_time` = {result['freq_time']},
+                        `size` = {result['size']},
+                        `fee` = {result['fee']},
+                        `slippage` = {result['slippage']},
+                        `symbol` = '{result['symbol']}',
+                        `Strategytype` = '{result['Strategytype']}',
+                        `highest_n1` = {result['highest_n1']},
+                        `lowest_n2` = {result['lowest_n2']},
+                        `ATR_short1` = {result['ATR_short1']},
+                        `ATR_long2` = {result['ATR_long2']}
+                        WHERE `strategyName` = '{result['strategyName']}';
+                    """)
+            else:
+                self.dataprovider_online.SQL.change_db_data(f"""
                 INSERT INTO `crypto_data`.`optimizeresult`
                     (`freq_time`, `size`, `fee`, `slippage`, `symbol`, `Strategytype`, `strategyName`, `highest_n1`, `lowest_n2`, `ATR_short1`, `ATR_long2`, `updatetime`)
                 VALUES
                     {tuple(result.values())};""")
-            break
 
     def get_target_symbol(self):
         dataprovider = DataProvider(time_type='D')
@@ -153,7 +162,6 @@ class Trading_systeam():
             eachCatchDf.set_index('Datetime', inplace=True)
             self.new_symbol_map.update({name: eachCatchDf})
 
-        
     def main(self):
         self.printfunc("開始交易!!!")
         self.line_alert.req_line_alert('Crypto_trading 正式交易啟動')
@@ -262,7 +270,7 @@ class AsyncTrading_systeam(Trading_systeam):
             Response = self.dataprovider_online.Binanceapp.client.futures_change_leverage(
                 symbol=each_symbol, leverage=10)
             self.printfunc(Response)
-            
+
         # 先將資料從DB撈取出來
         for name in self.symbol_name:
             original_df, eachCatchDf = self.dataprovider_online.get_symboldata(
@@ -352,8 +360,7 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
         # 初始化投資組合
         self.engine.Portfolio_online_register()
         self.symbol_name: set = self.engine.get_symbol_name()
-        
-        
+
         self.GUI = GUI
         # 用來保存所有的文字檔 並且判斷容量用
         self.all_msg = []
@@ -374,8 +381,10 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
 
 
 if __name__ == '__main__':
-    systeam = AsyncTrading_systeam()
-    t = threading.Thread(target=systeam.main)
-    t.start()
-    asyncio.run(systeam.asyncDataProvider.subscriptionData(
-        systeam.symbol_name))
+    # systeam = AsyncTrading_systeam()
+    # t = threading.Thread(target=systeam.main)
+    # t.start()
+    # asyncio.run(systeam.asyncDataProvider.subscriptionData(
+    #     systeam.symbol_name))
+
+    Trading_systeam().OptimizeAllSymbols()

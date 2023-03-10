@@ -67,7 +67,7 @@ class DB_operate():
         except:
             Debug_tool.debug.print_info()
 
-    def read_Dateframe(self, symbol_name: str) -> pd.DataFrame:
+    def read_Dateframe(self, text_msg: str) -> pd.DataFrame:
         """
             to get pandas Dateframe
             symbol_name: 'btcusdt-f'
@@ -75,7 +75,7 @@ class DB_operate():
         try:
             self.userconn = router.Router().mysql_financialdata_conn
             with self.userconn as conn:
-                return pd.read_sql(symbol_name, con=conn)
+                return pd.read_sql(text_msg, con=conn)
         except:
             Debug_tool.debug.print_info()
 
@@ -114,6 +114,3 @@ class SqlSentense():
 
         """
         return sql_query
-
-
-

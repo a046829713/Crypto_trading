@@ -536,6 +536,28 @@ class PortfolioTrader(object):
 
         return data
 
+    def leverage_model(self, money, levelage, Openprice, strategys_count):
+        """
+            將即時資金乘上槓桿倍數所做的邏輯運算        
+        """
+
+        return money * levelage / Openprice / strategys_count
+
+    def risk_model(self, money, rsikpercent, avgloss) -> float:
+        """風險百分比管理模式
+
+        Args:
+            money (_type_): 資金量
+            rsikpercent (_type_): 風險比率
+            avgloss (_type_): 每單位損失金錢
+
+        Returns:
+            _type_: _description_
+        """
+        print("資金量:", money, "風險比率:", rsikpercent,
+              '每單位損失金錢:', abs(avgloss), "實際下單數量:", money * rsikpercent / abs(avgloss))
+        return money * rsikpercent / abs(avgloss)
+
     def logic_order(self):
         """ 產生投資組合的order
 
@@ -551,6 +573,7 @@ class PortfolioTrader(object):
         self.data = self.get_data()
 
         levelage = 2  # 槓桿倍數
+        rsikpercent = 0.01  # 風險百分比
         ClosedPostionprofit = [self.Portfolio_initcash]
 
         strategy_order_info = {}  # 專門用來保存資料
@@ -564,7 +587,6 @@ class PortfolioTrader(object):
         profit = 0
         for each_index, each_row in self.data.items():
             for each_strategy_index, each_strategy_value in each_row.items():
-                print(each_strategy_index, each_strategy_value)
                 # 如果那個時間有資料的話 且有訂單的話
                 if each_strategy_value:
                     Order = each_strategy_value['Order']
@@ -576,8 +598,11 @@ class PortfolioTrader(object):
                             if ClosedPostionprofit[-1] < 0:
                                 size = 1 * levelage / Open / strategys_count
                             else:
-                                size = ClosedPostionprofit[-1] * \
-                                    levelage / Open / strategys_count
+                                # size = self.leverage_model(
+                                #     ClosedPostionprofit[-1], levelage, Open, strategys_count)
+                                
+                                size = self.risk_model(
+                                    ClosedPostionprofit[-1], rsikpercent, each_strategy_value['avgloss'])
                         else:
                             size = 0
                         # size = 1
