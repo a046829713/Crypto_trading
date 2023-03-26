@@ -15,7 +15,8 @@ def get_symobl_filter_useful(all_symbols):
             # 價格太低的商品不要
             if data.iloc[-1]['Close'] > 20:
                 mom_num = Pandas_count.momentum(data['Close'], 30)
-                out_list.append([symbolname.split('-')[0].upper(), mom_num.iloc[-1]])
+                if mom_num.iloc[-1]>0:
+                    out_list.append([symbolname.split('-')[0].upper(), mom_num.iloc[-1]])
 
     sort_example = sorted(out_list, key=lambda x: x[1], reverse=True)
     return sort_example

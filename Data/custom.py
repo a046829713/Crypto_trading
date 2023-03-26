@@ -177,7 +177,7 @@ class BinanceDate(object):
         # 取得歷史資料改寫
         klines = cls.historicalklines(symbol, kline_size, oldest_point.strftime("%d %b %Y %H:%M:%S"),
                                       newest_point.strftime("%d %b %Y %H:%M:%S"), klines_type=HistoricalKlinesType.FUTURES, client=client)
-        
+
         data = pd.DataFrame(klines,
                             columns=['Datetime', 'Open', 'High', 'Low', 'Close', 'Volume', 'close_time', 'quote_av',
                                      'trades', 'tb_base_av', 'tb_quote_av', 'ignore'])
@@ -191,7 +191,7 @@ class BinanceDate(object):
             new_df = data.copy(deep=True)
 
         new_df.set_index('Datetime', inplace=True)
-        
+
         # duplicated >> 重複 True 代表重複了 # 如果在極短的時間重複抓取 會有重複的問題
         new_df = new_df[~new_df.index.duplicated(keep='last')]
 
@@ -292,6 +292,19 @@ class Binance_server(object):
             if i['initialMargin'] == '0':
                 continue
             out_put.update({i['symbol']: i['positionAmt']})
+
+        return out_put
+
+    def getfutures_account_name(self):
+        """
+            取得合約部位 >> 裡面還可以看到其他資訊
+        """
+        data = self.client.futures_account()
+        out_put = []
+        for i in data['positions']:
+            if i['initialMargin'] == '0':
+                continue
+            out_put.append(i['symbol'])
 
         return out_put
 
@@ -454,7 +467,3 @@ class Binance_server(object):
             print(i)
             if i['asset'] == 'USDT':
                 return float(i['balance'])
-
-
-
-

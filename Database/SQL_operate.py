@@ -82,7 +82,7 @@ class DB_operate():
     def write_Dateframe(self, df: pd.DataFrame, symbol_name: str, exists='replace') -> pd.DataFrame:
         """
             to write pandas Dateframe
-            symbol_name: 'btcusdt-f'
+            symbol_name or tablename: 'btcusdt-f'
         """
         try:
             self.userconn = router.Router().mysql_financialdata_conn
@@ -96,21 +96,23 @@ class SqlSentense():
     @staticmethod
     def createOptimizResult() -> str:
         sql_query = """
-        CREATE TABLE `crypto_data`.`optimizeresult` (
-                        `freq_time` INT NOT NULL,
-                        `size` DECIMAL(10, 5) NOT NULL,
-                        `fee` DECIMAL(10, 5) NOT NULL,
-                        `slippage` DECIMAL(10, 5) NOT NULL,
-                        `symbol` VARCHAR(20) NOT NULL,
-                        `Strategytype` VARCHAR(20) NOT NULL,
-                        `strategyName` VARCHAR(20) NOT NULL,
-                        `highest_n1` INT NOT NULL,
-                        `lowest_n2` INT NOT NULL,
-                        `ATR_short1` DECIMAL(10, 5) NOT NULL,
-                        `ATR_long2` DECIMAL(10, 5) NOT NULL,
-                        `updatetime` DATE NOT NULL,
-                        PRIMARY KEY (`strategyName`)
-        );
+            CREATE TABLE `crypto_data`.`optimizeresult` (
+                `strategyName` VARCHAR(30) NOT NULL PRIMARY KEY,
+                `freq_time` INT NOT NULL,
+                `size` DECIMAL(10, 5) NOT NULL,
+                `fee` DECIMAL(10, 5) NOT NULL,
+                `slippage` DECIMAL(10, 5) NOT NULL,
+                `symbol` VARCHAR(20) NOT NULL,
+                `Strategytype` VARCHAR(20) NOT NULL,
+                `highest_n1` INT NOT NULL,
+                `lowest_n2` INT NOT NULL,
+                `ATR_short1` DECIMAL(10, 5) NOT NULL,
+                `ATR_long2` DECIMAL(10, 5) NOT NULL,
+                `updatetime` DATE NOT NULL
+            );
+
+
 
         """
+        
         return sql_query

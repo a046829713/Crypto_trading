@@ -5,7 +5,7 @@ from datetime import datetime
 from Count.Base import vecbot_count
 from numpy.lib.stride_tricks import sliding_window_view
 from utils.TimeCountMsg import TimeCountMsg
-
+from utils.Debug_tool import debug
 
 
 @njit
@@ -327,6 +327,7 @@ def more_fast_logic_order(
     ATR_short1,
     ATR_long2
 ):
+
     marketpostion_array = np.full(Length, 0, dtype=np.int_)
 
     # 此變數區列可以在迭代當中改變
@@ -375,7 +376,6 @@ def more_fast_logic_order(
         (marketpostion_array - last_marketpostion_arr > 0), open_array * (1+slippage), 0)
 
     entryprice_arr = entryprice_arr[np.where(entryprice_arr > 0)]
-
     # 跳過沒成交的交易
     if entryprice_arr.shape[0] == 0:
         return 0
@@ -383,7 +383,9 @@ def more_fast_logic_order(
     exitsprice_arr = np.where(
         (marketpostion_array - last_marketpostion_arr < 0), open_array * (1-slippage), 0)
     exitsprice_arr = exitsprice_arr[np.where(exitsprice_arr > 0)]
-
+    if exitsprice_arr.shape[0] == 0:
+        return 0
+    
     # 判斷長度
     entryprice_arr = entryprice_arr[:exitsprice_arr.shape[0]]
     # 取得點數差
@@ -403,11 +405,17 @@ def more_fast_logic_order(
     ClosedPostionprofit_arr = np.cumsum(
         ClosedPostionprofit_arr) + init_cash  # 已平倉損益
 
+
     # 指標優化區
     DD_per_array = get_drawdown_per(ClosedPostionprofit_arr, init_cash)
     sumallDD = np.sum(DD_per_array**2)
     ROI = (ClosedPostionprofit_arr[-1] / init_cash)-1
-    ui_ = (ROI*100) / ((sumallDD / exitsprice_arr.shape[0])**0.5)
+
+    if ((sumallDD / exitsprice_arr.shape[0])**0.5) == 0:
+        ui_ = 0
+    else:
+        ui_ = (ROI*100) / ((sumallDD / exitsprice_arr.shape[0])**0.5)
+
     return ui_
 
 
@@ -475,7 +483,7 @@ def logic_order(
 
     # 取得order單為當前主要目的
     shiftorder = TurtleStrategy(
-            high_array, highestarr, ATR_short, ATR_long, low_array, lowestarr)
+        high_array, highestarr, ATR_short, ATR_long, low_array, lowestarr)
 
     # 主循環區域
     for i in range(Length):

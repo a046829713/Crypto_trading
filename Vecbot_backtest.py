@@ -16,7 +16,6 @@ import copy
 from datetime import datetime
 
 
-
 class Optimizer(object):
     def __init__(self, symbol: str) -> None:
         self.symbol = symbol
@@ -36,10 +35,10 @@ class Optimizer(object):
             用來計算最佳化的參數
         """
         ordermap = Np_Order_Strategy(self.strategy)
-        inputs_parameter = {"highest_n1": np.arange(100, 800, 50, dtype=np.int16),
-                            "lowest_n2": np.arange(100, 800, 50, dtype=np.int16),
-                            'ATR_short1': np.arange(100, 200, 50, dtype=np.float_),
-                            'ATR_long2': np.arange(100, 200, 50, dtype=np.float_)}
+        inputs_parameter = {"highest_n1": np.arange(50, 800, 20, dtype=np.int16),
+                            "lowest_n2": np.arange(50, 800, 20, dtype=np.int16),
+                            'ATR_short1': np.arange(10, 200, 10, dtype=np.float_),
+                            'ATR_long2': np.arange(10, 200, 10, dtype=np.float_)}
         all_parameter = Hyper_optimization.generator_parameter(
             inputs_parameter)
         all_length = len(all_parameter)
@@ -61,12 +60,18 @@ class Optimizer(object):
             out_list.append([each_parameter, UI])
 
         UI_list = [i[1] for i in out_list]
-        max_data = max(UI_list)
 
-        for i in out_list:
-            if i[1] == max_data:
-                print(i)
-                self.result.update(i[0])
+        # 當完全沒有參數可以決定的時候
+        if UI_list:
+            max_data = max(UI_list)
+
+            for i in out_list:
+                if i[1] == max_data:
+                    print(i)
+                    self.result.update(i[0])
+        else:
+            self.result.update(
+                {'highest_n1': 610, 'lowest_n2': 350, 'ATR_short1': 130.0, 'ATR_long2': 50.0})
 
         self.result.update({"updatetime": str(datetime.now()).split()[0]})
         return self.result
@@ -267,7 +272,7 @@ class Quantify_systeam_online(object):
             先將基本資訊註冊
             並放入策略參數
         """
-
+        
         self.Trader.register(
             self.strategy1, self.strategypa1)
         self.Trader.register(

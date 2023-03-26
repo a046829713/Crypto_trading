@@ -2,7 +2,7 @@ from DataProvider import DataProvider, DataProvider_online, AsyncDataProvider
 from Major.Symbol_filter import get_symobl_filter_useful
 from Vecbot_backtest import Quantify_systeam_online, Optimizer
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import sys
 from LINE_Alert import LINE_Alert
 import pandas as pd
@@ -17,10 +17,20 @@ import threading
 # 修正權重模式
 # 增加總投組獲利平倉，或是單一策略平倉?
 # 建立所有商品的優化(GUI > Trading_systeam > Optimizer)
+# 查看資金問題(資金是否會越買越少?)
+
+# 判斷資料集的最後一天是否需要回補?
+# 增加匯出 optimizeresult 的功能,或許可以增加GUI
 
 
 class Trading_systeam():
     def __init__(self) -> None:
+        self._init_trading_system()
+
+    def _init_trading_system(self):
+        """
+            將init打包 方便子類呼叫
+        """
         self.symbol_map = {}
         # 這次新產生的資料
         self.new_symbol_map = {}
@@ -30,6 +40,45 @@ class Trading_systeam():
         self.line_alert = LINE_Alert()
         self.checkout = False
 
+    def checkDailydata(self):
+        """
+            檢查資料庫中的日資料是否已經回補
+            if already update then contiune
+        """
+        data = self.dataprovider_online.SQL.get_db_data(
+            """select *  from `btcusdt-f-d` order by Datetime desc limit 1""")
+        sql_date = str(data[0][0]).split(' ')[0]
+        _todaydate = str((datetime.today() - timedelta(days=1))).split(' ')[0]
+
+        if sql_date != _todaydate:
+            # 更新日資料 並且在回補完成後才繼續進行 即時行情的回補
+            DataProvider(time_type='D').reload_all_data()
+
+    def exportOptimizeResult(self):
+        """
+            將sql的優化資料匯出
+        """
+        df = self.dataprovider_online.SQL.read_Dateframe("optimizeresult")
+        df.set_index("strategyName", inplace=True)
+        df.to_csv("optimizeresult.csv")
+
+    def importOptimizeResult(self):
+        """
+            將sql的優化資料導入
+        """
+        try:
+            df = pd.read_csv("optimizeresult.csv")
+            df = df[["strategyName", 'freq_time', 'size', 'fee', 'slippage', 'symbol', 'Strategytype',
+                     'highest_n1',  'lowest_n2',  'ATR_short1', 'ATR_long2', 'updatetime']]
+            df.set_index("strategyName", inplace=True)
+
+            # 為了避免修改到原始sql 的create 使用append
+            self.dataprovider_online.SQL.write_Dateframe(
+                df, "optimizeresult", exists='append')
+            print(df)
+        except Exception as e:
+            print(f"導入資料錯誤:{e}")
+
     def OptimizeAllSymbols(self):
         """
             取得所有交易對
@@ -37,27 +86,36 @@ class Trading_systeam():
 
         all_symbols = self.dataprovider_online.Binanceapp.get_targetsymobls()
 
+        # 在進行判斷之前 可以先確認表是否存在
+        getAllTablesName = self.dataprovider_online.SQL.get_db_data(
+            'show tables;')
+        getAllTablesName = [y[0] for y in getAllTablesName]
+
+        if 'optimizeresult' not in getAllTablesName:
+            self.dataprovider_online.SQL.change_db_data(
+                SqlSentense.createOptimizResult())
+            print("成功創建")
+
+        # 將資料讀取出來
+        strategydf = self.dataprovider_online.SQL.read_Dateframe(
+            "select strategyName, symbol from optimizeresult")
+        strategylist = strategydf['strategyName'].to_list()
+        symbollist = strategydf['symbol'].to_list()
+
         # 使用 Optimizer # 建立DB
         for eachsymbol in all_symbols:
+            print(eachsymbol)
+
+            # 判斷
+            if eachsymbol in symbollist:
+                continue
+
             result = Optimizer(eachsymbol).optimize()
-            getAllTablesName = self.dataprovider_online.SQL.get_db_data(
-                'show tables;')
-            getAllTablesName = [y[0] for y in getAllTablesName]
-
-            if 'optimizeresult' not in getAllTablesName:
-                self.dataprovider_online.SQL.change_db_data(
-                    SqlSentense.createOptimizResult())
-                print("成功創建")
-
-            strategydf = self.dataprovider_online.SQL.read_Dateframe(
-                "select strategyName from optimizeresult")
-            strategylist = strategydf['strategyName'].to_list()
-
             # 先確認是否存在裡面
             if result['strategyName'] in strategylist:
                 self.dataprovider_online.SQL.change_db_data(
                     f"""UPDATE `crypto_data`.`optimizeresult`
-                        SET 
+                        SET
                         `updatetime` = '{result['updatetime']}',
                         `freq_time` = {result['freq_time']},
                         `size` = {result['size']},
@@ -165,10 +223,11 @@ class Trading_systeam():
     def main(self):
         self.printfunc("開始交易!!!")
         self.line_alert.req_line_alert('Crypto_trading 正式交易啟動')
+
         self.engine.Portfolio_online_register()
         symbol_name: list = self.engine.get_symbol_name()
 
-        # 初始化商品槓桿
+        # 初始化商品槓桿 這邊應該要優化成 判斷每一個商品所需使用的資金量()
         for each_symbol in symbol_name:
             Response = self.dataprovider_online.Binanceapp.client.futures_change_leverage(
                 symbol=each_symbol, leverage=10)
@@ -247,15 +306,20 @@ class Trading_systeam():
 
 class AsyncTrading_systeam(Trading_systeam):
     def __init__(self) -> None:
-        self.symbol_map = {}
-        # 這次新產生的資料
-        self.new_symbol_map = {}
-        self.engine = Quantify_systeam_online()
-        # formal正式啟動環境
-        self.dataprovider_online = DataProvider_online(formal=True)
-        self.line_alert = LINE_Alert()
-        self.checkout = False
+        super().__init__()
+        # check if already update, and reload data
+        self.checkDailydata()
 
+        # 取得要交易的標的
+        market_symobl = list(map(lambda x: x[0], self.get_target_symbol()))
+
+        # 取得實際擁有標的,合併
+        targetsymbol = self.dataprovider_online.transformer.target_symobl(
+            market_symobl, self.dataprovider_online.Binanceapp.getfutures_account_name())
+        
+        print(targetsymbol)
+
+        # 將標得注入引擎
         self.asyncDataProvider = AsyncDataProvider()
         self.datatransformer = Datatransformer()
 
@@ -265,6 +329,7 @@ class AsyncTrading_systeam(Trading_systeam):
 
     def main(self):
         self.line_alert.req_line_alert('Crypto_trading 正式交易啟動')
+
         # 初始化商品槓桿
         for each_symbol in self.symbol_name:
             Response = self.dataprovider_online.Binanceapp.client.futures_change_leverage(
@@ -344,23 +409,7 @@ class AsyncTrading_systeam(Trading_systeam):
 
 class GUI_Trading_systeam(AsyncTrading_systeam):
     def __init__(self, GUI) -> None:
-        self.symbol_map = {}
-        # 這次新產生的資料
-        self.new_symbol_map = {}
-
-        self.engine = Quantify_systeam_online()
-        # formal正式啟動環境
-        self.dataprovider_online = DataProvider_online(formal=True)
-        self.line_alert = LINE_Alert()
-        self.checkout = False
-
-        self.asyncDataProvider = AsyncDataProvider()
-        self.datatransformer = Datatransformer()
-
-        # 初始化投資組合
-        self.engine.Portfolio_online_register()
-        self.symbol_name: set = self.engine.get_symbol_name()
-
+        super().__init__()
         self.GUI = GUI
         # 用來保存所有的文字檔 並且判斷容量用
         self.all_msg = []
@@ -387,4 +436,4 @@ if __name__ == '__main__':
     # asyncio.run(systeam.asyncDataProvider.subscriptionData(
     #     systeam.symbol_name))
 
-    Trading_systeam().OptimizeAllSymbols()
+    app = AsyncTrading_systeam()

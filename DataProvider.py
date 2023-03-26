@@ -250,6 +250,8 @@ class AsyncDataProvider():
         self.all_data = {symbol: {} for symbol in symbols}
 
         last_all = {symbol: 0 for symbol in symbols}
+
+        print(f"即時行情回補, 目前商品: {symbols}")
         async with bsm.futures_multiplex_socket(streams) as stream:
             while True:
                 res = await stream.recv()
