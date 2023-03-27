@@ -39,6 +39,7 @@ class Trading_systeam():
         self.dataprovider_online = DataProvider_online(formal=True)
         self.line_alert = LINE_Alert()
         self.checkout = False
+        self.datatransformer = Datatransformer()  # dataprovider_online 裡面也有
 
     def checkDailydata(self):
         """
@@ -313,18 +314,15 @@ class AsyncTrading_systeam(Trading_systeam):
         # 取得要交易的標的
         market_symobl = list(map(lambda x: x[0], self.get_target_symbol()))
 
-        # 取得實際擁有標的,合併
-        targetsymbol = self.dataprovider_online.transformer.target_symobl(
+        # 取得binance實際擁有標的,合併 (因為原本有部位的也要持續追蹤)
+        targetsymbol = self.datatransformer.target_symobl(
             market_symobl, self.dataprovider_online.Binanceapp.getfutures_account_name())
-        
-        print(targetsymbol)
 
         # 將標得注入引擎
         self.asyncDataProvider = AsyncDataProvider()
-        self.datatransformer = Datatransformer()
 
-        # 初始化投資組合
-        self.engine.Portfolio_online_register()
+        # 初始化投資組合 (傳入要買的標的物, 並且傳入相關參數)
+        self.engine.Portfolio_online_register(targetsymbol,self.dataprovider_online.SQL.read_Dateframe("optimizeresult"))
         self.symbol_name: set = self.engine.get_symbol_name()
 
     def main(self):
@@ -435,5 +433,5 @@ if __name__ == '__main__':
     # t.start()
     # asyncio.run(systeam.asyncDataProvider.subscriptionData(
     #     systeam.symbol_name))
-
-    app = AsyncTrading_systeam()
+    systeam = Trading_systeam()
+    systeam.exportOptimizeResult()

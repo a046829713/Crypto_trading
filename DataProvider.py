@@ -49,7 +49,7 @@ class DataProvider:
                 print(df)
             elif reload_type == 'Online':
                 df = self.SQL.read_Dateframe(
-                    f'SELECT * FROM `{tb_symbol_name}` where Datetime > "2022-10-26"')
+                    f'SELECT * FROM `{tb_symbol_name}` where Datetime > "2022-12-26"')
             elif reload_type == 'all_data':
                 df = self.SQL.read_Dateframe(tb_symbol_name)
 

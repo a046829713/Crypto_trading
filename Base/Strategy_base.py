@@ -198,7 +198,10 @@ class Np_Order_Info(object):
         Returns:
             _type_: _description_
         """
-        return self.order['Gross_loss'].iloc[-1] / self.LossTrades
+        if self.LossTrades == 0:
+            return -100.0 # 由於都沒有交易輸的紀錄
+        else:
+            return self.order['Gross_loss'].iloc[-1] / self.LossTrades
 
     @property
     def TotalTrades(self) -> int:
@@ -554,8 +557,8 @@ class PortfolioTrader(object):
         Returns:
             _type_: _description_
         """
-        print("資金量:", money, "風險比率:", rsikpercent,
-              '每單位損失金錢:', abs(avgloss), "實際下單數量:", money * rsikpercent / abs(avgloss))
+        # print("資金量:", money, "風險比率:", rsikpercent,
+        #       '每單位損失金錢:', abs(avgloss), "實際下單數量:", money * rsikpercent / abs(avgloss))
         return money * rsikpercent / abs(avgloss)
 
     def logic_order(self):
@@ -600,9 +603,10 @@ class PortfolioTrader(object):
                             else:
                                 # size = self.leverage_model(
                                 #     ClosedPostionprofit[-1], levelage, Open, strategys_count)
-                                
+
                                 size = self.risk_model(
                                     ClosedPostionprofit[-1], rsikpercent, each_strategy_value['avgloss'])
+
                         else:
                             size = 0
                         # size = 1
