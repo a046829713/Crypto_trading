@@ -368,11 +368,29 @@ class Binance_server(object):
 
 
             line_alert: to send msg to LINE
+
+            Response example:{'symbol': 'XMRUSDT', 'leverage': 10, 'maxNotionalValue': '1000000'}
         """
 
         self.trade_count += 1
         print('目前交易次數', self.trade_count)
         print(f"進入下單,目前下單模式:{model}")
+
+        balance_money = self.get_futuresaccountbalance()
+        # 下單前檢查leverage
+        # 商品槓桿
+        for each_symbol in order_finally.keys():
+            def _change_leverage(_symbol, _leverage: int):
+                Response = self.client.futures_change_leverage(
+                    symbol=_symbol, leverage=_leverage)
+                print(Response)
+                if float(Response['maxNotionalValue']) < balance_money * 1.5:
+                    Response = self.client.futures_change_leverage(
+                        symbol=_symbol, leverage=_leverage-1)
+
+                    time.sleep(0.3)
+
+            _change_leverage(each_symbol, 20)
 
         for symbol, ready_to_order_size in order_finally.items():
             # 取得下單模式

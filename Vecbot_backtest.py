@@ -207,7 +207,7 @@ class Quantify_systeam_online(object):
             DataProvider 的資料提供的優先層級更大
         """
         # 創建即時交易模組
-        self.Trader = PortfolioOnline(Portfolio_initcash=16500)
+        self.Trader = PortfolioOnline(Portfolio_initcash=21771)
 
     def register_data(self, strategy_name: str, trade_data: pd.DataFrame):
         """

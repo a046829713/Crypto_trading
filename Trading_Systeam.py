@@ -18,9 +18,11 @@ import threading
 # 增加總投組獲利平倉，或是單一策略平倉?
 # 建立所有商品的優化(GUI > Trading_systeam > Optimizer)
 # 查看資金問題(資金是否會越買越少?)
-
 # 判斷資料集的最後一天是否需要回補?
 # 增加匯出 optimizeresult 的功能,或許可以增加GUI
+# 將檢查sql表的功能提取出來?
+
+
 
 
 class Trading_systeam():
@@ -172,6 +174,7 @@ class Trading_systeam():
     def check_money_level(self):
         """
             取得實時運作的資金水位 並且發出賴通知
+            採用USDT 
         """
         last_trade_money = self.engine.Trader.last_trade_money
         balance = self.dataprovider_online.Binanceapp.get_futuresaccountbalance()
@@ -227,13 +230,6 @@ class Trading_systeam():
 
         self.engine.Portfolio_online_register()
         symbol_name: list = self.engine.get_symbol_name()
-
-        # 初始化商品槓桿 這邊應該要優化成 判斷每一個商品所需使用的資金量()
-        for each_symbol in symbol_name:
-            Response = self.dataprovider_online.Binanceapp.client.futures_change_leverage(
-                symbol=each_symbol, leverage=10)
-            self.printfunc(Response)
-
         # 先將資料從DB撈取出來
         for name in symbol_name:
             original_df, eachCatchDf = self.dataprovider_online.get_symboldata(
@@ -322,18 +318,12 @@ class AsyncTrading_systeam(Trading_systeam):
         self.asyncDataProvider = AsyncDataProvider()
 
         # 初始化投資組合 (傳入要買的標的物, 並且傳入相關參數)
-        self.engine.Portfolio_online_register(targetsymbol,self.dataprovider_online.SQL.read_Dateframe("optimizeresult"))
+        self.engine.Portfolio_online_register(
+            targetsymbol, self.dataprovider_online.SQL.read_Dateframe("optimizeresult"))
         self.symbol_name: set = self.engine.get_symbol_name()
 
     def main(self):
         self.line_alert.req_line_alert('Crypto_trading 正式交易啟動')
-
-        # 初始化商品槓桿
-        for each_symbol in self.symbol_name:
-            Response = self.dataprovider_online.Binanceapp.client.futures_change_leverage(
-                symbol=each_symbol, leverage=10)
-            self.printfunc(Response)
-
         # 先將資料從DB撈取出來
         for name in self.symbol_name:
             original_df, eachCatchDf = self.dataprovider_online.get_symboldata(
@@ -428,10 +418,6 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
 
 
 if __name__ == '__main__':
-    # systeam = AsyncTrading_systeam()
-    # t = threading.Thread(target=systeam.main)
-    # t.start()
-    # asyncio.run(systeam.asyncDataProvider.subscriptionData(
-    #     systeam.symbol_name))
-    systeam = Trading_systeam()
-    systeam.exportOptimizeResult()
+    pass
+    # systeam = Trading_systeam()
+    # systeam.exportOptimizeResult()
