@@ -316,7 +316,7 @@ class Binance_server(object):
         """
         # 取得最小單位限制
         MinimumQuantity = self.getMinimumOrderQuantity()
-
+        print("最小下單數量", MinimumQuantity)
         out_dict = {}
         for symbol, ready_to_order_size in order_finally.items():
             # 取得 quantity數量
@@ -416,10 +416,19 @@ class Binance_server(object):
             line_alert.req_line_alert(
                 f"商品:{symbol}\n買賣別:{order_side}\n委託單:{order_type}\n委託類別:{order_timeInForce}\n委託數量:{order_quantity}")
 
-            args = dict(side=order_side,
-                        type=order_type,
-                        symbol=symbol,
-                        quantity=order_quantity)
+            if order_side == "SELL":
+                args = dict(side=order_side,
+                            type=order_type,
+                            symbol=symbol,
+                            quantity=order_quantity,
+                            reduceOnly=True)
+            else:
+                args = dict(side=order_side,
+                            type=order_type,
+                            symbol=symbol,
+                            quantity=order_quantity)
+
+
 
             print(args)
             if formal:

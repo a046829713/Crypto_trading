@@ -382,7 +382,7 @@ class AsyncTrading_systeam(Trading_systeam):
 
                 if order_finally:
                     self.dataprovider_online.Binanceapp.execute_orders(
-                        order_finally, self.line_alert, formal=False)
+                        order_finally, self.line_alert, formal=True)
 
                 self.printfunc("時間差", time.time() - begin_time)
                 last_min = datetime.now().minute
@@ -419,5 +419,5 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
 
 if __name__ == '__main__':
     pass
-    # systeam = Trading_systeam()
-    # systeam.exportOptimizeResult()
+    systeam = Trading_systeam()
+    systeam.importOptimizeResult()
