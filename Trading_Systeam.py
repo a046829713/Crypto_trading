@@ -17,12 +17,11 @@ import threading
 # 修正權重模式
 # 增加總投組獲利平倉，或是單一策略平倉?
 # 建立所有商品的優化(GUI > Trading_systeam > Optimizer)
-# 查看資金問題(資金是否會越買越少?)
 # 判斷資料集的最後一天是否需要回補?
 # 增加匯出 optimizeresult 的功能,或許可以增加GUI
 # 將檢查sql表的功能提取出來?
 
-
+# 該如何添加多個策略?
 
 
 class Trading_systeam():
@@ -82,7 +81,7 @@ class Trading_systeam():
         except Exception as e:
             print(f"導入資料錯誤:{e}")
 
-    def OptimizeAllSymbols(self):
+    def OptimizeAllSymbols(self, optimize_strategy_type: str):
         """
             取得所有交易對
         """
@@ -107,37 +106,42 @@ class Trading_systeam():
 
         # 使用 Optimizer # 建立DB
         for eachsymbol in all_symbols:
-            print(eachsymbol)
+            # 判斷每次要優化的策略名稱
+            if optimize_strategy_type == 'TurtleStrategy':
+                target_strategy_name = eachsymbol + "-15K-OB"
+            else:
+                target_strategy_name = eachsymbol + "-15K-OB-VCP"
 
-            # 判斷
-            if eachsymbol in symbollist:
+            if target_strategy_name in strategylist:
                 continue
 
-            result = Optimizer(eachsymbol).optimize()
+            print(target_strategy_name)
+            result = Optimizer(target_strategy_name, eachsymbol, optimize_strategy_type).optimize()
+            print(result)
             # 先確認是否存在裡面
-            if result['strategyName'] in strategylist:
-                self.dataprovider_online.SQL.change_db_data(
-                    f"""UPDATE `crypto_data`.`optimizeresult`
-                        SET
-                        `updatetime` = '{result['updatetime']}',
-                        `freq_time` = {result['freq_time']},
-                        `size` = {result['size']},
-                        `fee` = {result['fee']},
-                        `slippage` = {result['slippage']},
-                        `symbol` = '{result['symbol']}',
-                        `Strategytype` = '{result['Strategytype']}',
-                        `highest_n1` = {result['highest_n1']},
-                        `lowest_n2` = {result['lowest_n2']},
-                        `ATR_short1` = {result['ATR_short1']},
-                        `ATR_long2` = {result['ATR_long2']}
-                        WHERE `strategyName` = '{result['strategyName']}';
-                    """)
-            else:
-                self.dataprovider_online.SQL.change_db_data(f"""
-                INSERT INTO `crypto_data`.`optimizeresult`
-                    (`freq_time`, `size`, `fee`, `slippage`, `symbol`, `Strategytype`, `strategyName`, `highest_n1`, `lowest_n2`, `ATR_short1`, `ATR_long2`, `updatetime`)
-                VALUES
-                    {tuple(result.values())};""")
+            # if result['strategyName'] in strategylist:
+            #     self.dataprovider_online.SQL.change_db_data(
+            #         f"""UPDATE `crypto_data`.`optimizeresult`
+            #             SET
+            #             `updatetime` = '{result['updatetime']}',
+            #             `freq_time` = {result['freq_time']},
+            #             `size` = {result['size']},
+            #             `fee` = {result['fee']},
+            #             `slippage` = {result['slippage']},
+            #             `symbol` = '{result['symbol']}',
+            #             `Strategytype` = '{result['Strategytype']}',
+            #             `highest_n1` = {result['highest_n1']},
+            #             `lowest_n2` = {result['lowest_n2']},
+            #             `ATR_short1` = {result['ATR_short1']},
+            #             `ATR_long2` = {result['ATR_long2']}
+            #             WHERE `strategyName` = '{result['strategyName']}';
+            #         """)
+            # else:
+            #     self.dataprovider_online.SQL.change_db_data(f"""
+            #     INSERT INTO `crypto_data`.`optimizeresult`
+            #         (`freq_time`, `size`, `fee`, `slippage`, `symbol`, `Strategytype`, `strategyName`, `highest_n1`, `lowest_n2`, `ATR_short1`, `ATR_long2`, `updatetime`)
+            #     VALUES
+            #         {tuple(result.values())};""")
 
     def get_target_symbol(self):
         dataprovider = DataProvider(time_type='D')
@@ -420,4 +424,4 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
 if __name__ == '__main__':
     pass
     systeam = Trading_systeam()
-    systeam.importOptimizeResult()
+    systeam.OptimizeAllSymbols('VCPStrategy')

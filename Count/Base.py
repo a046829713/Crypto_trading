@@ -191,17 +191,61 @@ class vecbot_count():
         max_arr = np.empty(shape=a.shape[0])
         shape = a.shape[:-1] + (a.shape[-1] - window + 1, window)
         strides = a.strides + (a.strides[-1],)
-        rolling = np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
-        max_arr[window-1:] = np.roll(np.max(rolling, axis=1), 1)
+        rolling = np.lib.stride_tricks.as_strided(
+            a, shape=shape, strides=strides)
+        max_arr[window-1:] = np.roll(np.maximum.reduce(rolling, axis=1), 1)
         max_arr[:window] = np.nan
         return max_arr
-    
+
     @staticmethod
     def min_rolling(a, window, axis=1):
+        min_arr = np.empty(shape=a.shape[0])
+        shape = a.shape[:-1] + (a.shape[-1] - window + 1, window)
+        strides = a.strides + (a.strides[-1],)
+        rolling = np.lib.stride_tricks.as_strided(
+            a, shape=shape, strides=strides)
+        min_arr[window-1:] = np.roll(np.minimum.reduce(rolling, axis=1), 1)
+        min_arr[:window] = np.nan
+        return min_arr
+
+    @staticmethod
+    def std_rolling(a, window, axis=1):
+        """用來計算標準差
+
+        Args:
+            a (_type_): _description_
+            window (_type_): _description_
+            axis (int, optional): _description_. Defaults to 1.
+
+        Returns:
+            _type_: _description_
+        """
         max_arr = np.empty(shape=a.shape[0])
         shape = a.shape[:-1] + (a.shape[-1] - window + 1, window)
         strides = a.strides + (a.strides[-1],)
-        rolling = np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
-        max_arr[window-1:] = np.roll(np.min(rolling, axis=1), 1)
+        rolling = np.lib.stride_tricks.as_strided(
+            a, shape=shape, strides=strides)
+        max_arr[window-1:] = np.roll(np.std(rolling, axis=1, ddof=0), 1)
+        max_arr[:window] = np.nan
+        return max_arr
+
+    @staticmethod
+    def mean_rolling(a, window, axis=1):
+        """用來計算平均值
+
+        Args:
+            a (_type_): _description_
+            window (_type_): _description_
+            axis (int, optional): _description_. Defaults to 1.
+
+        Returns:
+            _type_: _description_
+        """
+        max_arr = np.empty(shape=a.shape[0])
+        shape = a.shape[:-1] + (a.shape[-1] - window + 1, window)
+        strides = a.strides + (a.strides[-1],)
+        rolling = np.lib.stride_tricks.as_strided(
+            a, shape=shape, strides=strides)
+        max_arr[window-1:] = np.roll(np.mean(rolling, axis=1), 1)
         max_arr[:window] = np.nan
         return max_arr

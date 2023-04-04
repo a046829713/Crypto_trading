@@ -1,8 +1,5 @@
 from numba import njit
 import numpy as np
-from typing import Sequence
-from datetime import datetime
-from Count.Base import vecbot_count
 from numpy.lib.stride_tricks import sliding_window_view
 from utils.TimeCountMsg import TimeCountMsg
 from utils.Debug_tool import debug
@@ -313,10 +310,14 @@ def get_order(marketpostion: np.array) -> np.array:
 
 @njit
 def more_fast_logic_order(
+    strategytype: str,
     open_array: np.ndarray,
     high_array: np.ndarray,
     low_array: np.ndarray,
     close_array: np.ndarray,
+    std_arr: np.ndarray,
+    Volume_array: np.ndarray,
+    Volume_avgarr: np.ndarray,
     highestarr: np.ndarray,
     lowestarr: np.ndarray,
     Length: int,
@@ -345,18 +346,20 @@ def more_fast_logic_order(
     fee = fee  # 手續費率
     direction = "buyonly"
 
-    # 迴圈可以先產生的資料
-    ATR_short = get_ATR(
-        Length, high_array, low_array, close_array, ATR_short1)
-
-    ATR_long = get_ATR(
-        Length, high_array, low_array, close_array, ATR_long2)
-
     # 取得order單為當前主要目的 將需要判斷的方向放入 這邊是選擇策略的主要地方
+    if strategytype == 'TurtleStrategy':
+        # 迴圈可以先產生的資料
+        ATR_short = get_ATR(
+            Length, high_array, low_array, close_array, ATR_short1)
 
-    shiftorder = TurtleStrategy(
-        high_array, highestarr, ATR_short, ATR_long, low_array, lowestarr)
+        ATR_long = get_ATR(
+            Length, high_array, low_array, close_array, ATR_long2)
 
+        shiftorder = TurtleStrategy(
+            high_array, highestarr, ATR_short, ATR_long, low_array, lowestarr)
+    else:
+        shiftorder = VCPStrategy(
+            std_arr, Volume_array, Volume_avgarr, high_array, highestarr, low_array, lowestarr)
     # 主循環區域
     for i in range(Length):
         current_order = shiftorder[i]  # 實際送出訂單位置
@@ -385,7 +388,7 @@ def more_fast_logic_order(
     exitsprice_arr = exitsprice_arr[np.where(exitsprice_arr > 0)]
     if exitsprice_arr.shape[0] == 0:
         return 0
-    
+
     # 判斷長度
     entryprice_arr = entryprice_arr[:exitsprice_arr.shape[0]]
     # 取得點數差
@@ -405,7 +408,6 @@ def more_fast_logic_order(
     ClosedPostionprofit_arr = np.cumsum(
         ClosedPostionprofit_arr) + init_cash  # 已平倉損益
 
-
     # 指標優化區
     DD_per_array = get_drawdown_per(ClosedPostionprofit_arr, init_cash)
     sumallDD = np.sum(DD_per_array**2)
@@ -421,10 +423,14 @@ def more_fast_logic_order(
 
 @njit
 def logic_order(
+    strategytype: str,
     open_array: np.ndarray,
     high_array: np.ndarray,
     low_array: np.ndarray,
     close_array: np.ndarray,
+    std_arr: np.ndarray,
+    Volume_array: np.ndarray,
+    Volume_avgarr: np.ndarray,
     highestarr: np.ndarray,
     lowestarr: np.ndarray,
     Length: int,
@@ -437,9 +443,10 @@ def logic_order(
 ):
     """
         撰寫邏輯的演算法
+        strategytype : TurtleStrategy
         init_cash = init_cash  # 起始資金
         exitsprice (設計時認為應該要添加滑價)
-
+        傳入參數不可以為None 需要為數值型態 np.nan
     """
     marketpostion_array = np.empty(shape=Length)
     entryprice_array = np.empty(shape=Length)
@@ -474,17 +481,20 @@ def logic_order(
     fee = fee  # 手續費率
     direction = "buyonly"
 
-    # 迴圈可以先產生的資料
-    ATR_short = get_ATR(
-        Length, high_array, low_array, close_array, ATR_short1)
+    if strategytype == 'TurtleStrategy':
+        # 迴圈可以先產生的資料
+        ATR_short = get_ATR(
+            Length, high_array, low_array, close_array, ATR_short1)
 
-    ATR_long = get_ATR(
-        Length, high_array, low_array, close_array, ATR_long2)
+        ATR_long = get_ATR(
+            Length, high_array, low_array, close_array, ATR_long2)
 
-    # 取得order單為當前主要目的
-    shiftorder = TurtleStrategy(
-        high_array, highestarr, ATR_short, ATR_long, low_array, lowestarr)
-
+        # 取得order單為當前主要目的
+        shiftorder = TurtleStrategy(
+            high_array, highestarr, ATR_short, ATR_long, low_array, lowestarr)
+    else:
+        shiftorder = VCPStrategy(
+            std_arr, Volume_array, Volume_avgarr, high_array, highestarr, low_array, lowestarr)
     # 主循環區域
     for i in range(Length):
         Open = open_array[i]
@@ -604,9 +614,44 @@ def logic_order(
 
 @njit
 def TurtleStrategy(high_array, highestarr, ATR_short, ATR_long, low_array, lowestarr):
+    """
+        海龜交易法
+    """
     trends = np.where((high_array - highestarr > 0) &
                       (ATR_short-ATR_long > 0), 1, 0)
     orders = np.where((low_array - lowestarr) < 0, -1, trends)
+    shiftorder = np.roll(orders, 1)
+    shiftorder[0] = 0
+    return shiftorder
+
+
+@njit
+def VCPStrategy(std_arr: np.array, Volume: np.array, Volume_avgarr: np.array, High: np.array, highestarr: np.array, Low: np.array, lowestarr: np.array, threshold=1.5):
+    """
+        通道壓縮交易法
+    """
+
+    # 判斷波動度是否縮小
+    shifted_arr_1 = np.roll(std_arr, 1)
+    shifted_arr_1[:1] = np.nan
+    shifted_arr_2 = np.roll(std_arr, 2)
+    shifted_arr_2[:2] = np.nan
+    shifted_arr_3 = np.roll(std_arr, 3)
+    shifted_arr_3[:3] = np.nan
+    shifted_arr_4 = np.roll(std_arr, 4)
+    shifted_arr_4[:4] = np.nan
+
+    vc_pattern = std_arr < shifted_arr_1
+    vc_pattern = vc_pattern & (std_arr < shifted_arr_2)
+    vc_pattern = vc_pattern & (std_arr < shifted_arr_3)
+    vc_pattern = vc_pattern & (std_arr < shifted_arr_4)
+
+    # 判斷成交量是否大於平均值
+    vc_pattern = np.where(Volume > Volume_avgarr*threshold, vc_pattern, False)
+
+    trends = np.where((High - highestarr > 0) & vc_pattern, 1, 0)
+    orders = np.where((Low - lowestarr) < 0, -1, trends)
+
     shiftorder = np.roll(orders, 1)
     shiftorder[0] = 0
     return shiftorder

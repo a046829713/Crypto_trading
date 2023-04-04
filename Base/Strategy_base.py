@@ -4,22 +4,19 @@ import numpy as np
 import pandas as pd
 from Count import nb
 import copy
-import talib
-import time
-import typing
 from Database.SQL_operate import DB_operate
 from Datatransformer import Datatransformer
 
 
 class Strategy_base(object):
-    """ 
+    """
     取得策略的基本資料及訊息
-    Args:
-        object (_type_): _description_
+
     """
 
     def __init__(self,
                  strategy_name: str,
+                 strategytype: str,
                  symbol_name: str,
                  freq_time: int,
                  size: float,
@@ -28,11 +25,13 @@ class Strategy_base(object):
                  init_cash: float = 10000.0,
                  symobl_type: str = "Futures",
                  lookback_date: str = None) -> None:
-        """ 
+        """
         to get strategy info msg
 
+
         Args:
-            strategy_name (str): distinguish symbol 
+            strategy_name (str): distinguish symbol
+            strategytype (str): TurtleStrategy
             symbol_name (int): _description_
                 like : BTCUSDT
             freq_time (int): _description_
@@ -41,6 +40,7 @@ class Strategy_base(object):
             lookback_date (str): "2022-01-01"
         """
         self.strategy_name = strategy_name
+        self.strategytype = strategytype
         self.symbol_name = symbol_name
         self.freq_time = freq_time
         self.size = size
@@ -83,7 +83,7 @@ class Strategy_base(object):
 
 
 class Strategy_atom(object):
-    """ 
+    """
     取得策略的基本訊息
     Args:
         object (_type_): _description_
@@ -99,11 +99,11 @@ class Strategy_atom(object):
                  init_cash: float = 10000.0,
                  symobl_type: str = "Futures",
                  lookback_date: str = None) -> None:
-        """ 
+        """
         to get strategy info msg
 
         Args:
-            strategy_name (str): distinguish symbol 
+            strategy_name (str): distinguish symbol
             symbol_name (int): _description_
                 like : BTCUSDT
             freq_time (int): _description_
@@ -192,14 +192,14 @@ class Np_Order_Info(object):
 
     @property
     def avgloss(self) -> float:
-        """ 
+        """
             透過毛損來計算平均策略虧損
 
         Returns:
             _type_: _description_
         """
         if self.LossTrades == 0:
-            return -100.0 # 由於都沒有交易輸的紀錄
+            return -100.0  # 由於都沒有交易輸的紀錄
         else:
             return self.order['Gross_loss'].iloc[-1] / self.LossTrades
 
@@ -259,7 +259,7 @@ class Np_Order_Info(object):
 
     @property
     def UI_indicators(self):
-        """ 
+        """
             可根据价格下跌的深度和持续时间来衡量下行风险
         Returns:
             _type_: _description_
@@ -282,28 +282,6 @@ class small_Np_Order_Info(Np_Order_Info):
                  orders: np.ndarray,
                  ClosedPostionprofit: np.ndarray,
                  ) -> None:
-        # 取得order儲存列
-        self.order = pd.DataFrame(datetime_list, columns=['Datetime'])
-        self.order['Order'] = orders
-        self.order['ClosedPostionprofit'] = ClosedPostionprofit
-
-        # 壓縮資訊減少運算
-        self.order = self.order[self.order['Order'] != 0]
-        self.order.set_index("Datetime", inplace=True)
-
-        # 取得需要二次運算的資料(計算勝率，賠率....繪圖)
-        self.ClosedPostionprofit_array = self.order['ClosedPostionprofit'].to_numpy(
-        )
-
-
-class ALL_order_INFO(Np_Order_Info):
-    def __init__(self) -> None:
-        pass
-
-    def register_data(self,
-                      datetime_list,
-                      orders: np.ndarray,
-                      ClosedPostionprofit: np.ndarray,):
         # 取得order儲存列
         self.order = pd.DataFrame(datetime_list, columns=['Datetime'])
         self.order['Order'] = orders
@@ -353,7 +331,7 @@ class Np_Order_Strategy(object):
     Args:
         object (_type_): _description_
 
-        original_data columns name 
+        original_data columns name
             'Open', 'High', 'Low', 'Close', 'Volume'
     """
 
@@ -366,50 +344,47 @@ class Np_Order_Strategy(object):
         self.high_array = self.original_data[:, 1]
         self.low_array = self.original_data[:, 2]
         self.close_array = self.original_data[:, 3]
+        self.volume_array = self.original_data[:, 4]
 
     def set_parameter(self, parameter: dict):
         self.parameter = parameter
-        self.highest_n1 = self.parameter['highest_n1']
-        self.lowest_n2 = self.parameter['lowest_n2']
-        self.ATR_short1 = self.parameter['ATR_short1']
-        self.ATR_long2 = self.parameter['ATR_long2']
+        self.highest_n1 = self.parameter.get('highest_n1', np.nan)
+        self.lowest_n2 = self.parameter.get('lowest_n2', np.nan)
+        self.ATR_short1 = self.parameter.get('ATR_short1', np.nan)
+        self.ATR_long2 = self.parameter.get('ATR_long2', np.nan)
+        self.std_n3 = self.parameter.get('std_n3', np.nan)
+        self.volume_n3 = self.parameter.get('volume_n3', np.nan)
 
-    def main_logic(self):
-        """
-            這邊就類似MC內編譯地方
-        """
-        ATR_short = nb.get_ATR(
-            self.Length, self.high_array, self.low_array, self.close_array, self.ATR_short1)
+        
+        if not np.isnan(self.highest_n1):
+            self.highestarr = vecbot_count.max_rolling(
+                self.high_array, self.highest_n1)
 
-        ATR_long = nb.get_ATR(
-            self.Length, self.high_array, self.low_array, self.close_array, self.ATR_long2)
+        if not np.isnan(self.lowest_n2):
+            self.lowestarr = vecbot_count.min_rolling(
+                self.low_array, self.lowest_n2)
 
-        self.highestarr = vecbot_count.max_rolling(
-            self.high_array, self.highest_n1)
+        if not np.isnan(self.std_n3):
+            self.std_arr = vecbot_count.std_rolling(
+                self.close_array, self.std_n3)
 
-        self.lowestarr = vecbot_count.min_rolling(
-            self.low_array, self.lowest_n2)
-
-        self.marketpostion_array = nb.get_marketpostion_array(
-            self.Length, self.high_array, self.low_array, self.close_array, ATR_short, ATR_long, self.highestarr, self.lowestarr)
+        if not np.isnan(self.volume_n3):
+            self.Volume_avgarr = vecbot_count.mean_rolling(
+                self.volume_array, self.volume_n3)
 
     def more_fast_logic_order(self):
         """
             用來創造閹割版的快速回測
         """
-
-        # 有些比較難使用向量化完成
-        self.highestarr = vecbot_count.max_rolling(
-            self.high_array, self.highest_n1)
-
-        self.lowestarr = vecbot_count.min_rolling(
-            self.low_array, self.lowest_n2)
-
         return nb.more_fast_logic_order(
+            self.strategy_info.strategytype,
             self.open_array,
             self.high_array,
             self.low_array,
             self.close_array,
+            self.std_arr,
+            self.volume_array,
+            self.Volume_avgarr,
             self.highestarr,
             self.lowestarr,
             self.Length,
@@ -427,17 +402,17 @@ class Np_Order_Strategy(object):
         Returns:
             _type_: _description_
         """
-        self.highestarr = vecbot_count.max_rolling(
-            self.high_array, self.highest_n1)
 
-        self.lowestarr = vecbot_count.min_rolling(
-            self.low_array, self.lowest_n2)
-
+        print("進入測試")
         orders, marketpostion_array, entryprice_array, buy_Fees_array, sell_Fees_array, OpenPostionprofit_array, ClosedPostionprofit_array, profit_array, Gross_profit_array, Gross_loss_array, all_Fees_array, netprofit_array = nb.logic_order(
+            self.strategy_info.strategytype,
             self.open_array,
             self.high_array,
             self.low_array,
             self.close_array,
+            self.std_arr,
+            self.volume_array,
+            self.Volume_avgarr,
             self.highestarr,
             self.lowestarr,
             self.Length,

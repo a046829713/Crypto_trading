@@ -1,44 +1,56 @@
 from Base.Strategy_base import Strategy_base
 from Base.Strategy_base import Np_Order_Strategy
 from Base.Strategy_base import PortfolioTrader
-from Base.Strategy_base import ALL_order_INFO
 from Base.Strategy_base import PortfolioOnline
 from Base.Strategy_base import Strategy_atom
-from tqdm import tqdm
 from Hyper_optimiza import Hyper_optimization
 from Plot_draw.Picture_Mode import Picture_maker
 import numpy as np
-from utils import Debug_tool
 import pandas as pd
 from Count.Base import Event_count
 from AppSetting import AppSetting
 import copy
 from datetime import datetime
+import time
 
 
 class Optimizer(object):
-    def __init__(self, symbol: str) -> None:
+    def __init__(self, strategyName: str, symbol: str, optimize_strategy_type: str) -> None:
+        """
+
+        Args:
+            optimize_strategy_type (str): TurtleStrategy,VCPStrategy
+            symbol (str): _description_
+            strategyName (str): _description_
+        """
         self.symbol = symbol
         self.setting = AppSetting.get_setting(
         )['Quantify_systeam']['sharemode']['Attributes']['SHARE-15K-OB']
-        strategyName = 'SHARE-15K-OB'.replace("SHARE", symbol.upper())
-        self.strategy = Strategy_base(strategyName, symbol, self.setting['freq_time'],
+
+        self.strategy = Strategy_base(strategyName, optimize_strategy_type, symbol, self.setting['freq_time'],
                                       self.setting['size'], self.setting['fee'], self.setting['slippage'])
 
         self.result = copy.deepcopy(self.setting)
 
         self.result.update(
-            {'symbol': self.symbol, "Strategytype": "TurtleStrategy", "strategyName": strategyName})
+            {'symbol': self.symbol, "Strategytype": optimize_strategy_type, "strategyName": strategyName})
 
     def optimize(self):
         """
             用來計算最佳化的參數
         """
         ordermap = Np_Order_Strategy(self.strategy)
-        inputs_parameter = {"highest_n1": np.arange(50, 800, 20, dtype=np.int16),
-                            "lowest_n2": np.arange(50, 800, 20, dtype=np.int16),
-                            'ATR_short1': np.arange(10, 200, 10, dtype=np.float_),
-                            'ATR_long2': np.arange(10, 200, 10, dtype=np.float_)}
+        if self.strategy.strategytype == 'TurtleStrategy':
+            inputs_parameter = {"highest_n1": np.arange(50, 800, 20, dtype=np.int16),
+                                "lowest_n2": np.arange(50, 800, 20, dtype=np.int16),
+                                'ATR_short1': np.arange(10, 200, 10, dtype=np.float_),
+                                'ATR_long2': np.arange(10, 200, 10, dtype=np.float_)}
+        else:
+            inputs_parameter = {"highest_n1": np.arange(100, 800, 100, dtype=np.int16),
+                                "lowest_n2": np.arange(100, 800, 100, dtype=np.int16),
+                                'std_n3': np.arange(50, 200, 50, dtype=np.int16),
+                                'volume_n3': np.arange(50, 200, 50, dtype=np.int16)}
+
         all_parameter = Hyper_optimization.generator_parameter(
             inputs_parameter)
         all_length = len(all_parameter)
@@ -70,8 +82,12 @@ class Optimizer(object):
                     print(i)
                     self.result.update(i[0])
         else:
-            self.result.update(
-                {'highest_n1': 610, 'lowest_n2': 350, 'ATR_short1': 130.0, 'ATR_long2': 50.0})
+            if self.strategy.strategytype == 'TurtleStrategy':
+                self.result.update(
+                    {'highest_n1': 610, 'lowest_n2': 350, 'ATR_short1': 130.0, 'ATR_long2': 50.0})
+            else:
+                self.result.update(
+                    {'highest_n1': 300, 'lowest_n2': 600, 'std_n3': 50, 'volume_n3': 150})
 
         self.result.update({"updatetime": str(datetime.now()).split()[0]})
         return self.result
@@ -83,60 +99,66 @@ class Quantify_systeam(object):
             設定基礎時間跟基本資訊
         """
 
-        self.setting = AppSetting.get_setting()['Quantify_systeam']['history']
-        Attributes_data = self.setting['Attributes']
-
-        # ///////////////////////////////////////////////////
-        strategyName1 = "AVAXUSDT-15K-OB"
-        strategyAt_Data1 = Attributes_data[strategyName1]
+        # self.setting = AppSetting.get_setting()['Quantify_systeam']['history']
+        # Attributes_data = self.setting['Attributes']
 
         self.strategy1 = Strategy_base(
-            strategyName1, strategyAt_Data1['symbol'], strategyAt_Data1['freq_time'], strategyAt_Data1['size'], strategyAt_Data1['fee'], strategyAt_Data1['slippage'], lookback_date=strategyAt_Data1['lookback_date'])
+            'BTCUSDT-15K-OB', 'VCPStrategy', 'BTCUSDT', 15,  1.0,  0.002, 0.0025)
 
         # ///////////////////////////////////////////////////
-        strategyName2 = "COMPUSDT-15K-OB"
-        strategyAt_Data2 = Attributes_data[strategyName2]
+        # strategyName2 = "COMPUSDT-15K-OB"
+        # strategyAt_Data2 = Attributes_data[strategyName2]
 
-        self.strategy2 = Strategy_base(
-            strategyName2, strategyAt_Data2['symbol'], strategyAt_Data2['freq_time'], strategyAt_Data2['size'], strategyAt_Data2['fee'], strategyAt_Data2['slippage'], lookback_date=strategyAt_Data2['lookback_date'])
-
-        # ///////////////////////////////////////////////////
-        strategyName3 = "SOLUSDT-15K-OB"
-        strategyAt_Data3 = Attributes_data[strategyName3]
-
-        self.strategy3 = Strategy_base(
-            strategyName3, strategyAt_Data3['symbol'], strategyAt_Data3['freq_time'], strategyAt_Data3['size'], strategyAt_Data3['fee'], strategyAt_Data3['slippage'], lookback_date=strategyAt_Data3['lookback_date'])
+        # self.strategy2 = Strategy_base(
+        #     strategyName2, strategyAt_Data2['symbol'], strategyAt_Data2['freq_time'], strategyAt_Data2['size'], strategyAt_Data2['fee'], strategyAt_Data2['slippage'], lookback_date=strategyAt_Data2['lookback_date'])
 
         # ///////////////////////////////////////////////////
-        strategyName4 = "AAVEUSDT-15K-OB"
-        strategyAt_Data4 = Attributes_data[strategyName4]
+        # strategyName3 = "SOLUSDT-15K-OB"
+        # strategyAt_Data3 = Attributes_data[strategyName3]
 
-        self.strategy4 = Strategy_base(
-            strategyName4, strategyAt_Data4['symbol'], strategyAt_Data4['freq_time'], strategyAt_Data4['size'], strategyAt_Data4['fee'], strategyAt_Data4['slippage'], lookback_date=strategyAt_Data4['lookback_date'])
+        # self.strategy3 = Strategy_base(
+        #     strategyName3, strategyAt_Data3['symbol'], strategyAt_Data3['freq_time'], strategyAt_Data3['size'], strategyAt_Data3['fee'], strategyAt_Data3['slippage'], lookback_date=strategyAt_Data3['lookback_date'])
 
         # ///////////////////////////////////////////////////
-        strategyName5 = "DEFIUSDT-15K-OB"
-        strategyAt_Data5 = Attributes_data[strategyName5]
+        # strategyName4 = "AAVEUSDT-15K-OB"
+        # strategyAt_Data4 = Attributes_data[strategyName4]
 
-        self.strategy5 = Strategy_base(
-            strategyName5, strategyAt_Data5['symbol'], strategyAt_Data5['freq_time'], strategyAt_Data5['size'], strategyAt_Data5['fee'], strategyAt_Data5['slippage'], lookback_date=strategyAt_Data5['lookback_date'])
+        # self.strategy4 = Strategy_base(
+        #     strategyName4, strategyAt_Data4['symbol'], strategyAt_Data4['freq_time'], strategyAt_Data4['size'], strategyAt_Data4['fee'], strategyAt_Data4['slippage'], lookback_date=strategyAt_Data4['lookback_date'])
 
-        parameter_data = self.setting['parameter']
-        self.strategypa1 = parameter_data[strategyName1]
-        self.strategypa2 = parameter_data[strategyName2]
-        self.strategypa3 = parameter_data[strategyName3]
-        self.strategypa4 = parameter_data[strategyName4]
-        self.strategypa5 = parameter_data[strategyName5]
+        # ///////////////////////////////////////////////////
+        # strategyName5 = "DEFIUSDT-15K-OB"
+        # strategyAt_Data5 = Attributes_data[strategyName5]
+
+        # self.strategy5 = Strategy_base(
+        #     strategyName5, strategyAt_Data5['symbol'], strategyAt_Data5['freq_time'], strategyAt_Data5['size'], strategyAt_Data5['fee'], strategyAt_Data5['slippage'], lookback_date=strategyAt_Data5['lookback_date'])
+
+        # parameter_data = self.setting['parameter']
+        # self.strategypa1 = parameter_data[strategyName1]
+        # self.strategypa2 = parameter_data[strategyName2]
+        # self.strategypa3 = parameter_data[strategyName3]
+        # self.strategypa4 = parameter_data[strategyName4]
+        # self.strategypa5 = parameter_data[strategyName5]
 
     def optimize(self):
         """
             用來計算最佳化的參數
         """
-        ordermap = Np_Order_Strategy(self.strategy5)
-        inputs_parameter = {"highest_n1": np.arange(50, 800, 20, dtype=np.int16),
-                            "lowest_n2": np.arange(50, 800, 20, dtype=np.int16),
-                            'ATR_short1': np.arange(10, 200, 10, dtype=np.float_),
-                            'ATR_long2': np.arange(10, 200, 10, dtype=np.float_)}
+
+        begintime = time.time()
+        ordermap = Np_Order_Strategy(self.strategy1)
+
+        if self.strategy1.strategytype == 'TurtleStrategy':
+            inputs_parameter = {"highest_n1": np.arange(50, 800, 20, dtype=np.int16),
+                                "lowest_n2": np.arange(50, 800, 20, dtype=np.int16),
+                                'ATR_short1': np.arange(10, 200, 10, dtype=np.float_),
+                                'ATR_long2': np.arange(10, 200, 10, dtype=np.float_)}
+        else:
+            inputs_parameter = {"highest_n1": np.arange(50, 800, 20, dtype=np.int16),
+                                "lowest_n2": np.arange(50, 800, 20, dtype=np.int16),
+                                'std_n3': np.arange(10, 200, 10, dtype=np.int16),
+                                'volume_n3': np.arange(10, 200, 10, dtype=np.int16)}
+
         all_parameter = Hyper_optimization.generator_parameter(
             inputs_parameter)
         all_length = len(all_parameter)
@@ -165,12 +187,20 @@ class Quantify_systeam(object):
             if i[1] == max_data:
                 print(i)
 
+        endtime = time.time()
+        print(endtime - begintime)  # 39.32245182991028
+
     def Backtesting(self):
         """
             普通回測模式
         """
-        ordermap = Np_Order_Strategy(self.strategy1)
-        ordermap.set_parameter(self.strategypa1)
+        ordermap = Np_Order_Strategy(Strategy_base(
+            'BTCUSDT-15K-OB', 'VCPStrategy', 'BTCUSDT', 15,  1.0,  0.002, 0.0025, lookback_date='2020-01-01'))
+        # ordermap.set_parameter(self.strategypa1)
+        ordermap.set_parameter(
+            {'highest_n1': 300, 'lowest_n2': 600, 'std_n3': 50, 'volume_n3': 150}
+        )
+
         pf = ordermap.logic_order()
         Picture_maker(pf)
 
@@ -184,12 +214,12 @@ class Quantify_systeam(object):
             self.strategy1, self.strategypa1)
         app.register(
             self.strategy2, self.strategypa2)
-        app.register(
-            self.strategy3, self.strategypa3)
-        app.register(
-            self.strategy4, self.strategypa4)
-        app.register(
-            self.strategy5, self.strategypa5)
+        # app.register(
+        #     self.strategy3, self.strategypa3)
+        # app.register(
+        #     self.strategy4, self.strategypa4)
+        # app.register(
+        #     self.strategy5, self.strategypa5)
 
         pf = app.logic_order()
         Picture_maker(pf)
@@ -244,7 +274,6 @@ class Quantify_systeam_online(object):
             self.Trader.register(
                 strategy, strategypa)
 
-
     def Portfolio_online_start(self):
         pf = self.Trader.logic_order()
         return pf
@@ -270,4 +299,4 @@ class Quantify_systeam_online(object):
 
 if __name__ == "__main__":
     systeam = Quantify_systeam()
-    systeam.PortfolioBacktesting()
+    systeam.optimize()
