@@ -22,8 +22,8 @@ import threading
 # 將檢查sql表的功能提取出來?
 
 # 該如何添加多個策略?
-
-
+# 待修正回補問題
+# 待修正時間校準問題
 class Trading_systeam():
     def __init__(self) -> None:
         self._init_trading_system()
@@ -106,6 +106,7 @@ class Trading_systeam():
 
         # 使用 Optimizer # 建立DB
         for eachsymbol in all_symbols:
+            print(eachsymbol)
             # 判斷每次要優化的策略名稱
             if optimize_strategy_type == 'TurtleStrategy':
                 target_strategy_name = eachsymbol + "-15K-OB"
@@ -115,33 +116,18 @@ class Trading_systeam():
             if target_strategy_name in strategylist:
                 continue
 
-            print(target_strategy_name)
-            result = Optimizer(target_strategy_name, eachsymbol, optimize_strategy_type).optimize()
-            print(result)
+            result = Optimizer(target_strategy_name, eachsymbol,
+                               optimize_strategy_type).optimize()
+
             # 先確認是否存在裡面
-            # if result['strategyName'] in strategylist:
-            #     self.dataprovider_online.SQL.change_db_data(
-            #         f"""UPDATE `crypto_data`.`optimizeresult`
-            #             SET
-            #             `updatetime` = '{result['updatetime']}',
-            #             `freq_time` = {result['freq_time']},
-            #             `size` = {result['size']},
-            #             `fee` = {result['fee']},
-            #             `slippage` = {result['slippage']},
-            #             `symbol` = '{result['symbol']}',
-            #             `Strategytype` = '{result['Strategytype']}',
-            #             `highest_n1` = {result['highest_n1']},
-            #             `lowest_n2` = {result['lowest_n2']},
-            #             `ATR_short1` = {result['ATR_short1']},
-            #             `ATR_long2` = {result['ATR_long2']}
-            #             WHERE `strategyName` = '{result['strategyName']}';
-            #         """)
-            # else:
-            #     self.dataprovider_online.SQL.change_db_data(f"""
-            #     INSERT INTO `crypto_data`.`optimizeresult`
-            #         (`freq_time`, `size`, `fee`, `slippage`, `symbol`, `Strategytype`, `strategyName`, `highest_n1`, `lowest_n2`, `ATR_short1`, `ATR_long2`, `updatetime`)
-            #     VALUES
-            #         {tuple(result.values())};""")
+            if result['strategyName'] in strategylist:
+                self.dataprovider_online.SQL.change_db_data(
+                    SqlSentense.update_optimizeresult(result, optimize_strategy_type)
+                    )
+            else:
+                self.dataprovider_online.SQL.change_db_data(
+                    SqlSentense.insert_optimizeresult(result, optimize_strategy_type))
+            
 
     def get_target_symbol(self):
         dataprovider = DataProvider(time_type='D')

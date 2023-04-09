@@ -88,6 +88,10 @@ class Datatransformer:
                     continue
                 diff_map.update({symbol_name: postition_size})
             else:
+                # 當目前保證金浮動的時候會有不足的現象
+                if (postition_size - float(true_size[symbol_name])) / float(true_size[symbol_name]) < 0.01:
+                    print(postition_size - float(true_size[symbol_name])) / float(true_size[symbol_name])
+                    continue
                 diff_map.update(
                     {symbol_name: postition_size - float(true_size[symbol_name])})
 

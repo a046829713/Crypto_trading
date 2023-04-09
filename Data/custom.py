@@ -7,6 +7,7 @@ from binance.client import Client
 from binance.enums import HistoricalKlinesType
 from binance.enums import SIDE_BUY, ORDER_TYPE_MARKET, ORDER_TYPE_LIMIT, SIDE_SELL
 from binance.helpers import interval_to_milliseconds, convert_ts_str
+from binance.exceptions import BinanceAPIException
 import pandas as pd
 from dateutil import parser
 import math
@@ -18,7 +19,7 @@ from utils.Date_time import parser_time
 from utils.Debug_tool import debug
 import time
 from Database import SQL_operate
-
+from decimal import Decimal
 
 class BinanceDate(object):
     """
@@ -323,8 +324,8 @@ class Binance_server(object):
             order_quantity = abs(ready_to_order_size)
 
             if divmod(order_quantity, float(MinimumQuantity[symbol]))[0] != 0:
-                filter_size = int(
-                    order_quantity / float(MinimumQuantity[symbol])) * float(MinimumQuantity[symbol])
+                filter_size = float(Decimal(str(int(
+                                order_quantity / float(MinimumQuantity[symbol])))) * Decimal(str(float(MinimumQuantity[symbol]))))
 
                 # 依然要還原方向
                 out_dict.update({symbol: filter_size if order_quantity ==
@@ -380,16 +381,28 @@ class Binance_server(object):
         # 下單前檢查leverage
         # 商品槓桿
         for each_symbol in order_finally.keys():
+            print(each_symbol)
+
             def _change_leverage(_symbol, _leverage: int):
                 time.sleep(0.3)
-                Response = self.client.futures_change_leverage(
-                    symbol=_symbol, leverage=_leverage)
-                print(Response)
-                if float(Response['maxNotionalValue']) < balance_money * 1.5:
-                    _change_leverage(
-                        _symbol=_symbol, _leverage=_leverage-1)
+                try:
+                    Response = self.client.futures_change_leverage(
+                        symbol=_symbol, leverage=_leverage)
+                    print(Response)
+                    if float(Response['maxNotionalValue']) > balance_money * 2:
+                        _change_leverage(
+                            _symbol=_symbol, _leverage=_leverage+1)
+                except BinanceAPIException as e:
+                    if e.code == -4028:
+                        print(
+                            "Invalid leverage value. Please choose a valid leverage value.")
+                    elif e.code == -2027:
+                        print(
+                            "Exceeded the maximum allowable position at current leverage.")
+                    else:
+                        raise e
 
-            _change_leverage(each_symbol, 20)
+            _change_leverage(each_symbol, 1)
 
         for symbol, ready_to_order_size in order_finally.items():
             # 取得下單模式

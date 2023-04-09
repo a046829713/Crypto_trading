@@ -46,10 +46,10 @@ class Optimizer(object):
                                 'ATR_short1': np.arange(10, 200, 10, dtype=np.float_),
                                 'ATR_long2': np.arange(10, 200, 10, dtype=np.float_)}
         else:
-            inputs_parameter = {"highest_n1": np.arange(100, 800, 100, dtype=np.int16),
-                                "lowest_n2": np.arange(100, 800, 100, dtype=np.int16),
-                                'std_n3': np.arange(50, 200, 50, dtype=np.int16),
-                                'volume_n3': np.arange(50, 200, 50, dtype=np.int16)}
+            inputs_parameter = {"highest_n1": np.arange(50, 800, 50, dtype=np.int16),
+                                "lowest_n2": np.arange(50, 800, 50, dtype=np.int16),
+                                'std_n3': np.arange(50, 200, 10, dtype=np.int16),
+                                'volume_n3': np.arange(50, 200, 10, dtype=np.int16)}
 
         all_parameter = Hyper_optimization.generator_parameter(
             inputs_parameter)
