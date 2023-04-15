@@ -355,7 +355,6 @@ class Np_Order_Strategy(object):
         self.std_n3 = self.parameter.get('std_n3', np.nan)
         self.volume_n3 = self.parameter.get('volume_n3', np.nan)
 
-        
         if not np.isnan(self.highest_n1):
             self.highestarr = vecbot_count.max_rolling(
                 self.high_array, self.highest_n1)
@@ -375,7 +374,11 @@ class Np_Order_Strategy(object):
     def more_fast_logic_order(self):
         """
             用來創造閹割版的快速回測
+            有遇到資料過小的情況 可能未來就不會再出現類似的情況了(資料長度越來越長)
         """
+        if isinstance(self.lowestarr, int) or isinstance(self.highestarr, int):
+            return 0
+
         return nb.more_fast_logic_order(
             self.strategy_info.strategytype,
             self.open_array,

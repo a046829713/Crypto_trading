@@ -4,7 +4,7 @@ from Vecbot_backtest import Quantify_systeam_online, Optimizer
 import time
 from datetime import datetime, timedelta
 import sys
-from LINE_Alert import LINE_Alert
+from Infrastructure.LINE_Alert import LINE_Alert
 import pandas as pd
 from utils import Debug_tool
 import logging
@@ -13,17 +13,20 @@ import asyncio
 from Datatransformer import Datatransformer
 import threading
 
-# 修正自動配比biance 內的保證金數
+
 # 修正權重模式
 # 增加總投組獲利平倉，或是單一策略平倉?
 # 建立所有商品的優化(GUI > Trading_systeam > Optimizer)
 # 判斷資料集的最後一天是否需要回補?
 # 增加匯出 optimizeresult 的功能,或許可以增加GUI
 # 將檢查sql表的功能提取出來?
-
 # 該如何添加多個策略?
 # 待修正回補問題
 # 待修正時間校準問題
+# 帶修正買入數量過小問題
+# 待修正回測裡面紀錄部位的大小(不同策略之間)
+# 待修正下單槓桿倍數(不同策略之間)
+
 class Trading_systeam():
     def __init__(self) -> None:
         self._init_trading_system()
@@ -122,12 +125,12 @@ class Trading_systeam():
             # 先確認是否存在裡面
             if result['strategyName'] in strategylist:
                 self.dataprovider_online.SQL.change_db_data(
-                    SqlSentense.update_optimizeresult(result, optimize_strategy_type)
-                    )
+                    SqlSentense.update_optimizeresult(
+                        result, optimize_strategy_type)
+                )
             else:
                 self.dataprovider_online.SQL.change_db_data(
                     SqlSentense.insert_optimizeresult(result, optimize_strategy_type))
-            
 
     def get_target_symbol(self):
         dataprovider = DataProvider(time_type='D')
@@ -187,7 +190,7 @@ class Trading_systeam():
             self.dataprovider_online.SQL.change_db_data(
                 """CREATE TABLE `crypto_data`.`sysstatus`(`ID` varchar(255) NOT NULL,`systeam_datetime` varchar(255) NOT NULL,PRIMARY KEY(`ID`));""")
             self.dataprovider_online.SQL.change_db_data(
-                """INSERT INTO `sysstatus` VALUES ('1','2023-02-21 17:07:57.184614');""")
+                f"""INSERT INTO `sysstatus` VALUES ('1','{str(datetime.now())}');""")
         else:
             self.dataprovider_online.SQL.change_db_data(
                 f""" UPDATE `sysstatus` SET `systeam_datetime`='{str(datetime.now())}' WHERE `ID`='1';""")
@@ -372,7 +375,7 @@ class AsyncTrading_systeam(Trading_systeam):
 
                 if order_finally:
                     self.dataprovider_online.Binanceapp.execute_orders(
-                        order_finally, self.line_alert, formal=True)
+                        order_finally, self.line_alert, formal=False)
 
                 self.printfunc("時間差", time.time() - begin_time)
                 last_min = datetime.now().minute

@@ -1,0 +1,8 @@
+<RCC>
+  <qresource prefix="images">
+    <file>Images/CsvExport.jpg</file>
+    <file>Images/Gear.png</file>
+    <file>Images/ImportData.jpg</file>
+    <file>Images/SaveData.jpg</file>
+  </qresource>
+</RCC>
