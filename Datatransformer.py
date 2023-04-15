@@ -113,14 +113,18 @@ class Datatransformer:
             [1678000140000, '46.77', '46.77', '46.76', '46.76', '6.597', 1678000199999, '308.51848', 9, '0.000', '0.00000', '0']]
         """
         # 先將catch 裡面的資料做轉換 # 由於當次分鐘量不會很大 所以決定不清空 考慮到異步問題
-        df = pd.DataFrame.from_dict(socketdata[symbol_name], orient='index')
-        df.reset_index(drop=True, inplace=True)
-        df['Datetime'] = pd.to_datetime(df['Datetime'])
+        if socketdata.get(symbol_name,None) is not None:
+            df = pd.DataFrame.from_dict(socketdata[symbol_name], orient='index')
+            df.reset_index(drop=True, inplace=True)
+            df['Datetime'] = pd.to_datetime(df['Datetime'])
+        else:
+            df = pd.DataFrame()
 
         # lastdata
         lastdata.reset_index(inplace=True)
         new_df = pd.concat([lastdata, df])
 
+        print(new_df)
         new_df.set_index('Datetime', inplace=True)
         # duplicated >> 重複 True 代表重複了 # 過濾相同資料
         new_df = new_df[~new_df.index.duplicated(keep='last')]

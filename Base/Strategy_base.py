@@ -91,6 +91,7 @@ class Strategy_atom(object):
 
     def __init__(self,
                  strategy_name: str,
+                 strategytype:str,
                  symbol_name: str,
                  freq_time: int,
                  size: float,
@@ -112,6 +113,7 @@ class Strategy_atom(object):
             lookback_date (str): "2022-01-01"
         """
         self.strategy_name = strategy_name
+        self.strategytype = strategytype
         self.symbol_name = symbol_name
         self.freq_time = freq_time
         self.size = size
@@ -376,7 +378,7 @@ class Np_Order_Strategy(object):
             用來創造閹割版的快速回測
             有遇到資料過小的情況 可能未來就不會再出現類似的情況了(資料長度越來越長)
         """
-        if isinstance(self.lowestarr, int) or isinstance(self.highestarr, int):
+        if isinstance(self.lowestarr, int) or isinstance(self.highestarr, int) or isinstance(self.volume_array, int) or isinstance(self.std_arr, int):
             return 0
 
         return nb.more_fast_logic_order(
@@ -407,6 +409,7 @@ class Np_Order_Strategy(object):
         """
 
         print("進入測試")
+        
         orders, marketpostion_array, entryprice_array, buy_Fees_array, sell_Fees_array, OpenPostionprofit_array, ClosedPostionprofit_array, profit_array, Gross_profit_array, Gross_loss_array, all_Fees_array, netprofit_array = nb.logic_order(
             self.strategy_info.strategytype,
             self.open_array,
@@ -462,6 +465,8 @@ class PortfolioTrader(object):
 
         """
         self.strategys.append(strategy_info)
+        
+        
         self.strategys_maps.update(
             {strategy_info.strategy_name: strategy_info})
 
@@ -480,6 +485,8 @@ class PortfolioTrader(object):
         """
             將訂單的買賣方向匯入
         """
+        print("進入匯入訂單")
+        print(self.strategys)
         for strategy in self.strategys:
             ordermap = Np_Order_Strategy(strategy)
             ordermap.set_parameter(

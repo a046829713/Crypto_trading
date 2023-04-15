@@ -575,42 +575,6 @@ def logic_order(
     return neworders, marketpostion_array, entryprice_array, buy_Fees_array, sell_Fees_array, OpenPostionprofit_array, ClosedPostionprofit_array, profit_array, Gross_profit_array, Gross_loss_array, all_Fees_array, netprofit_array
 
 
-#     entryprice = 0  # 入場價格
-#     exitsprice = 0  # 出場價格
-#     buy_Fees = 0  # 買方手續費
-#     sell_Fees = 0  # 賣方手續費
-#     buy_sizes = size  # 買進部位大小
-#     sell_sizes = size  # 賣出進部位大小
-
-#     direction = "buyonly"
-#     # 主循環區域
-#     for i in range(Length):
-#         Close = close_array[i]
-#         # 策略所產生之資訊
-#
-#
-#         # ==============================================================
-#         # 主邏輯區段
-#         marketpostion = marketpostion_array[i]
-#         # ==============================================================
-#         # 計算當前賣出進部位大小 (由於賣出部位是買入給的 要先判斷賣出)
-#         if marketpostion == 0 and last_marketpostion == 1:
-#             sell_sizes = buy_sizes
-#         elif marketpostion == 1:
-#             sell_sizes = 0
-
-#         # 計算當前買進部位大小
-#         if marketpostion == 1 and last_marketpostion == 0:
-#             # buy_sizes = init_cash / Close
-#             buy_sizes = 1
-#         elif marketpostion == 0:
-#             buy_sizes = 0
-
-
-#     orders = np.array(get_order(marketpostion_array))
-
-#     return orders, entryprice_array, buy_Fees_array, sell_Fees_array, OpenPostionprofit_array, ClosedPostionprofit_array, profit_array, Gross_profit_array, Gross_loss_array, all_Fees_array, netprofit_array
-
 
 @njit
 def TurtleStrategy(high_array, highestarr, ATR_short, ATR_long, low_array, lowestarr):

@@ -232,14 +232,20 @@ class vecbot_count():
         Returns:
             _type_: _description_
         """
-        max_arr = np.empty(shape=a.shape[0])
-        shape = a.shape[:-1] + (a.shape[-1] - window + 1, window)
-        strides = a.strides + (a.strides[-1],)
-        rolling = np.lib.stride_tricks.as_strided(
-            a, shape=shape, strides=strides)
-        max_arr[window-1:] = np.roll(np.std(rolling, axis=1, ddof=0), 1)
-        max_arr[:window] = np.nan
-        return max_arr
+        try:
+            max_arr = np.empty(shape=a.shape[0])
+            shape = a.shape[:-1] + (a.shape[-1] - window + 1, window)
+            strides = a.strides + (a.strides[-1],)
+            rolling = np.lib.stride_tricks.as_strided(
+                a, shape=shape, strides=strides)
+            max_arr[window-1:] = np.roll(np.std(rolling, axis=1, ddof=0), 1)
+            max_arr[:window] = np.nan
+            return max_arr
+        except Exception as e:
+            if "negative dimensions are not allowed" in str(e):
+                return 0
+            else:
+                raise e
 
     @staticmethod
     def mean_rolling(a, window, axis=1):
@@ -253,11 +259,17 @@ class vecbot_count():
         Returns:
             _type_: _description_
         """
-        max_arr = np.empty(shape=a.shape[0])
-        shape = a.shape[:-1] + (a.shape[-1] - window + 1, window)
-        strides = a.strides + (a.strides[-1],)
-        rolling = np.lib.stride_tricks.as_strided(
-            a, shape=shape, strides=strides)
-        max_arr[window-1:] = np.roll(np.mean(rolling, axis=1), 1)
-        max_arr[:window] = np.nan
-        return max_arr
+        try:
+            max_arr = np.empty(shape=a.shape[0])
+            shape = a.shape[:-1] + (a.shape[-1] - window + 1, window)
+            strides = a.strides + (a.strides[-1],)
+            rolling = np.lib.stride_tricks.as_strided(
+                a, shape=shape, strides=strides)
+            max_arr[window-1:] = np.roll(np.mean(rolling, axis=1), 1)
+            max_arr[:window] = np.nan
+            return max_arr
+        except Exception as e:
+            if "negative dimensions are not allowed" in str(e):
+                return 0
+            else:
+                raise e

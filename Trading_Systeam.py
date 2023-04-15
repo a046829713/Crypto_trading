@@ -412,5 +412,6 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
 
 if __name__ == '__main__':
     pass
-    systeam = Trading_systeam()
-    systeam.OptimizeAllSymbols('VCPStrategy')
+
+    app = AsyncTrading_systeam()
+    app.main()
