@@ -111,7 +111,7 @@ class SqlSentense():
                 `ATR_long2` DECIMAL(10, 5)  DEFAULT NULL,
                 `updatetime` DATE NOT NULL,
                 `std_n3` int DEFAULT NULL,
-                `volume_n3` int DEFAULT NULL,
+                `volume_n3` int DEFAULT NULL
             );   
 
 
