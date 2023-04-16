@@ -334,7 +334,7 @@ class Binance_server(object):
 
         return out_dict
 
-    def execute_orders(self, order_finally: dict, line_alert, model=ORDER_TYPE_MARKET, current_size=dict(), formal=False):
+    def execute_orders(self, order_finally: dict, line_alert, model=ORDER_TYPE_MARKET, current_size=dict(), symbol_map=dict(), formal=False):
         """
             Execute orders to Binance.
             use for futures 
@@ -378,6 +378,9 @@ class Binance_server(object):
                 'COMPUSDT': '80.300', 'BTCDOMUSDT': '2.410', 'BTCUSDT': '0.200'}
 
             Response example:{'symbol': 'XMRUSDT', 'leverage': 10, 'maxNotionalValue': '1000000'}
+
+
+
         """
 
         self.trade_count += 1
@@ -398,10 +401,9 @@ class Binance_server(object):
 
             leverage_map.update({i: leverage})
 
-        for each_symbol in order_finally.keys():
+        for each_symbol, ready_to_order_size in order_finally.items():
             print(each_symbol)
 
-            # 如果商品已經存在 直接呼叫
             if leverage_map.get(each_symbol, None) is None:
                 def _change_leverage(_symbol, _leverage: int):
                     time.sleep(0.3)
@@ -424,9 +426,31 @@ class Binance_server(object):
 
                 _change_leverage(each_symbol, 1)
             else:
+                # 如果商品已經存在 直接呼叫
+                # 判斷是否需要更改槓桿 不需要管正負號
+
                 Response = self.client.futures_change_leverage(
                     symbol=each_symbol, leverage=leverage_map.get(each_symbol))
+
                 print("直接取得原始槓桿:", Response)
+                beginleverage = leverage_map.get(each_symbol)
+                while True :
+                    if (float(current_size[each_symbol]) + ready_to_order_size) * symbol_map[each_symbol]['Close'].iloc[-1] < float(Response['maxNotionalValue']):
+                        break
+                    # print("商品名稱:", each_symbol)
+                    # print(
+                    #     "總倉位:", (float(current_size[each_symbol]) + ready_to_order_size))
+                    # print("最後價格:", symbol_map[each_symbol]['Close'].iloc[-1])
+                    # print("總價值:", (float(
+                    #     current_size[each_symbol]) + ready_to_order_size) * symbol_map[each_symbol]['Close'].iloc[-1])
+                    # print("最大容許契約價值:", float(Response['maxNotionalValue']))
+                    # print('*'*120)
+                    time.sleep(0.3)
+                    beginleverage = beginleverage - 1
+                    Response = self.client.futures_change_leverage(
+                        symbol=each_symbol, leverage=beginleverage)
+
+                    print("調整槓桿:", Response)
 
         for symbol, ready_to_order_size in order_finally.items():
             # 取得下單模式

@@ -372,7 +372,7 @@ class AsyncTrading_systeam(Trading_systeam):
 
                 if order_finally:
                     self.dataprovider_online.Binanceapp.execute_orders(
-                        order_finally, self.line_alert, current_size=current_size, formal=False)
+                        order_finally, self.line_alert, current_size=current_size,symbol_map = self.symbol_map, formal=False)
 
                 self.printfunc("時間差", time.time() - begin_time)
                 last_min = datetime.now().minute
