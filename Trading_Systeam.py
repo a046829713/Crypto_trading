@@ -21,11 +21,8 @@ import threading
 # 增加匯出 optimizeresult 的功能,或許可以增加GUI
 # 將檢查sql表的功能提取出來?
 # 該如何添加多個策略?
-# 待修正回補問題
 # 待修正時間校準問題
-# 帶修正買入數量過小問題
-# 待修正回測裡面紀錄部位的大小(不同策略之間)
-# 待修正下單槓桿倍數(不同策略之間)
+
 
 class Trading_systeam():
     def __init__(self) -> None:
@@ -73,14 +70,13 @@ class Trading_systeam():
         """
         try:
             df = pd.read_csv("optimizeresult.csv")
-            df = df[["strategyName", 'freq_time', 'size', 'fee', 'slippage', 'symbol', 'Strategytype',
-                     'highest_n1',  'lowest_n2',  'ATR_short1', 'ATR_long2', 'updatetime']]
             df.set_index("strategyName", inplace=True)
-
+            self.dataprovider_online.SQL.change_db_data(
+                "DELETE FROM `optimizeresult`;"
+            )
             # 為了避免修改到原始sql 的create 使用append
             self.dataprovider_online.SQL.write_Dateframe(
                 df, "optimizeresult", exists='append')
-            print(df)
         except Exception as e:
             print(f"導入資料錯誤:{e}")
 
@@ -116,8 +112,8 @@ class Trading_systeam():
             else:
                 target_strategy_name = eachsymbol + "-15K-OB-VCP"
 
-            if target_strategy_name in strategylist:
-                continue
+            # if target_strategy_name in strategylist:
+            #     continue
 
             result = Optimizer(target_strategy_name, eachsymbol,
                                optimize_strategy_type).optimize()
@@ -281,7 +277,7 @@ class Trading_systeam():
 
                 if order_finally:
                     self.dataprovider_online.Binanceapp.execute_orders(
-                        order_finally, self.line_alert, formal=True)
+                        order_finally, self.line_alert, formal=False)
 
                 self.printfunc("時間差", time.time() - begin_time)
                 last_min = datetime.now().minute
@@ -313,6 +309,7 @@ class AsyncTrading_systeam(Trading_systeam):
         # 初始化投資組合 (傳入要買的標的物, 並且傳入相關參數)
         self.engine.Portfolio_online_register(
             targetsymbol, self.dataprovider_online.SQL.read_Dateframe("optimizeresult"))
+
         self.symbol_name: set = self.engine.get_symbol_name()
 
     def main(self):
@@ -362,10 +359,10 @@ class AsyncTrading_systeam(Trading_systeam):
 
                 current_size = self.dataprovider_online.Binanceapp.getfutures_account_positions()
                 self.printfunc("目前binance交易所內的部位狀態:", current_size)
-
+                
                 # >>比對目前binance 內的部位狀態 進行交易
                 order_finally = self.dataprovider_online.transformer.calculation_size(
-                    last_status, current_size)
+                    last_status, current_size, self.symbol_map)
 
                 # 將order_finally 跟下單最小單位相比
                 order_finally = self.dataprovider_online.Binanceapp.change_min_postion(
@@ -375,7 +372,7 @@ class AsyncTrading_systeam(Trading_systeam):
 
                 if order_finally:
                     self.dataprovider_online.Binanceapp.execute_orders(
-                        order_finally, self.line_alert, formal=False)
+                        order_finally, self.line_alert, current_size=current_size, formal=False)
 
                 self.printfunc("時間差", time.time() - begin_time)
                 last_min = datetime.now().minute

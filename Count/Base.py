@@ -245,6 +245,7 @@ class vecbot_count():
             if "negative dimensions are not allowed" in str(e):
                 return 0
             else:
+                print(a, window)
                 raise e
 
     @staticmethod

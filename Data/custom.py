@@ -21,6 +21,7 @@ import time
 from Database import SQL_operate
 from decimal import Decimal
 
+
 class BinanceDate(object):
     """
         'pip install python-binance'
@@ -325,7 +326,7 @@ class Binance_server(object):
 
             if divmod(order_quantity, float(MinimumQuantity[symbol]))[0] != 0:
                 filter_size = float(Decimal(str(int(
-                                order_quantity / float(MinimumQuantity[symbol])))) * Decimal(str(float(MinimumQuantity[symbol]))))
+                    order_quantity / float(MinimumQuantity[symbol])))) * Decimal(str(float(MinimumQuantity[symbol]))))
 
                 # 依然要還原方向
                 out_dict.update({symbol: filter_size if order_quantity ==
@@ -333,7 +334,7 @@ class Binance_server(object):
 
         return out_dict
 
-    def execute_orders(self, order_finally: dict, line_alert, model=ORDER_TYPE_MARKET, formal=False):
+    def execute_orders(self, order_finally: dict, line_alert, model=ORDER_TYPE_MARKET, current_size=dict(), formal=False):
         """
             Execute orders to Binance.
             use for futures 
@@ -370,6 +371,12 @@ class Binance_server(object):
 
             line_alert: to send msg to LINE
 
+            current_size:
+                {'BNBUSDT': '21.18', 'ETCUSDT': '2.35', 'XMRUSDT': '27.470',
+                'KSMUSDT': '107.1', 'ZECUSDT': '111.190', 'SOLUSDT': '168', 'YFIUSDT': '1.260', 'ETHUSDT': '3.399',
+                'EGLDUSDT': '156.8', 'BCHUSDT': '36.130', 'AAVEUSDT': '71.1', 'MKRUSDT': '3.579', 'DEFIUSDT': '9.939',
+                'COMPUSDT': '80.300', 'BTCDOMUSDT': '2.410', 'BTCUSDT': '0.200'}
+
             Response example:{'symbol': 'XMRUSDT', 'leverage': 10, 'maxNotionalValue': '1000000'}
         """
 
@@ -380,29 +387,46 @@ class Binance_server(object):
         balance_money = self.get_futuresaccountbalance()
         # 下單前檢查leverage
         # 商品槓桿
+        # 將已經持倉的部位傳入(讀取所有的槓桿)
+        leverage_map = {}
+        for i in current_size.keys():
+            # 获取 BTCUSDT 合约的当前部位信息
+            position = self.client.futures_position_information(symbol=i)
+
+            # 获取当前杠杆倍数
+            leverage = int(position[0]['leverage'])
+
+            leverage_map.update({i: leverage})
+
         for each_symbol in order_finally.keys():
             print(each_symbol)
 
-            def _change_leverage(_symbol, _leverage: int):
-                time.sleep(0.3)
-                try:
-                    Response = self.client.futures_change_leverage(
-                        symbol=_symbol, leverage=_leverage)
-                    print(Response)
-                    if float(Response['maxNotionalValue']) > balance_money * 2:
-                        _change_leverage(
-                            _symbol=_symbol, _leverage=_leverage+1)
-                except BinanceAPIException as e:
-                    if e.code == -4028:
-                        print(
-                            "Invalid leverage value. Please choose a valid leverage value.")
-                    elif e.code == -2027:
-                        print(
-                            "Exceeded the maximum allowable position at current leverage.")
-                    else:
-                        raise e
+            # 如果商品已經存在 直接呼叫
+            if leverage_map.get(each_symbol, None) is None:
+                def _change_leverage(_symbol, _leverage: int):
+                    time.sleep(0.3)
+                    try:
+                        Response = self.client.futures_change_leverage(
+                            symbol=_symbol, leverage=_leverage)
+                        print(Response)
+                        if float(Response['maxNotionalValue']) > balance_money * 2:
+                            _change_leverage(
+                                _symbol=_symbol, _leverage=_leverage+1)
+                    except BinanceAPIException as e:
+                        if e.code == -4028:
+                            print(
+                                "Invalid leverage value. Please choose a valid leverage value.")
+                        elif e.code == -2027:
+                            print(
+                                "Exceeded the maximum allowable position at current leverage.")
+                        else:
+                            raise e
 
-            _change_leverage(each_symbol, 1)
+                _change_leverage(each_symbol, 1)
+            else:
+                Response = self.client.futures_change_leverage(
+                    symbol=each_symbol, leverage=leverage_map.get(each_symbol))
+                print("直接取得原始槓桿:", Response)
 
         for symbol, ready_to_order_size in order_finally.items():
             # 取得下單模式

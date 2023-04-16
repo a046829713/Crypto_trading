@@ -264,17 +264,24 @@ class Quantify_systeam_online(object):
         argsData = argsdf.to_dict('index')
 
         for each_symbol in target_symobl:
-            strategyName = f"{each_symbol}-15K-OB"
-            print(strategyName)
-            eachargdata = argsData[strategyName]
-            print(eachargdata)
-            strategy = Strategy_atom(
-                strategyName, eachargdata['Strategytype'], eachargdata['symbol'], eachargdata['freq_time'], eachargdata['size'], eachargdata['fee'], eachargdata['slippage'])
+            for _strategy in ["TurtleStrategy","VCPStrategy"]:
+                if _strategy == 'TurtleStrategy':
+                    strategyName = f"{each_symbol}-15K-OB"
+                    eachargdata = argsData[strategyName]
+                    strategy = Strategy_atom(
+                        strategyName, eachargdata['Strategytype'], eachargdata['symbol'], eachargdata['freq_time'], eachargdata['size'], eachargdata['fee'], eachargdata['slippage'])
+                    strategypa = {"highest_n1": eachargdata['highest_n1'], "lowest_n2": eachargdata['lowest_n2'],
+                                "ATR_short1": eachargdata['ATR_short1'], "ATR_long2": eachargdata['ATR_long2']}
 
-            strategypa = {"highest_n1": eachargdata['highest_n1'], "lowest_n2": eachargdata['lowest_n2'],
-                          "ATR_short1": eachargdata['ATR_short1'], "ATR_long2": eachargdata['ATR_long2']}
-            self.Trader.register(
-                strategy, strategypa)
+                else:
+                    strategyName = f"{each_symbol}-15K-OB-VCP"
+                    eachargdata = argsData[strategyName]                    
+                    strategy = Strategy_atom(
+                        strategyName, eachargdata['Strategytype'], eachargdata['symbol'], eachargdata['freq_time'], eachargdata['size'], eachargdata['fee'], eachargdata['slippage'])
+                    strategypa = {"highest_n1": eachargdata['highest_n1'], "lowest_n2": eachargdata['lowest_n2'],
+                                "std_n3": int(eachargdata['std_n3']), "volume_n3": int(eachargdata['volume_n3'])}
+                self.Trader.register(
+                    strategy, strategypa)
 
     def Portfolio_online_start(self):
         pf = self.Trader.logic_order()

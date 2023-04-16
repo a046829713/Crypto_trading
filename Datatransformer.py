@@ -53,7 +53,7 @@ class Datatransformer:
 
         return df
 
-    def calculation_size(self, systeam_size: dict, true_size: dict) -> dict:
+    def calculation_size(self, systeam_size: dict, true_size: dict, symbol_map: dict) -> dict:
         """
         用來比較 系統部位 和 Binance 交易所的實際部位
 
@@ -89,8 +89,8 @@ class Datatransformer:
                 diff_map.update({symbol_name: postition_size})
             else:
                 # 當目前保證金浮動的時候會有不足的現象
-                if (postition_size - float(true_size[symbol_name])) / float(true_size[symbol_name]) < 0.01:
-                    print(postition_size - float(true_size[symbol_name])) / float(true_size[symbol_name])
+                # 以當前商品的價值 小於5美金跳過(幣安最小5美金)(不論是增加或是減少)(將來可以將reduce only的下單減少方式改回)
+                if abs(symbol_map[symbol_name]['Close'].iloc[-1] * (postition_size - float(true_size[symbol_name]))) < 5:
                     continue
                 diff_map.update(
                     {symbol_name: postition_size - float(true_size[symbol_name])})
@@ -113,8 +113,9 @@ class Datatransformer:
             [1678000140000, '46.77', '46.77', '46.76', '46.76', '6.597', 1678000199999, '308.51848', 9, '0.000', '0.00000', '0']]
         """
         # 先將catch 裡面的資料做轉換 # 由於當次分鐘量不會很大 所以決定不清空 考慮到異步問題
-        if socketdata.get(symbol_name,None) is not None:
-            df = pd.DataFrame.from_dict(socketdata[symbol_name], orient='index')
+        if socketdata.get(symbol_name, None) is not None:
+            df = pd.DataFrame.from_dict(
+                socketdata[symbol_name], orient='index')
             df.reset_index(drop=True, inplace=True)
             df['Datetime'] = pd.to_datetime(df['Datetime'])
         else:
@@ -124,7 +125,6 @@ class Datatransformer:
         lastdata.reset_index(inplace=True)
         new_df = pd.concat([lastdata, df])
 
-        print(new_df)
         new_df.set_index('Datetime', inplace=True)
         # duplicated >> 重複 True 代表重複了 # 過濾相同資料
         new_df = new_df[~new_df.index.duplicated(keep='last')]

@@ -448,6 +448,8 @@ def logic_order(
         exitsprice (設計時認為應該要添加滑價)
         傳入參數不可以為None 需要為數值型態 np.nan
     """
+    
+    
     marketpostion_array = np.empty(shape=Length)
     entryprice_array = np.empty(shape=Length)
     buy_Fees_array = np.empty(shape=Length)
@@ -482,6 +484,7 @@ def logic_order(
     direction = "buyonly"
 
     if strategytype == 'TurtleStrategy':
+        
         # 迴圈可以先產生的資料
         ATR_short = get_ATR(
             Length, high_array, low_array, close_array, ATR_short1)

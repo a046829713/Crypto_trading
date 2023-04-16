@@ -6,6 +6,7 @@ from Count import nb
 import copy
 from Database.SQL_operate import DB_operate
 from Datatransformer import Datatransformer
+import inspect
 
 
 class Strategy_base(object):
@@ -91,7 +92,7 @@ class Strategy_atom(object):
 
     def __init__(self,
                  strategy_name: str,
-                 strategytype:str,
+                 strategytype: str,
                  symbol_name: str,
                  freq_time: int,
                  size: float,
@@ -380,7 +381,8 @@ class Np_Order_Strategy(object):
         """
         if isinstance(self.lowestarr, int) or isinstance(self.highestarr, int) or isinstance(self.volume_array, int) or isinstance(self.std_arr, int):
             return 0
-
+        
+        # 如果回測其他策略會需要修改
         return nb.more_fast_logic_order(
             self.strategy_info.strategytype,
             self.open_array,
@@ -402,32 +404,16 @@ class Np_Order_Strategy(object):
         )
 
     def logic_order(self):
-        """_summary_
+        """
+            單一策略回測
 
         Returns:
             _type_: _description_
         """
+        params = self.change_params()
 
-        print("進入測試")
-        
         orders, marketpostion_array, entryprice_array, buy_Fees_array, sell_Fees_array, OpenPostionprofit_array, ClosedPostionprofit_array, profit_array, Gross_profit_array, Gross_loss_array, all_Fees_array, netprofit_array = nb.logic_order(
-            self.strategy_info.strategytype,
-            self.open_array,
-            self.high_array,
-            self.low_array,
-            self.close_array,
-            self.std_arr,
-            self.volume_array,
-            self.Volume_avgarr,
-            self.highestarr,
-            self.lowestarr,
-            self.Length,
-            self.strategy_info.init_cash,
-            self.strategy_info.slippage,
-            self.strategy_info.size,
-            self.strategy_info.fee,
-            self.ATR_short1,
-            self.ATR_long2
+            **params
         )
 
         Order_Info = Np_Order_Info(self.datetime_list,
@@ -448,6 +434,62 @@ class Np_Order_Strategy(object):
 
         return Order_Info
 
+    def change_params(self) -> dict:
+        """用來將參數打包成字典,傳入nb.logic_order
+
+        Returns:
+            dict: _description_
+        """
+        if self.strategy_info.strategytype == 'TurtleStrategy':
+            self.std_arr = np.array([np.nan])
+            self.Volume_avgarr = np.array([np.nan])
+            params = {
+                k: v for k, v in zip(
+                    list(inspect.signature(nb.logic_order).parameters.keys()),
+                    [self.strategy_info.strategytype,
+                     self.open_array,
+                     self.high_array,
+                     self.low_array,
+                     self.close_array,
+                     self.std_arr,
+                     self.volume_array,
+                     self.Volume_avgarr,
+                     self.highestarr,
+                     self.lowestarr,
+                     self.Length,
+                     self.strategy_info.init_cash,
+                     self.strategy_info.slippage,
+                     self.strategy_info.size,
+                     self.strategy_info.fee,
+                     self.ATR_short1,
+                     self.ATR_long2]
+                )
+            }
+        else:
+            params = {
+                k: v for k, v in zip(
+                    list(inspect.signature(nb.logic_order).parameters.keys()),
+                    [self.strategy_info.strategytype,
+                     self.open_array,
+                     self.high_array,
+                     self.low_array,
+                     self.close_array,
+                     self.std_arr,
+                     self.volume_array,
+                     self.Volume_avgarr,
+                     self.highestarr,
+                     self.lowestarr,
+                     self.Length,
+                     self.strategy_info.init_cash,
+                     self.strategy_info.slippage,
+                     self.strategy_info.size,
+                     self.strategy_info.fee,
+                     self.ATR_short1,
+                     self.ATR_long2]
+                )
+            }
+        return params
+
 
 class PortfolioTrader(object):
     def __init__(self, Portfolio_initcash: int) -> None:
@@ -465,8 +507,7 @@ class PortfolioTrader(object):
 
         """
         self.strategys.append(strategy_info)
-        
-        
+
         self.strategys_maps.update(
             {strategy_info.strategy_name: strategy_info})
 
@@ -485,8 +526,6 @@ class PortfolioTrader(object):
         """
             將訂單的買賣方向匯入
         """
-        print("進入匯入訂單")
-        print(self.strategys)
         for strategy in self.strategys:
             ordermap = Np_Order_Strategy(strategy)
             ordermap.set_parameter(
