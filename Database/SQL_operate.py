@@ -107,11 +107,12 @@ class SqlSentense():
                 `Strategytype` VARCHAR(20) NOT NULL,
                 `highest_n1` INT NOT NULL,
                 `lowest_n2` INT NOT NULL,
-                `ATR_short1` DECIMAL(10, 5) NOT NULL,
-                `ATR_long2` DECIMAL(10, 5) NOT NULL,
-                `updatetime` DATE NOT NULL
-            );
-
+                `ATR_short1` DECIMAL(10, 5)  DEFAULT NULL,
+                `ATR_long2` DECIMAL(10, 5)  DEFAULT NULL,
+                `updatetime` DATE NOT NULL,
+                `std_n3` int DEFAULT NULL,
+                `volume_n3` int DEFAULT NULL,
+            );   
 
 
         """
