@@ -411,9 +411,16 @@ class Binance_server(object):
                         Response = self.client.futures_change_leverage(
                             symbol=_symbol, leverage=_leverage)
                         print(Response)
-                        if float(Response['maxNotionalValue']) > balance_money * 2:
-                            _change_leverage(
-                                _symbol=_symbol, _leverage=_leverage+1)
+
+                        # 比下單資金更大才行
+                        if float(Response['maxNotionalValue']) > ready_to_order_size * symbol_map[each_symbol]['Close'].iloc[-1]:
+                            if float(Response['maxNotionalValue']) > balance_money * 2:
+                                _change_leverage(
+                                    _symbol=_symbol, _leverage=_leverage+1)
+                        else:
+                            Response = self.client.futures_change_leverage(
+                                symbol=_symbol, leverage=_leverage-1)
+
                     except BinanceAPIException as e:
                         if e.code == -4028:
                             print(
@@ -434,17 +441,9 @@ class Binance_server(object):
 
                 print("直接取得原始槓桿:", Response)
                 beginleverage = leverage_map.get(each_symbol)
-                while True :
+                while True:
                     if (float(current_size[each_symbol]) + ready_to_order_size) * symbol_map[each_symbol]['Close'].iloc[-1] < float(Response['maxNotionalValue']):
                         break
-                    # print("商品名稱:", each_symbol)
-                    # print(
-                    #     "總倉位:", (float(current_size[each_symbol]) + ready_to_order_size))
-                    # print("最後價格:", symbol_map[each_symbol]['Close'].iloc[-1])
-                    # print("總價值:", (float(
-                    #     current_size[each_symbol]) + ready_to_order_size) * symbol_map[each_symbol]['Close'].iloc[-1])
-                    # print("最大容許契約價值:", float(Response['maxNotionalValue']))
-                    # print('*'*120)
                     time.sleep(0.3)
                     beginleverage = beginleverage - 1
                     Response = self.client.futures_change_leverage(

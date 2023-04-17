@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Dialog</class>
- <widget class="QDialog" name="Dialog">
+ <class>WourLogin</class>
+ <widget class="QDialog" name="WourLogin">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,25 +11,42 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>WourTradingSysteam</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normalon>Images/binance.png</normalon>
+   </iconset>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1,
+                                    stop: 0 #4c4c4c, stop: 1 #1f1f1f);</string>
   </property>
   <widget class="QPushButton" name="pushButton_login">
    <property name="geometry">
     <rect>
      <x>30</x>
      <y>380</y>
-     <width>151</width>
+     <width>161</width>
      <height>41</height>
     </rect>
    </property>
    <property name="font">
     <font>
      <pointsize>14</pointsize>
+     <bold>true</bold>
     </font>
    </property>
    <property name="styleSheet">
-    <string notr="true">background-color: rgb(162, 158, 154);
-color: rgb(255, 255, 255);</string>
+    <string notr="true">QPushButton {
+    background-color: rgb(162, 158, 154);
+    color: rgb(255, 255, 255);
+    border-radius: 10px;
+}
+
+QPushButton:hover {
+    background-color: rgb(130, 130, 130);
+}</string>
    </property>
    <property name="text">
     <string>Login</string>
@@ -49,8 +66,12 @@ color: rgb(255, 255, 255);</string>
      <pointsize>14</pointsize>
     </font>
    </property>
+   <property name="styleSheet">
+    <string notr="true">color: rgb(255, 255, 255);
+background-color: rgba(255, 255, 255, 0);</string>
+   </property>
    <property name="text">
-    <string>請記住帳號密碼</string>
+    <string>記住帳號密碼</string>
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton_CheckDate">
@@ -58,24 +79,35 @@ color: rgb(255, 255, 255);</string>
     <rect>
      <x>200</x>
      <y>380</y>
-     <width>151</width>
+     <width>171</width>
      <height>41</height>
     </rect>
    </property>
    <property name="font">
     <font>
      <pointsize>14</pointsize>
+     <bold>true</bold>
     </font>
    </property>
    <property name="styleSheet">
-    <string notr="true">background-color: rgb(85, 170, 0);
-color: rgb(255, 255, 255);</string>
+    <string notr="true">QPushButton {
+    background-color: rgb(85, 170, 0);
+    color: rgb(255, 255, 255);
+    border-radius: 10px;
+}
+
+QPushButton:hover {
+    
+	background-color: rgb(0, 170, 0);
+}
+
+</string>
    </property>
    <property name="text">
     <string>CheckDate</string>
    </property>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>30</x>
@@ -96,7 +128,12 @@ color: rgb(255, 255, 255);</string>
       <property name="font">
        <font>
         <pointsize>14</pointsize>
+        <bold>true</bold>
        </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: rgba(255, 255, 255, 0);
+color: rgb(255, 255, 255);</string>
       </property>
       <property name="text">
        <string>Binance API_KEY</string>
@@ -111,6 +148,10 @@ color: rgb(255, 255, 255);</string>
         <height>40</height>
        </size>
       </property>
+      <property name="styleSheet">
+       <string notr="true"> border-radius: 10px; 
+background-color: rgb(255, 255, 255);</string>
+      </property>
      </widget>
     </item>
     <item>
@@ -124,7 +165,12 @@ color: rgb(255, 255, 255);</string>
       <property name="font">
        <font>
         <pointsize>14</pointsize>
+        <bold>true</bold>
        </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: rgba(255, 255, 255, 0);
+color: rgb(255, 255, 255);</string>
       </property>
       <property name="text">
        <string>Binance Secret Key</string>
@@ -139,6 +185,13 @@ color: rgb(255, 255, 255);</string>
         <height>40</height>
        </size>
       </property>
+      <property name="styleSheet">
+       <string notr="true"> border-radius: 10px; 
+background-color: rgb(255, 255, 255);</string>
+      </property>
+      <property name="echoMode">
+       <enum>QLineEdit::Password</enum>
+      </property>
      </widget>
     </item>
     <item>
@@ -152,7 +205,12 @@ color: rgb(255, 255, 255);</string>
       <property name="font">
        <font>
         <pointsize>14</pointsize>
+        <bold>true</bold>
        </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: rgba(255, 255, 255, 0);
+color: rgb(255, 255, 255);</string>
       </property>
       <property name="text">
        <string>LINE Notify</string>
@@ -167,11 +225,20 @@ color: rgb(255, 255, 255);</string>
         <height>40</height>
        </size>
       </property>
+      <property name="styleSheet">
+       <string notr="true"> border-radius: 10px; 
+background-color: rgb(255, 255, 255);</string>
+      </property>
+      <property name="echoMode">
+       <enum>QLineEdit::Password</enum>
+      </property>
      </widget>
     </item>
    </layout>
   </widget>
  </widget>
- <resources/>
+ <resources>
+  <include location="images.qrc"/>
+ </resources>
  <connections/>
 </ui>

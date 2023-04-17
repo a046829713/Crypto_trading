@@ -9,92 +9,137 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 
-class Ui_Dialog(object):
-    def setupUi(self, Dialog):
-        Dialog.setObjectName("Dialog")
-        Dialog.resize(400, 509)
-        self.pushButton_login = QtWidgets.QPushButton(Dialog)
-        self.pushButton_login.setGeometry(QtCore.QRect(30, 380, 151, 41))
+class Ui_WourLogin(object):
+    def setupUi(self, WourLogin):
+        WourLogin.setObjectName("WourLogin")
+        WourLogin.resize(400, 509)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(".\\GUI\\Images/binance.png"),
+                       QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.On)
+        WourLogin.setWindowIcon(icon)
+        WourLogin.setStyleSheet("background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1,\n"
+                                "                                    stop: 0 #4c4c4c, stop: 1 #1f1f1f);")
+        self.pushButton_login = QtWidgets.QPushButton(WourLogin)
+        self.pushButton_login.setGeometry(QtCore.QRect(30, 380, 161, 41))
         font = QtGui.QFont()
         font.setPointSize(14)
+        font.setBold(True)
         self.pushButton_login.setFont(font)
-        self.pushButton_login.setStyleSheet("background-color: rgb(162, 158, 154);\n"
-                                            "color: rgb(255, 255, 255);")
+        self.pushButton_login.setStyleSheet("QPushButton {\n"
+                                            "    background-color: rgb(162, 158, 154);\n"
+                                            "    color: rgb(255, 255, 255);\n"
+                                            "    border-radius: 10px;\n"
+                                            "}\n"
+                                            "\n"
+                                            "QPushButton:hover {\n"
+                                            "    background-color: rgb(130, 130, 130);\n"
+                                            "}")
         self.pushButton_login.setObjectName("pushButton_login")
-        self.checkBox_remeberpa = QtWidgets.QCheckBox(Dialog)
+        self.checkBox_remeberpa = QtWidgets.QCheckBox(WourLogin)
         self.checkBox_remeberpa.setGeometry(QtCore.QRect(30, 340, 161, 20))
         font = QtGui.QFont()
         font.setPointSize(14)
         self.checkBox_remeberpa.setFont(font)
+        self.checkBox_remeberpa.setStyleSheet("color: rgb(255, 255, 255);\n"
+                                              "background-color: rgba(255, 255, 255, 0);")
         self.checkBox_remeberpa.setObjectName("checkBox_remeberpa")
-        self.pushButton_CheckDate = QtWidgets.QPushButton(Dialog)
-        self.pushButton_CheckDate.setGeometry(QtCore.QRect(200, 380, 151, 41))
+        self.pushButton_CheckDate = QtWidgets.QPushButton(WourLogin)
+        self.pushButton_CheckDate.setGeometry(QtCore.QRect(200, 380, 171, 41))
         font = QtGui.QFont()
         font.setPointSize(14)
+        font.setBold(True)
         self.pushButton_CheckDate.setFont(font)
-        self.pushButton_CheckDate.setStyleSheet("background-color: rgb(85, 170, 0);\n"
-                                                "color: rgb(255, 255, 255);")
+        self.pushButton_CheckDate.setStyleSheet("QPushButton {\n"
+                                                "    background-color: rgb(85, 170, 0);\n"
+                                                "    color: rgb(255, 255, 255);\n"
+                                                "    border-radius: 10px;\n"
+                                                "}\n"
+                                                "\n"
+                                                "QPushButton:hover {\n"
+                                                "    \n"
+                                                "    background-color: rgb(0, 170, 0);\n"
+                                                "}\n"
+                                                "\n"
+                                                "")
         self.pushButton_CheckDate.setObjectName("pushButton_CheckDate")
-        self.widget = QtWidgets.QWidget(Dialog)
-        self.widget.setGeometry(QtCore.QRect(30, 20, 343, 301))
-        self.widget.setObjectName("widget")
-        self.verticalLayout = QtWidgets.QVBoxLayout(self.widget)
+        self.layoutWidget = QtWidgets.QWidget(WourLogin)
+        self.layoutWidget.setGeometry(QtCore.QRect(30, 20, 343, 301))
+        self.layoutWidget.setObjectName("layoutWidget")
+        self.verticalLayout = QtWidgets.QVBoxLayout(self.layoutWidget)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.label_accout = QtWidgets.QLabel(self.widget)
+        self.label_accout = QtWidgets.QLabel(self.layoutWidget)
         self.label_accout.setMinimumSize(QtCore.QSize(191, 0))
         font = QtGui.QFont()
         font.setPointSize(14)
+        font.setBold(True)
         self.label_accout.setFont(font)
+        self.label_accout.setStyleSheet("background-color: rgba(255, 255, 255, 0);\n"
+                                        "color: rgb(255, 255, 255);")
         self.label_accout.setObjectName("label_accout")
         self.verticalLayout.addWidget(self.label_accout)
-        self.lineEdit_api_key = QtWidgets.QLineEdit(self.widget)
+        self.lineEdit_api_key = QtWidgets.QLineEdit(self.layoutWidget)
         self.lineEdit_api_key.setMinimumSize(QtCore.QSize(341, 40))
+        self.lineEdit_api_key.setStyleSheet(" border-radius: 10px; \n"
+                                            "background-color: rgb(255, 255, 255);")
         self.lineEdit_api_key.setObjectName("lineEdit_api_key")
         self.verticalLayout.addWidget(self.lineEdit_api_key)
-        self.label_secret_key = QtWidgets.QLabel(self.widget)
+        self.label_secret_key = QtWidgets.QLabel(self.layoutWidget)
         self.label_secret_key.setMinimumSize(QtCore.QSize(301, 0))
         font = QtGui.QFont()
         font.setPointSize(14)
+        font.setBold(True)
         self.label_secret_key.setFont(font)
+        self.label_secret_key.setStyleSheet("background-color: rgba(255, 255, 255, 0);\n"
+                                            "color: rgb(255, 255, 255);")
         self.label_secret_key.setObjectName("label_secret_key")
         self.verticalLayout.addWidget(self.label_secret_key)
-        self.lineEdit_secret_key = QtWidgets.QLineEdit(self.widget)
+        self.lineEdit_secret_key = QtWidgets.QLineEdit(self.layoutWidget)
         self.lineEdit_secret_key.setMinimumSize(QtCore.QSize(321, 40))
+        self.lineEdit_secret_key.setStyleSheet(" border-radius: 10px; \n"
+                                               "background-color: rgb(255, 255, 255);")
+        self.lineEdit_secret_key.setEchoMode(
+            QtWidgets.QLineEdit.EchoMode.Password)
         self.lineEdit_secret_key.setObjectName("lineEdit_secret_key")
         self.verticalLayout.addWidget(self.lineEdit_secret_key)
-        self.label_LINE = QtWidgets.QLabel(self.widget)
+        self.label_LINE = QtWidgets.QLabel(self.layoutWidget)
         self.label_LINE.setMinimumSize(QtCore.QSize(181, 0))
         font = QtGui.QFont()
         font.setPointSize(14)
+        font.setBold(True)
         self.label_LINE.setFont(font)
+        self.label_LINE.setStyleSheet("background-color: rgba(255, 255, 255, 0);\n"
+                                      "color: rgb(255, 255, 255);")
         self.label_LINE.setObjectName("label_LINE")
         self.verticalLayout.addWidget(self.label_LINE)
-        self.lineEdit_LINE = QtWidgets.QLineEdit(self.widget)
+        self.lineEdit_LINE = QtWidgets.QLineEdit(self.layoutWidget)
         self.lineEdit_LINE.setMinimumSize(QtCore.QSize(301, 40))
+        self.lineEdit_LINE.setStyleSheet(" border-radius: 10px; \n"
+                                         "background-color: rgb(255, 255, 255);")
+        self.lineEdit_LINE.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
         self.lineEdit_LINE.setObjectName("lineEdit_LINE")
         self.verticalLayout.addWidget(self.lineEdit_LINE)
 
-        self.retranslateUi(Dialog)
-        QtCore.QMetaObject.connectSlotsByName(Dialog)
+        self.retranslateUi(WourLogin)
+        QtCore.QMetaObject.connectSlotsByName(WourLogin)
 
-    def retranslateUi(self, Dialog):
+    def retranslateUi(self, WourLogin):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
-        self.pushButton_login.setText(_translate("Dialog", "Login"))
-        self.checkBox_remeberpa.setText(_translate("Dialog", "請記住帳號密碼"))
-        self.pushButton_CheckDate.setText(_translate("Dialog", "CheckDate"))
-        self.label_accout.setText(_translate("Dialog", "Binance API_KEY"))
+        WourLogin.setWindowTitle(_translate("WourLogin", "WourTradingSysteam"))
+        self.pushButton_login.setText(_translate("WourLogin", "Login"))
+        self.checkBox_remeberpa.setText(_translate("WourLogin", "記住帳號密碼"))
+        self.pushButton_CheckDate.setText(_translate("WourLogin", "CheckDate"))
+        self.label_accout.setText(_translate("WourLogin", "Binance API_KEY"))
         self.label_secret_key.setText(
-            _translate("Dialog", "Binance Secret Key"))
-        self.label_LINE.setText(_translate("Dialog", "LINE Notify"))
+            _translate("WourLogin", "Binance Secret Key"))
+        self.label_LINE.setText(_translate("WourLogin", "LINE Notify"))
 
 
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    Dialog = QtWidgets.QDialog()
-    ui = Ui_Dialog()
-    ui.setupUi(Dialog)
-    Dialog.show()
+    WourLogin = QtWidgets.QDialog()
+    ui = Ui_WourLogin()
+    ui.setupUi(WourLogin)
+    WourLogin.show()
     sys.exit(app.exec())

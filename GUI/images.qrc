@@ -1,8 +1,7 @@
 <RCC>
   <qresource prefix="images">
-    <file>Images/CsvExport.jpg</file>
+    <file>Images/Attention.png</file>
     <file>Images/Gear.png</file>
-    <file>Images/ImportData.jpg</file>
-    <file>Images/SaveData.jpg</file>
+    <file>Images/binance.png</file>
   </qresource>
 </RCC>
