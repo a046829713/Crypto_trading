@@ -58,34 +58,34 @@ class Ui_MainWindow(object):
         self.toolBar = QtWidgets.QToolBar(MainWindow)
         self.toolBar.setIconSize(QtCore.QSize(32, 32))
         self.toolBar.setObjectName("toolBar")
-        MainWindow.addToolBar(QtCore.Qt.ToolBarArea.TopToolBarArea, self.toolBar)
-        
+        MainWindow.addToolBar(
+            QtCore.Qt.ToolBarArea.TopToolBarArea, self.toolBar)
+
         self.actionimport = QtGui.QAction(MainWindow)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("GUI\Images\ImportData.jpg"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
+        icon.addPixmap(QtGui.QPixmap(".\GUI\Images\ImportData.png"),
+                       QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
         self.actionimport.setIcon(icon)
         self.actionimport.setObjectName("actionimport")
-        
-        
+
         self.actionexport = QtGui.QAction(MainWindow)
         icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap("GUI\Images\CsvExport.jpg"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
+        icon1.addPixmap(QtGui.QPixmap(".\GUI\Images\CsvExport.png"),
+                        QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
         self.actionexport.setIcon(icon1)
         self.actionexport.setObjectName("actionexport")
-        
-        
-        
+
         self.actionAutoTrading = QtGui.QAction(MainWindow)
         icon2 = QtGui.QIcon()
-        icon2.addPixmap(QtGui.QPixmap("GUI\Images\Gear.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
+        icon2.addPixmap(QtGui.QPixmap(".\GUI\Images\Gear.png"),
+                        QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
         self.actionAutoTrading.setIcon(icon2)
         self.actionAutoTrading.setObjectName("actionAutoTrading")
-        
-        
-        
+
         self.actionSaveData = QtGui.QAction(MainWindow)
         icon3 = QtGui.QIcon()
-        icon3.addPixmap(QtGui.QPixmap("GUI\Images\SaveData.jpg"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
+        icon3.addPixmap(QtGui.QPixmap(".\GUI\Images\SaveData.png"),
+                        QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
         self.actionSaveData.setIcon(icon3)
         self.actionSaveData.setObjectName("actionSaveData")
         self.actionReload_Day_Data = QtGui.QAction(MainWindow)
@@ -113,17 +113,22 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Crypto Trading Systeam"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "CloseProfit"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "Tab 2"))
+        MainWindow.setWindowTitle(_translate(
+            "MainWindow", "Crypto Trading Systeam"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(
+            self.tab), _translate("MainWindow", "CloseProfit"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(
+            self.tab_2), _translate("MainWindow", "Tab 2"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.toolBar.setWindowTitle(_translate("MainWindow", "toolBar"))
         self.actionimport.setText(_translate("MainWindow", "Import"))
         self.actionexport.setText(_translate("MainWindow", "Export"))
         self.actionAutoTrading.setText(_translate("MainWindow", "AutoTrading"))
         self.actionSaveData.setText(_translate("MainWindow", "SaveData"))
-        self.actionReload_Day_Data.setText(_translate("MainWindow", "Reload Day Data"))
-        self.actionReload_Min_Data.setText(_translate("MainWindow", "Reload Min Data"))
+        self.actionReload_Day_Data.setText(
+            _translate("MainWindow", "Reload Day Data"))
+        self.actionReload_Min_Data.setText(
+            _translate("MainWindow", "Reload Min Data"))
 
 
 if __name__ == "__main__":
