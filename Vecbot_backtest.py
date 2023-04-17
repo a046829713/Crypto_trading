@@ -140,56 +140,6 @@ class Quantify_systeam(object):
         # self.strategypa4 = parameter_data[strategyName4]
         # self.strategypa5 = parameter_data[strategyName5]
 
-    def optimize(self):
-        """
-            用來計算最佳化的參數
-        """
-
-        begintime = time.time()
-        ordermap = Np_Order_Strategy(self.strategy1)
-
-        if self.strategy1.strategytype == 'TurtleStrategy':
-            inputs_parameter = {"highest_n1": np.arange(50, 800, 20, dtype=np.int16),
-                                "lowest_n2": np.arange(50, 800, 20, dtype=np.int16),
-                                'ATR_short1': np.arange(10, 200, 10, dtype=np.float_),
-                                'ATR_long2': np.arange(10, 200, 10, dtype=np.float_)}
-        else:
-            inputs_parameter = {"highest_n1": np.arange(50, 800, 20, dtype=np.int16),
-                                "lowest_n2": np.arange(50, 800, 20, dtype=np.int16),
-                                'std_n3': np.arange(10, 200, 10, dtype=np.int16),
-                                'volume_n3': np.arange(10, 200, 10, dtype=np.int16)}
-
-        all_parameter = Hyper_optimization.generator_parameter(
-            inputs_parameter)
-        all_length = len(all_parameter)
-        out_list = []
-        num = 0
-        all_i = 0
-        for each_parameter in all_parameter:
-            num += 1
-            if num > 500 * all_i:
-                all_i += 1
-                print(f"總數量{all_length},目前完成進度: {(num / all_length) * 100} %")
-            ordermap.set_parameter(each_parameter)
-            UI = ordermap.more_fast_logic_order()
-
-            if UI == 0:
-                continue
-            if UI < 0:
-                continue
-            out_list.append([each_parameter, UI])
-
-        print(out_list)
-        UI_list = [i[1] for i in out_list]
-        max_data = max(UI_list)
-
-        for i in out_list:
-            if i[1] == max_data:
-                print(i)
-
-        endtime = time.time()
-        print(endtime - begintime)  # 39.32245182991028
-
     def Backtesting(self):
         """
             普通回測模式
