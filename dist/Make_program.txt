@@ -1,0 +1,2 @@
+pyinstaller --onefile .\Alert_Msg.py
+pyinstaller --name=TradeUi --onefile --noconsole TradeUi.py
