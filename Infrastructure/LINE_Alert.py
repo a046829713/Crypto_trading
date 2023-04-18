@@ -22,7 +22,7 @@ class LINE_Alert():
         try:
             r = requests.post("https://notify-api.line.me/api/notify",
                               headers=headers, params=params)
-
             return r.status_code
-        except:
+        except Exception as e:
+            print("錯誤資訊內容:{e},訊息無法傳送")
             return "訊息無法傳送"

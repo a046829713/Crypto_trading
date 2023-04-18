@@ -40,6 +40,8 @@ class Login_Dialog(QDialog, Ui_WourLogin):
 
             with open(r"C:/LINE_TOEKN.txt", 'r') as file:
                 LINE_TOEKN = file.read()
+                LINE_TOEKN = LINE_TOEKN.replace("\n","")
+                print(LINE_TOEKN)
 
             self.checkBox_remeberpa.setChecked(True)
             self.lineEdit_api_key.setText(account)
@@ -60,7 +62,7 @@ class Login_Dialog(QDialog, Ui_WourLogin):
                 file.write(self.secret_key + "\n")
 
             with open(r"C:/LINE_TOEKN.txt", 'w') as file:
-                file.write(self.LINE + "\n")
+                file.write(self.LINE )
 
     def closeEvent(self, event):
         """

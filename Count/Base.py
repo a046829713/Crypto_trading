@@ -1,8 +1,6 @@
 import pandas as pd
 import numpy as np
 from typing import Sequence
-import talib
-
 
 class Portfolio_count():
     pass

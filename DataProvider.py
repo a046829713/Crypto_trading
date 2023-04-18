@@ -46,7 +46,7 @@ class DataProvider:
             if reload_type == 'History':
                 SQL_Q = f"""SELECT * FROM ( SELECT * FROM `{tb_symbol_name}` ORDER BY Datetime DESC LIMIT 20 ) t ORDER BY Datetime ASC;"""
                 df = self.SQL.read_Dateframe(SQL_Q)
-                print(df)
+                
             elif reload_type == 'Online':
                 df = self.SQL.read_Dateframe(
                     f'SELECT * FROM `{tb_symbol_name}` where Datetime > "2022-12-26"')
@@ -124,6 +124,15 @@ class DataProvider:
         """
             用來回補所有symbol的歷史資料
             為了避免寫入過慢 更改成append
+            
+            2023.04.18
+                TODO:
+                    lewis MSG:
+                        i find bug in pandas to sql 
+                        in SQLAlchemy==2.XX.XX no error but mysql database can't insert data
+                        so i reply SQLAlchemy==1.4.44
+                        if future can try to fix this bug 
+                    
         """
         for symbol_name in self.Binanceapp.get_targetsymobls():
             try:

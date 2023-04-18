@@ -3,7 +3,7 @@ from Database import router
 from sqlalchemy import text
 from utils import Debug_tool
 import pandas as pd
-
+import time
 
 class DB_operate():
     def wirte_data(self, quoteSymbol: str, out_list: list):
@@ -198,3 +198,6 @@ class SqlSentense():
                                     WHERE `strategyName` = '{result['strategyName']}';
                                 """
         return sql_query
+
+
+    

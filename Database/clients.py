@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, engine
-
+from sqlalchemy import text
 
 def get_mysql_financialdata_conn() -> engine.base.Connection:
     """    
@@ -16,4 +16,11 @@ def get_mysql_financialdata_conn() -> engine.base.Connection:
     # address = "mysql+pymysql://root:123456@localhost:3306/crypto_data"
     engine = create_engine(address)
     connect = engine.connect()
+
     return connect
+
+
+if __name__ == "__main__":
+    with get_mysql_financialdata_conn() as conn:
+        result = conn.execute(text("select *  from `btcusdt-f-d`;"))
+        print(len(list(result)))

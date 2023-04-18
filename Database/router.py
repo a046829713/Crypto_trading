@@ -3,13 +3,14 @@ import typing
 from sqlalchemy import engine
 from Database import clients
 from utils import Debug_tool
-
+from sqlalchemy import text
 
 def check_alive(connect: engine.base.Connection):
     """
     在每次使用之前，先確認 connect 是否活者
     """
-    connect.execute("SELECT 1 + 1")
+    connect.execute(text("SELECT 1 + 1;"))
+
 
 
 def reconnect(connect_func: typing.Callable) -> engine.base.Connection:

@@ -158,7 +158,7 @@ class Quantify_systeam(object):
         """
             投資組合模擬非正式
         """
-        app = PortfolioTrader(Portfolio_initcash=18000)
+        app = PortfolioTrader(Portfolio_initcash=15757)
 
         app.register(
             self.strategy1, self.strategypa1)

@@ -22,7 +22,7 @@ import threading
 # 將檢查sql表的功能提取出來?
 # 該如何添加多個策略?
 # 待修正時間校準問題
-
+# 為了方便轉移 還是需要打包起來
 
 class Trading_systeam():
     def __init__(self) -> None:
@@ -47,6 +47,7 @@ class Trading_systeam():
             檢查資料庫中的日資料是否已經回補
             if already update then contiune
         """
+        print("檢查每日資料")
         data = self.dataprovider_online.SQL.get_db_data(
             """select *  from `btcusdt-f-d` order by Datetime desc limit 1""")
         sql_date = str(data[0][0]).split(' ')[0]
