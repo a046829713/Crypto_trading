@@ -1,4 +1,4 @@
-from DataProvider import DataProvider, DataProvider_online, AsyncDataProvider
+from Major.DataProvider import DataProvider, DataProvider_online, AsyncDataProvider
 from Major.Symbol_filter import get_symobl_filter_useful
 from Vecbot_backtest import Quantify_systeam_online, Optimizer
 import time
@@ -12,7 +12,7 @@ from Database.SQL_operate import SqlSentense
 import asyncio
 from Datatransformer import Datatransformer
 import threading
-
+from utils import BackUp
 
 # 修正權重模式
 # 增加總投組獲利平倉，或是單一策略平倉?
@@ -24,6 +24,10 @@ import threading
 # 待修正時間校準問題
 # 為了方便轉移 還是需要打包起來
 
+
+
+# 建構輸入輸出檢查的decorator
+# 轉移資料
 class Trading_systeam():
     def __init__(self) -> None:
         self._init_trading_system()
@@ -47,7 +51,6 @@ class Trading_systeam():
             檢查資料庫中的日資料是否已經回補
             if already update then contiune
         """
-        print("檢查每日資料")
         data = self.dataprovider_online.SQL.get_db_data(
             """select *  from `btcusdt-f-d` order by Datetime desc limit 1""")
         sql_date = str(data[0][0]).split(' ')[0]
@@ -129,14 +132,32 @@ class Trading_systeam():
                 self.dataprovider_online.SQL.change_db_data(
                     SqlSentense.insert_optimizeresult(result, optimize_strategy_type))
 
+
+    def exportAllKbarsData(self):
+        """
+            將資料庫裡面的資料全部讀取出來保存成CSV檔案
+            只保留1 min的數據
+        """
+        BackUp.check_file()
+        
+        
+        for each_symbol in self.dataprovider_online.Binanceapp.get_targetsymobls():
+            BackUp.exportKbarsData(each_symbol,self.dataprovider_online)
+            
+            
+        
+        
     def get_target_symbol(self):
+        """ 
+        # 取得交易標的
+
+        """
         dataprovider = DataProvider(time_type='D')
         all_symbols = dataprovider.get_symbols_history_data()
         example = get_symobl_filter_useful(all_symbols)
         return example
 
-        # 取得交易標的(頻率不需要太頻繁 一個月一次即可)
-        # ['SOLUSDT', 1.517890576242979], ['AVAXUSDT', 0.8844715966080059], ['COMPUSDT', 0.8142903121982619], ['AAVEUSDT', 0.5655210439257492], ['DEFIUSDT', 0.5171522556390977]
+        
 
     def change_money(self):
         """
@@ -409,7 +430,7 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
 
 
 if __name__ == '__main__':
-    pass
 
-    app = AsyncTrading_systeam()
-    app.main()
+
+    app = Trading_systeam()
+    app.exportAllKbarsData()

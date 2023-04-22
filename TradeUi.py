@@ -4,7 +4,7 @@ from MainW import Ui_Form
 from PyQt6.QtCore import pyqtSignal
 from Trading_Systeam import GUI_Trading_systeam
 from PyQt6.QtCore import QThread
-from DataProvider import DataProvider
+from Major.DataProvider import DataProvider
 import pandas as pd
 import asyncio
 

@@ -246,6 +246,7 @@ class Binance_server(object):
             取得最小下單數量限制
         """
         data = self.client.futures_exchange_info()
+
         out_dict = {}
         for symbol in data['symbols']:
             out_dict.update({symbol['symbol']: symbol['filters'][2]['minQty']})

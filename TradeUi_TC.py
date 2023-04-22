@@ -4,11 +4,10 @@ import os
 from GUI.MainWindow_TC import Ui_MainWindow
 from GUI.Login import Ui_WourLogin
 from GUI.Error_Login import Ui_Dialog_Error
-
 from PyQt6.QtCore import pyqtSignal
 from Trading_Systeam import GUI_Trading_systeam
 from PyQt6.QtCore import QThread
-from DataProvider import DataProvider
+from Major.DataProvider import DataProvider
 import pandas as pd
 import asyncio
 

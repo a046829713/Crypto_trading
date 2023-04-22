@@ -1,4 +1,4 @@
 pyuic6 -x .\MainWindow.ui -o MainW.py
-pyuic6 -x .\MainWindow_TC.ui -o MainWindow_TC.py
+pyuic6 -x .\GUI\MainWindow_TC.ui -o .\GUI\MainWindow_TC.py
 pyuic6 -x .\GUI\Login.ui -o .\GUI\Login.py
 pyuic6 -x .\GUI\Error_Login.ui -o .\GUI\Error_Login.py
