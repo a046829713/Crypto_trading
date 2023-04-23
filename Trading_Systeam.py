@@ -144,10 +144,49 @@ class Trading_systeam():
         
         
         for each_symbol in self.dataprovider_online.Binanceapp.get_targetsymobls():
-            if os.path.exists("History\\" + each_symbol.lower() + "-f.csv"):
-                continue
+            # if os.path.exists("History\\" + each_symbol.lower() + "-f.csv"):
+            #     continue
             BackUp.exportKbarsData(each_symbol,self.dataprovider_online)
-            
+    
+    
+    def importAllKbarsData(self):
+        """
+            將資料全部寫入MySQL
+            'btcusdt-f',
+            'CREATE TABLE `btcusdt-f` (\n  `Datetime` datetime NOT NULL,
+            \n  `Open` float NOT NULL,
+            \n  `High` float NOT NULL,
+            \n  `Low` float NOT NULL,
+            \n  `Close` float NOT NULL,
+            \n  `Volume` float NOT NULL,
+            \n  `close_time` float NOT NULL,
+            \n  `quote_av` float NOT NULL,
+            \n  `trades` float NOT NULL,
+            \n  `tb_base_av` float NOT NULL,
+            \n  `tb_quote_av` float NOT NULL,
+            \n  `ignore` float NOT NULL,
+            \n  PRIMARY KEY (`Datetime`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci'
+
+        """
+
+        
+        for each_symbol in self.dataprovider_online.Binanceapp.get_targetsymobls():
+            if each_symbol.lower() == "aaveusdt":
+                # 檢查是否在資料庫裏面
+                symbol_name_list = self.dataprovider_online.SQL.get_db_data('show tables;')
+                symbol_name_list = [y[0] for y in symbol_name_list]
+                
+                tb_symbol_name = each_symbol + '-F'
+                tb_symbol_name = tb_symbol_name.lower()
+                
+                if tb_symbol_name in symbol_name_list:
+                    pass
+                else:
+                    self.dataprovider_online.SQL.change_db_data(SqlSentense.create_table_name(tb_symbol_name))
+                    df = pd.read_csv("History\\" + each_symbol.lower() + "-f.csv")
+                    df.set_index('Datetime',inplace=True)
+
+        
     def get_target_symbol(self):
         """ 
         # 取得交易標的
