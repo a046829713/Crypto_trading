@@ -148,8 +148,6 @@ class Trading_systeam():
                 continue
             BackUp.exportKbarsData(each_symbol,self.dataprovider_online)
             
-        
-        
     def get_target_symbol(self):
         """ 
         # 取得交易標的
