@@ -13,6 +13,8 @@ import asyncio
 from Datatransformer import Datatransformer
 import threading
 from utils import BackUp
+import os
+
 
 # 修正權重模式
 # 增加總投組獲利平倉，或是單一策略平倉?
@@ -142,8 +144,9 @@ class Trading_systeam():
         
         
         for each_symbol in self.dataprovider_online.Binanceapp.get_targetsymobls():
+            if os.path.exists("History\\" + each_symbol.lower() + "-f.csv"):
+                continue
             BackUp.exportKbarsData(each_symbol,self.dataprovider_online)
-            
             
         
         
