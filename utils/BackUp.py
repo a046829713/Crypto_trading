@@ -23,3 +23,6 @@ def exportKbarsData(symbol_name,dataProvider:DataProvider_online):
     df = dataProvider.SQL.read_Dateframe(table_name)
     df.set_index('Datetime',inplace=True)
     df.to_csv(f"History\{table_name}.csv")
+
+
+

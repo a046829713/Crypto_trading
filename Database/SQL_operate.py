@@ -202,6 +202,7 @@ class SqlSentense():
 
     @staticmethod
     def create_table_name(tb_symbol_name:str) -> str:
+        """ to create 1 min"""
         sql_query = f"""CREATE TABLE `crypto_data`.`{tb_symbol_name}`(
                 `Datetime` DATETIME NOT NULL,
                 `Open` FLOAT NOT NULL,
