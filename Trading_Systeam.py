@@ -75,6 +75,16 @@ class Trading_systeam():
             將sql的優化資料導入
         """
         try:
+            # 在進行判斷之前 可以先確認表是否存在
+            getAllTablesName = self.dataprovider_online.SQL.get_db_data(
+                'show tables;')
+            getAllTablesName = [y[0] for y in getAllTablesName]
+
+            if 'optimizeresult' not in getAllTablesName:
+                self.dataprovider_online.SQL.change_db_data(
+                    SqlSentense.createOptimizResult())
+                print("成功創建")
+
             df = pd.read_csv("optimizeresult.csv")
             df.set_index("strategyName", inplace=True)
             self.dataprovider_online.SQL.change_db_data(
@@ -464,4 +474,4 @@ if __name__ == '__main__':
 
 
     app = Trading_systeam()
-    app.importAllKbarsData()
+    app.importOptimizeResult()
