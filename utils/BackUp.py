@@ -6,6 +6,7 @@ import os
 from Major.DataProvider import DataProvider_online,DataProvider
 from typing import Optional
 from datetime import datetime
+from Database.SQL_operate import SqlSentense
 
 def check_file():
     """ 檢查檔案是否存在 否則創建 """
@@ -49,7 +50,11 @@ def check_table_if_exits(table_name :Optional[str] = None):
                         """CREATE TABLE `crypto_data`.`sysstatus`(`ID` varchar(255) NOT NULL,`systeam_datetime` varchar(255) NOT NULL,PRIMARY KEY(`ID`));""")
                     dataProvider.SQL.change_db_data(
                         f"""INSERT INTO `sysstatus` VALUES ('1','{str(datetime.now())}');""")
-            
+                        # 在進行判斷之前 可以先確認表是否存在
+                
+                if table_name =="optimizeresult" and table_name not in getAllTablesName:
+                    dataProvider.SQL.change_db_data(SqlSentense.createOptimizResult())
+                    print("成功創建")
             func(*args,**kwargs)
         return warpper
     return _check_table_if_exits

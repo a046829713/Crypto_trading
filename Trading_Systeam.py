@@ -21,17 +21,13 @@ import os
 # 建立所有商品的優化(GUI > Trading_systeam > Optimizer)
 # 判斷資料集的最後一天是否需要回補?
 # 增加匯出 optimizeresult 的功能,或許可以增加GUI
-# 將檢查sql表的功能提取出來?
-# 該如何添加多個策略?
 # 待修正時間校準問題
 # 為了方便轉移 還是需要打包起來
 # 建構輸入輸出檢查的decorator
-
-
-
 # 轉移資料
 
-# 優化檢查資料庫
+
+
 class Trading_systeam():
     def __init__(self) -> None:
         self._init_trading_system()
@@ -72,21 +68,12 @@ class Trading_systeam():
         df.set_index("strategyName", inplace=True)
         df.to_csv("optimizeresult.csv")
 
+    @BackUp.check_table_if_exits(table_name="optimizeresult")
     def importOptimizeResult(self):
         """
             將sql的優化資料導入
         """
         try:
-            # 在進行判斷之前 可以先確認表是否存在
-            getAllTablesName = self.dataprovider_online.SQL.get_db_data(
-                'show tables;')
-            getAllTablesName = [y[0] for y in getAllTablesName]
-
-            if 'optimizeresult' not in getAllTablesName:
-                self.dataprovider_online.SQL.change_db_data(
-                    SqlSentense.createOptimizResult())
-                print("成功創建")
-
             df = pd.read_csv("optimizeresult.csv")
             df.set_index("strategyName", inplace=True)
             self.dataprovider_online.SQL.change_db_data(
