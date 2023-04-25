@@ -25,11 +25,13 @@ import os
 # 該如何添加多個策略?
 # 待修正時間校準問題
 # 為了方便轉移 還是需要打包起來
-
-
-
 # 建構輸入輸出檢查的decorator
+
+
+
 # 轉移資料
+
+# 優化檢查資料庫
 class Trading_systeam():
     def __init__(self) -> None:
         self._init_trading_system()
@@ -152,7 +154,6 @@ class Trading_systeam():
         """
         BackUp.check_file()
         
-        
         for each_symbol in self.dataprovider_online.Binanceapp.get_targetsymobls():
             # if os.path.exists("History\\" + each_symbol.lower() + "-f.csv"):
             #     continue
@@ -163,9 +164,7 @@ class Trading_systeam():
         """
             將資料全部寫入MySQL
 
-        """
-
-        
+        """        
         for each_symbol in self.dataprovider_online.Binanceapp.get_targetsymobls():
             print(each_symbol)
             # 檢查是否在資料庫裏面
@@ -236,22 +235,13 @@ class Trading_systeam():
             self.line_alert.req_line_alert("警告:請校正資金水位,投資組合水位差距超過百分之10")
             self.change_money()
 
+    
+    @BackUp.check_table_if_exits(table_name="sysstatus")
     def timewritersql(self):
         """
             寫入保存時間
         """
-        getAllTablesName = self.dataprovider_online.SQL.get_db_data(
-            'show tables;')
-        getAllTablesName = [y[0] for y in getAllTablesName]
-
-        if 'sysstatus' not in getAllTablesName:
-            # 將其更改為寫入DB
-            self.dataprovider_online.SQL.change_db_data(
-                """CREATE TABLE `crypto_data`.`sysstatus`(`ID` varchar(255) NOT NULL,`systeam_datetime` varchar(255) NOT NULL,PRIMARY KEY(`ID`));""")
-            self.dataprovider_online.SQL.change_db_data(
-                f"""INSERT INTO `sysstatus` VALUES ('1','{str(datetime.now())}');""")
-        else:
-            self.dataprovider_online.SQL.change_db_data(
+        self.dataprovider_online.SQL.change_db_data(
                 f""" UPDATE `sysstatus` SET `systeam_datetime`='{str(datetime.now())}' WHERE `ID`='1';""")
 
     def printfunc(self, *args):
@@ -474,4 +464,4 @@ if __name__ == '__main__':
 
 
     app = Trading_systeam()
-    app.importOptimizeResult()
+    app.timewritersql()
