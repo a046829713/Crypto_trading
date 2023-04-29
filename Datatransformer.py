@@ -1,7 +1,7 @@
 import pandas as pd
 from utils.Date_time import parser_time
 import time
-
+from utils.Debug_tool import debug
 
 class Datatransformer:
     def get_tradedata(self, original_df: pd.DataFrame, freq: int = 30):
@@ -52,10 +52,11 @@ class Datatransformer:
                 df = df.drop(columns=[key])
 
         return df
-
+    
+    @debug.record_args_return_type
     def calculation_size(self, systeam_size: dict, true_size: dict, symbol_map: dict) -> dict:
         """
-        用來比較 系統部位 和 Binance 交易所的實際部位
+            用來比較 系統部位 和 Binance 交易所的實際部位
 
         Args:
             systeam_size (dict): example :{'BTCUSDT-15K-OB': [1.0, 0.37385995823410634], 'ETHUSDT-15K-OB': [1.0, 5.13707471134965],'BTCUSDT-30K-OB': [1.0, 0.995823410634], 'ETHUSDT-17K-OB': [1.0, 2.13707471134965]}
@@ -90,7 +91,8 @@ class Datatransformer:
             else:
                 # 當目前保證金浮動的時候會有不足的現象
                 # 以當前商品的價值 小於5美金跳過(幣安最小5美金)(不論是增加或是減少)(將來可以將reduce only的下單減少方式改回)
-                if abs(symbol_map[symbol_name]['Close'].iloc[-1] * (postition_size - float(true_size[symbol_name]))) < 5:
+                # 為避免價格快速浮動小於5美金故調整成10美金
+                if abs(symbol_map[symbol_name]['Close'].iloc[-1] * (postition_size - float(true_size[symbol_name]))) < 10:
                     continue
                 diff_map.update(
                     {symbol_name: postition_size - float(true_size[symbol_name])})

@@ -11,7 +11,7 @@ from Count.Base import Event_count
 from AppSetting import AppSetting
 import copy
 from datetime import datetime
-import time
+from utils.TimeCountMsg import TimeCountMsg
 
 
 class Optimizer(object):
@@ -232,7 +232,8 @@ class Quantify_systeam_online(object):
                                 "std_n3": int(eachargdata['std_n3']), "volume_n3": int(eachargdata['volume_n3'])}
                 self.Trader.register(
                     strategy, strategypa)
-
+    
+    @TimeCountMsg.record_timemsg
     def Portfolio_online_start(self):
         pf = self.Trader.logic_order()
         return pf

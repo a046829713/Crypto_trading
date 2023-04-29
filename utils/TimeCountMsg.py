@@ -9,7 +9,8 @@ class TimeCountMsg():
             begin_time = time()
             result = func(*args, **kwargs)
             end_time = time()
-            print(func, end_time-begin_time)
+            print("函數名稱:",func)
+            print("使用時間:",end_time-begin_time)
             return result
 
         return wrapper

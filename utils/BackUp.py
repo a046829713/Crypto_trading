@@ -8,10 +8,10 @@ from typing import Optional
 from datetime import datetime
 from Database.SQL_operate import SqlSentense
 
-def check_file():
+def check_file(filename:str):
     """ 檢查檔案是否存在 否則創建 """
-    if not os.path.exists("History"):
-        os.mkdir('History')
+    if not os.path.exists(filename):
+        os.mkdir(filename)
         
 
 
