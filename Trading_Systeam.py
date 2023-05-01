@@ -14,6 +14,7 @@ from Datatransformer import Datatransformer
 import threading
 import os
 from binance.exceptions import BinanceAPIException
+import copy
 
 # 修正權重模式
 # 增加總投組獲利平倉，或是單一策略平倉?
@@ -25,7 +26,7 @@ from binance.exceptions import BinanceAPIException
 # 建構輸入輸出檢查的decorator
 # 轉移資料
 
-
+# 自動抓取DB內上次校正的最後資金
 
 class Trading_systeam():
     def __init__(self) -> None:
@@ -38,12 +39,18 @@ class Trading_systeam():
         self.symbol_map = {}
         # 這次新產生的資料
         self.new_symbol_map = {}
-        self.engine = Quantify_systeam_online()
         # formal正式啟動環境
         self.dataprovider_online = DataProvider_online(formal=True)
+        self.engine = self.buildEngine()
         self.line_alert = LINE_Alert()
         self.checkout = False
-        self.datatransformer = Datatransformer()  # dataprovider_online 裡面也有
+        self.datatransformer = Datatransformer()  
+
+    @BackUp.check_table_if_exits('lastinitcapital')
+    def buildEngine(self):
+        capital = self.dataprovider_online.SQL.get_db_data("select *  from `lastinitcapital`;")
+        return Quantify_systeam_online(capital[0][-1])
+
 
     def checkDailydata(self):
         """
@@ -138,11 +145,9 @@ class Trading_systeam():
             將資料庫裡面的資料全部讀取出來保存成CSV檔案
             只保留1 min的數據
         """
-        BackUp.check_file()
+        BackUp.check_file("History")
         
         for each_symbol in self.dataprovider_online.Binanceapp.get_targetsymobls():
-            # if os.path.exists("History\\" + each_symbol.lower() + "-f.csv"):
-            #     continue
             BackUp.exportKbarsData(each_symbol,self.dataprovider_online)
     
     
@@ -199,15 +204,19 @@ class Trading_systeam():
         balance = self.dataprovider_online.Binanceapp.get_futuresaccountbalance()
 
         while (abs(balance-self.engine.Trader.last_trade_money) / self.engine.Trader.last_trade_money) * 100 > 5:
-            print("測試進入", "實際金額:", balance, "系統金額",
+            print("實際金額:", balance, "系統金額",
                   self.engine.Trader.last_trade_money)
             if self.engine.Trader.last_trade_money - balance > 0:
                 self.engine.Trader.Portfolio_initcash = self.engine.Trader.Portfolio_initcash*0.98
             elif self.engine.Trader.last_trade_money - balance < 0:
                 self.engine.Trader.Portfolio_initcash = self.engine.Trader.Portfolio_initcash*1.02
-            print("初始資金:", self.engine.Trader.Portfolio_initcash)
             self.engine.Trader.logic_order()
 
+        # 將優化完成的資料寫入DB
+        print("初始資金:", self.engine.Trader.Portfolio_initcash)
+        self.dataprovider_online.SQL.change_db_data(f"UPDATE `lastinitcapital` SET `capital` = {int(self.engine.Trader.Portfolio_initcash)} WHERE `ID` = '1';")
+        print("更新初始化資金完成")
+        
     def check_money_level(self):
         """
             取得實時運作的資金水位 並且發出賴通知
@@ -217,7 +226,6 @@ class Trading_systeam():
         balance = self.dataprovider_online.Binanceapp.get_futuresaccountbalance()
 
         if (abs(balance-last_trade_money) / last_trade_money) * 100 > 10:
-            print('警告:請校正資金水位,投資組合水位差距超過百分之10')
             self.line_alert.req_line_alert("警告:請校正資金水位,投資組合水位差距超過百分之10")
             self.change_money()
 
@@ -255,6 +263,7 @@ class Trading_systeam():
 class AsyncTrading_systeam(Trading_systeam):
     def __init__(self) -> None:
         super().__init__()
+        
         # check if already update, and reload data
         self.checkDailydata()
 
@@ -292,9 +301,11 @@ class AsyncTrading_systeam(Trading_systeam):
                     begin_time = time.time()
                     # 取得原始資料
                     for name, each_df in self.symbol_map.items():
-                        # 這邊要進入catch裡面合併資料
+                        # 這邊要進入catch裡面合併資料                        
+                        # 這邊在轉換的過程中會報錯                        
+                        copydata = copy.deepcopy(self.asyncDataProvider.all_data)                        
                         original_df, eachCatchDf = self.datatransformer.mergeData(
-                            name, each_df, self.asyncDataProvider.all_data)
+                            name, each_df, copydata)
                         self.symbol_map.update({name: original_df})
                         self.get_catch(name, eachCatchDf)
 
@@ -317,7 +328,13 @@ class AsyncTrading_systeam(Trading_systeam):
                         self.checkout = True
 
                     pf = self.engine.Portfolio_online_start()
+                    
+                    # 將資料發送給GUI
+                    self.SendClosedProfit(pf.order['ClosedPostionprofit'])
+                    
                     last_status = pf.get_last_status()
+                    
+                    
                     self.printfunc('目前交易狀態,校正之後', last_status)
 
                     current_size = self.dataprovider_online.Binanceapp.getfutures_account_positions()
@@ -349,10 +366,13 @@ class AsyncTrading_systeam(Trading_systeam):
                     
             except Exception as e:
                 if isinstance(e, BinanceAPIException) and e.code == -1001:
-                    Debug_tool.debug.print_info()
+                    pass
                 else:
                     # re-raise the exception if it's not the expected error code
+                    
                     raise e
+                
+                Debug_tool.debug.print_info()
 
 class GUI_Trading_systeam(AsyncTrading_systeam):
     def __init__(self, GUI) -> None:
@@ -361,6 +381,7 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
         # 用來保存所有的文字檔 並且判斷容量用
         self.all_msg = []
         self.debug = Debug_tool.debug()
+        
 
     def printfunc(self, *args):
         if len(self.all_msg) > 20:
@@ -375,8 +396,9 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
         self.GUI.update_trade_info_signal.emit(out_str)
         self.debug.record_msg(out_str, log_level=logging.error)
 
-
+    def SendClosedProfit(self,data):
+        print(data)
 if __name__ == '__main__':
 
-    app = AsyncTrading_systeam()
-    app.main()
+    app = Trading_systeam()
+    

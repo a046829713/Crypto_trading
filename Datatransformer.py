@@ -53,7 +53,7 @@ class Datatransformer:
 
         return df
     
-    @debug.record_args_return_type
+    
     def calculation_size(self, systeam_size: dict, true_size: dict, symbol_map: dict) -> dict:
         """
             用來比較 系統部位 和 Binance 交易所的實際部位

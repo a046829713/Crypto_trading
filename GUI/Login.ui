@@ -236,6 +236,23 @@ background-color: rgb(255, 255, 255);</string>
     </item>
    </layout>
   </widget>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>270</x>
+     <y>480</y>
+     <width>121</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color: rgba(255, 255, 255, 0);
+color: rgb(255, 255, 255);</string>
+   </property>
+   <property name="text">
+    <string>Version:2023-04-29</string>
+   </property>
+  </widget>
  </widget>
  <resources>
   <include location="images.qrc"/>

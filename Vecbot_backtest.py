@@ -181,13 +181,14 @@ class Quantify_systeam_online(object):
         所以獨立出來
     """
 
-    def __init__(self) -> None:
+    def __init__(self,initcash:int) -> None:
         """
             這邊的lookback_date 是指策略最早的接收日期，如果資料讀取沒有這麼多不影響
             DataProvider 的資料提供的優先層級更大
         """
         # 創建即時交易模組
-        self.Trader = PortfolioOnline(Portfolio_initcash=21771)
+        self.Trader = PortfolioOnline(Portfolio_initcash=initcash)
+        self.CloseProfit = []
 
     def register_data(self, strategy_name: str, trade_data: pd.DataFrame):
         """

@@ -4,13 +4,17 @@ import os
 from GUI.MainWindow_TC import Ui_MainWindow
 from GUI.Login import Ui_WourLogin
 from GUI.Error_Login import Ui_Dialog_Error
+from GUI.disclamier import Ui_DisCalmier_Dialog
 from PyQt6.QtCore import pyqtSignal
 from Trading_Systeam import GUI_Trading_systeam
 from PyQt6.QtCore import QThread
 from Major.DataProvider import DataProvider
 import pandas as pd
 import asyncio
+from PyQt6.QtCore import  QPointF
+from PyQt6.QtCharts import QChart, QChartView, QLineSeries
 
+from PyQt6 import QtCore, QtGui, QtWidgets
 
 class Error_Dialog(QDialog, Ui_Dialog_Error):
     def __init__(self):
@@ -20,7 +24,15 @@ class Error_Dialog(QDialog, Ui_Dialog_Error):
 
         self.pushButton_Error.clicked.connect(self.accept)
 
-
+class DisCalmier_Dialog(QDialog,Ui_DisCalmier_Dialog):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        self.show()
+        
+        self.pushButton_agree.clicked.connect(self.accept)
+        self.pushButton_disagree.clicked.connect(self.reject)
+        
 class Login_Dialog(QDialog, Ui_WourLogin):
     def __init__(self):
         super().__init__()
@@ -28,6 +40,8 @@ class Login_Dialog(QDialog, Ui_WourLogin):
         self.show()
 
         self.pushButton_login.clicked.connect(self.Get_Login_info)
+        
+        # 通常在對話框內使用「確定」或「確認」按鈕時，會在按下按鈕後呼叫 accept() 方法以關閉對話框並返回一個確認信號給父窗口，以通知已經成功執行動作。
         self.pushButton_login.clicked.connect(self.accept)
 
         # 如果資料都在直接將其寫入
@@ -81,7 +95,8 @@ class TradeUI(QMainWindow, Ui_MainWindow):
     # 建立 pyqtSignal 物件，傳遞字串格式內容
     update_trade_info_signal = pyqtSignal(str)
     clear_info_signal = pyqtSignal()
-
+    GUI_CloseProfit = pyqtSignal(list)
+    
     def __init__(self) -> None:
         super().__init__()
         self.setupUi(self)
@@ -90,9 +105,10 @@ class TradeUI(QMainWindow, Ui_MainWindow):
         # 建立插槽監聽信號
         self.update_trade_info_signal.connect(self.showMsg)
         self.clear_info_signal.connect(self.clear_Msg)
-
-        
+        self.GUI_CloseProfit.connect(self.line_chart)
         self.actionAutoTrading.triggered.connect(self.click_btn_trade)
+        self.actionReload_Day_Data.triggered.connect(self.reload_data_day)
+        self.actionReload_Min_Data.triggered.connect(self.reload_data_min)
         
     def clear_Msg(self):
         self.trade_info.clear()
@@ -109,7 +125,7 @@ class TradeUI(QMainWindow, Ui_MainWindow):
 
     def click_btn_trade(self):
         self.systeam = GUI_Trading_systeam(self)
-
+        
         def run_subscriptionData():
             # 回補資料
             asyncio.run(self.systeam.asyncDataProvider.subscriptionData(
@@ -123,6 +139,7 @@ class TradeUI(QMainWindow, Ui_MainWindow):
         self.Trading_systeam_Thread.setObjectName = "trade"
         self.Trading_systeam_Thread.run = self.systeam.main
         self.Trading_systeam_Thread.start()
+        
 
     def reload_data_day(self):
         self.dataprovider = DataProvider(time_type='D')
@@ -161,18 +178,53 @@ class TradeUI(QMainWindow, Ui_MainWindow):
         self.save_data_Thread.run = mergefunc
         self.save_data_Thread.start()
 
+    def line_chart(self, data: list):
+        print("取得line_chart傳送資料:",data)
+        # series = QLineSeries()
+
+        
+        # print("以平倉損益:",self.systeam.engine.Trader.CloseProfit)
+        # series.append([
+        #     QPointF(1.0, 1.0), QPointF(2.0, 73.0), QPointF(3.0, 268.0),
+        #     QPointF(4.0, 17.0), QPointF(5.0, 120.0), QPointF(6.0, 210.0)])
+
+
+
+
+        # chart = QChart()
+        # chart.addSeries(series)
+        # chart.createDefaultAxes()
+        # chart.setTitle("Line Chart Example")
+
+        # #adding animation
+        # chart.setAnimationOptions(QChart.AnimationOption.AllAnimations)
+
+
+        # #adding theme
+        # chart.setTheme(QChart.ChartTheme.ChartThemeDark)
+
+
+        # chartview = QChartView(chart)
+        # self.verticalLayout = QtWidgets.QVBoxLayout(self.CloseProfit_tab)
+        # self.verticalLayout.addWidget(chartview)
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    DisCalmier_dialog = DisCalmier_Dialog()
+    if DisCalmier_dialog.exec() == 1:
+        while True:
+            
+            
+            Login_dialog = Login_Dialog()
 
-    while True:
-        dialog = Login_Dialog()
-
-        # 如果用戶是執行登入
-        if dialog.exec() == 1:
-            if dialog.api_key and dialog.secret_key and dialog.LINE:
-                BeginTDsys = TradeUI()
-                sys.exit(app.exec())
-            else:
-                error_dialog = Error_Dialog()
-                error_dialog.exec()
+            # 如果用戶是執行登入
+            if Login_dialog.exec() == 1:
+                if Login_dialog.api_key and Login_dialog.secret_key and Login_dialog.LINE:
+                    BeginTDsys = TradeUI()
+                    sys.exit(app.exec())
+                else:
+                    error_dialog = Error_Dialog()
+                    error_dialog.exec()
+    else:
+        sys.exit()

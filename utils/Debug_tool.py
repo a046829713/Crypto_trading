@@ -12,7 +12,7 @@ if not os.path.exists(LOG_DIR):
 
 today = datetime.date.today().strftime('%Y%m%d')
 log_file = os.path.join(LOG_DIR, f"{today}.log")
-handler = logging.FileHandler(log_file)
+handler = logging.FileHandler(log_file,encoding='utf-8')
 
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s %(levelname)s %(message)s',
                     datefmt='%Y-%m-%d %H:%M', handlers=[handler, ])

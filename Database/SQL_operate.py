@@ -220,3 +220,14 @@ class SqlSentense():
                 );"""
                 
         return sql_query
+    
+    
+    @staticmethod
+    def createlastinitcapital() -> str:
+        sql_query = """CREATE TABLE `lastinitcapital` (
+        `ID` varchar(255) NOT NULL,
+        `capital` int NOT NULL,
+        PRIMARY KEY (`ID`)
+        );"""
+        
+        return sql_query

@@ -267,6 +267,8 @@ class Binance_server(object):
     def get_targetsymobls(self) -> list:
         """
             to call api get futures symbol and clean data
+            
+            只收集USDT使用的合約,並且已經掛牌上可以交易的標的
         Returns:
             list: _description_
         """
@@ -275,7 +277,7 @@ class Binance_server(object):
         for key in data.keys():
             if key == 'symbols':
                 for each_data in data[key]:
-                    if each_data['marginAsset'] == 'USDT':
+                    if each_data['marginAsset'] == 'USDT' and each_data['status'] == 'TRADING':
                         # 目前怪怪的合約都拋棄不要（有數字的大概論都有特殊意義）
                         clear_name = re.findall(
                             '[A-Z]+USDT', each_data['symbol'])
@@ -283,6 +285,7 @@ class Binance_server(object):
                             if each_data['symbol'] == clear_name[0]:
                                 if each_data['symbol'] not in out_list:
                                     out_list.append(each_data['symbol'])
+        print("get_targetsymobls 裡面的資料",out_list)
         return out_list
 
     def getfutures_account_positions(self):
@@ -319,7 +322,6 @@ class Binance_server(object):
         """
         # 取得最小單位限制
         MinimumQuantity = self.getMinimumOrderQuantity()
-        print("最小下單數量", MinimumQuantity)
         out_dict = {}
         for symbol, ready_to_order_size in order_finally.items():
             # 取得 quantity數量

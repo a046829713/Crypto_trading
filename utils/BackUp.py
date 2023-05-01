@@ -44,17 +44,24 @@ def check_table_if_exits(table_name :Optional[str] = None):
                 getAllTablesName = dataProvider.SQL.get_db_data(
                 'show tables;')
                 getAllTablesName = [y[0] for y in getAllTablesName]                
+                
                 if table_name == "sysstatus" and table_name not in getAllTablesName:
                     # 將其更改為寫入DB
                     dataProvider.SQL.change_db_data(
                         """CREATE TABLE `crypto_data`.`sysstatus`(`ID` varchar(255) NOT NULL,`systeam_datetime` varchar(255) NOT NULL,PRIMARY KEY(`ID`));""")
                     dataProvider.SQL.change_db_data(
                         f"""INSERT INTO `sysstatus` VALUES ('1','{str(datetime.now())}');""")
-                        # 在進行判斷之前 可以先確認表是否存在
+                        
                 
-                if table_name =="optimizeresult" and table_name not in getAllTablesName:
+                elif table_name =="optimizeresult" and table_name not in getAllTablesName:
                     dataProvider.SQL.change_db_data(SqlSentense.createOptimizResult())
-                    print("成功創建")
-            func(*args,**kwargs)
+                
+                    
+                elif table_name =="lastinitcapital" and table_name not in getAllTablesName:
+                    dataProvider.SQL.change_db_data(SqlSentense.createlastinitcapital())
+                    dataProvider.SQL.change_db_data(
+                        f"""INSERT INTO `lastinitcapital` VALUES ('1',20000);""")
+                    print("完成")
+            return func(*args,**kwargs)
         return warpper
     return _check_table_if_exits

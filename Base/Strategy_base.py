@@ -686,7 +686,7 @@ class PortfolioTrader(object):
 
         # 系統資金校正 當差異值來到10% 發出賴通知
         self.last_trade_money = Portfolio_ClosedPostionprofit[-1]
-        print(self.last_trade_money)
+        
         Order_Info = Portfolio_Order_Info(
             datetimelist, orders, stragtegy_names, Portfolio_profit, Portfolio_ClosedPostionprofit, self.Portfolio_initcash, sizes)
 

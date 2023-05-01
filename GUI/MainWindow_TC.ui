@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1154</width>
+    <width>1173</width>
     <height>667</height>
    </rect>
   </property>
@@ -41,7 +41,7 @@
     <property name="currentIndex">
      <number>0</number>
     </property>
-    <widget class="QWidget" name="tab">
+    <widget class="QWidget" name="CloseProfit_tab">
      <attribute name="title">
       <string>CloseProfit</string>
      </attribute>
@@ -52,35 +52,21 @@
      </attribute>
     </widget>
    </widget>
-   <widget class="QWidget" name="layoutWidget">
+   <widget class="QWidget" name="">
     <property name="geometry">
      <rect>
-      <x>860</x>
+      <x>820</x>
       <y>40</y>
-      <width>252</width>
-      <height>531</height>
+      <width>341</width>
+      <height>511</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout" stretch="2,1">
      <item>
-      <widget class="QTableView" name="NowMonitorStrategy_from">
-       <property name="maximumSize">
-        <size>
-         <width>250</width>
-         <height>400</height>
-        </size>
-       </property>
-      </widget>
+      <widget class="QTableWidget" name="tableWidget"/>
      </item>
      <item>
-      <widget class="QTextEdit" name="textEdit">
-       <property name="maximumSize">
-        <size>
-         <width>250</width>
-         <height>400</height>
-        </size>
-       </property>
-      </widget>
+      <widget class="QTextEdit" name="trade_info"/>
      </item>
     </layout>
    </widget>
@@ -90,7 +76,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1154</width>
+     <width>1173</width>
      <height>22</height>
     </rect>
    </property>
@@ -106,6 +92,8 @@
     <addaction name="separator"/>
     <addaction name="actionReload_Day_Data"/>
     <addaction name="actionReload_Min_Data"/>
+    <addaction name="actionExport_History_Data"/>
+    <addaction name="actionImport_History_Data"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -131,6 +119,11 @@
    <addaction name="separator"/>
    <addaction name="actionimport"/>
    <addaction name="actionexport"/>
+   <addaction name="separator"/>
+   <addaction name="actionExport_History_Data"/>
+   <addaction name="actionImport_History_Data"/>
+   <addaction name="actionReload_Day_Data"/>
+   <addaction name="actionReload_Min_Data"/>
   </widget>
   <action name="actionimport">
    <property name="icon">
@@ -138,16 +131,16 @@
      <normaloff>Images/ImportData.png</normaloff>Images/ImportData.png</iconset>
    </property>
    <property name="text">
-    <string>Import</string>
+    <string>Import Optimize Result</string>
    </property>
   </action>
   <action name="actionexport">
    <property name="icon">
     <iconset>
-     <normaloff>:/images/Images/CsvExport.jpg</normaloff>:/images/Images/CsvExport.jpg</iconset>
+     <normaloff>Images/CsvExport.png</normaloff>Images/CsvExport.png</iconset>
    </property>
    <property name="text">
-    <string>Export</string>
+    <string>Export Optimize Result</string>
    </property>
   </action>
   <action name="actionAutoTrading">
@@ -162,20 +155,46 @@
   <action name="actionSaveData">
    <property name="icon">
     <iconset>
-     <normaloff>:/images/Images/SaveData.jpg</normaloff>:/images/Images/SaveData.jpg</iconset>
+     <normaloff>Images/SaveData.png</normaloff>Images/SaveData.png</iconset>
    </property>
    <property name="text">
     <string>SaveData</string>
    </property>
   </action>
   <action name="actionReload_Day_Data">
+   <property name="icon">
+    <iconset>
+     <normaloff>Images/DayData.png</normaloff>Images/DayData.png</iconset>
+   </property>
    <property name="text">
     <string>Reload Day Data</string>
    </property>
   </action>
   <action name="actionReload_Min_Data">
+   <property name="icon">
+    <iconset>
+     <normaloff>Images/MinData.png</normaloff>Images/MinData.png</iconset>
+   </property>
    <property name="text">
     <string>Reload Min Data</string>
+   </property>
+  </action>
+  <action name="actionExport_History_Data">
+   <property name="icon">
+    <iconset>
+     <normaloff>Images/exporthistory.png</normaloff>Images/exporthistory.png</iconset>
+   </property>
+   <property name="text">
+    <string>Export History Data</string>
+   </property>
+  </action>
+  <action name="actionImport_History_Data">
+   <property name="icon">
+    <iconset>
+     <normaloff>Images/importhistory.png</normaloff>Images/importhistory.png</iconset>
+   </property>
+   <property name="text">
+    <string>Import History Data</string>
    </property>
   </action>
  </widget>
