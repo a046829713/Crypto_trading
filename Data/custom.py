@@ -285,7 +285,6 @@ class Binance_server(object):
                             if each_data['symbol'] == clear_name[0]:
                                 if each_data['symbol'] not in out_list:
                                     out_list.append(each_data['symbol'])
-        print("get_targetsymobls 裡面的資料",out_list)
         return out_list
 
     def getfutures_account_positions(self):

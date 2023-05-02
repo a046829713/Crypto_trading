@@ -43,14 +43,17 @@ class TradeUI(QWidget, Ui_Form):
             # 回補資料
             asyncio.run(self.systeam.asyncDataProvider.subscriptionData(
                 self.systeam.symbol_name))
-
+        
+        def run_trading_systeam():
+            asyncio.run(self.systeam.main())
+            
         self.run_subscrip_Thread = QThread()
         self.run_subscrip_Thread.run = run_subscriptionData
         self.run_subscrip_Thread.start()
 
         self.Trading_systeam_Thread = QThread()
         self.Trading_systeam_Thread.setObjectName = "trade"
-        self.Trading_systeam_Thread.run = self.systeam.main
+        self.Trading_systeam_Thread.run = run_trading_systeam
         self.Trading_systeam_Thread.start()
 
     def reload_data_day(self):

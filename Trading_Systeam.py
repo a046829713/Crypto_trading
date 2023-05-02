@@ -26,7 +26,7 @@ import copy
 # 建構輸入輸出檢查的decorator
 # 轉移資料
 
-# 自動抓取DB內上次校正的最後資金
+# 將 main 改為異步函數
 
 class Trading_systeam():
     def __init__(self) -> None:
@@ -275,15 +275,16 @@ class AsyncTrading_systeam(Trading_systeam):
             market_symobl, self.dataprovider_online.Binanceapp.getfutures_account_name())
 
         # 將標得注入引擎
-        self.asyncDataProvider = AsyncDataProvider()
-
+        self.asyncDataProvider = AsyncDataProvider()        
+        self.lock = asyncio.Lock()
+        
         # 初始化投資組合 (傳入要買的標的物, 並且傳入相關參數)
         self.engine.Portfolio_online_register(
             targetsymbol, self.dataprovider_online.SQL.read_Dateframe("optimizeresult"))
 
         self.symbol_name: set = self.engine.get_symbol_name()
 
-    def main(self):
+    async def main(self):
         self.line_alert.req_line_alert('Crypto_trading 正式交易啟動')
         # 先將資料從DB撈取出來
         for name in self.symbol_name:
@@ -302,10 +303,11 @@ class AsyncTrading_systeam(Trading_systeam):
                     # 取得原始資料
                     for name, each_df in self.symbol_map.items():
                         # 這邊要進入catch裡面合併資料                        
-                        # 這邊在轉換的過程中會報錯                        
-                        copydata = copy.deepcopy(self.asyncDataProvider.all_data)                        
-                        original_df, eachCatchDf = self.datatransformer.mergeData(
-                            name, each_df, copydata)
+                        # 這邊在轉換的過程中會報錯
+                        # 嘗試使用所以防止,迭代過程中資料改變                        
+                        async with self.lock:                        
+                            original_df, eachCatchDf = self.datatransformer.mergeData(
+                                name, each_df, self.asyncDataProvider.all_data)
                         self.symbol_map.update({name: original_df})
                         self.get_catch(name, eachCatchDf)
 
