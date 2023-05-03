@@ -399,8 +399,10 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
         self.debug.record_msg(out_str, log_level=logging.error)
 
     def SendClosedProfit(self,data):
-        print(data)
+        self.GUI.GUI_CloseProfit.emit(data)
+        
 if __name__ == '__main__':
 
-    app = Trading_systeam()
+    app = AsyncTrading_systeam()
+    app.main()
     

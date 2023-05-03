@@ -2,6 +2,7 @@ import pandas as pd
 from utils.Date_time import parser_time
 import time
 from utils.Debug_tool import debug
+from utils.TimeCountMsg import TimeCountMsg
 
 class Datatransformer:
     def get_tradedata(self, original_df: pd.DataFrame, freq: int = 30):
@@ -103,7 +104,7 @@ class Datatransformer:
                 diff_map.update({symbol_name: - float(postition_size)})
 
         return diff_map
-
+    @TimeCountMsg.record_timemsg
     def mergeData(self, symbol_name: str, lastdata: pd.DataFrame, socketdata: dict):
         """合併資料用來
 

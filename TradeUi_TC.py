@@ -107,6 +107,8 @@ class TradeUI(QMainWindow, Ui_MainWindow):
         self.clear_info_signal.connect(self.clear_Msg)
         self.GUI_CloseProfit.connect(self.line_chart)
         self.actionAutoTrading.triggered.connect(self.click_btn_trade)
+        
+        self.actionSaveData.triggered.connect(self.click_save_data)
         self.actionReload_Day_Data.triggered.connect(self.reload_data_day)
         self.actionReload_Min_Data.triggered.connect(self.reload_data_min)
         
@@ -125,19 +127,22 @@ class TradeUI(QMainWindow, Ui_MainWindow):
 
     def click_btn_trade(self):
         self.systeam = GUI_Trading_systeam(self)
-        
+
         def run_subscriptionData():
             # 回補資料
             asyncio.run(self.systeam.asyncDataProvider.subscriptionData(
                 self.systeam.symbol_name))
-
+        
+        def run_trading_systeam():
+            asyncio.run(self.systeam.main())
+            
         self.run_subscrip_Thread = QThread()
         self.run_subscrip_Thread.run = run_subscriptionData
         self.run_subscrip_Thread.start()
 
         self.Trading_systeam_Thread = QThread()
         self.Trading_systeam_Thread.setObjectName = "trade"
-        self.Trading_systeam_Thread.run = self.systeam.main
+        self.Trading_systeam_Thread.run = run_trading_systeam
         self.Trading_systeam_Thread.start()
         
 
@@ -180,33 +185,26 @@ class TradeUI(QMainWindow, Ui_MainWindow):
 
     def line_chart(self, data: list):
         print("取得line_chart傳送資料:",data)
-        # series = QLineSeries()
+        print("取得line_chart傳送資料的型態:",type(data))
+        series = QLineSeries()
 
-        
-        # print("以平倉損益:",self.systeam.engine.Trader.CloseProfit)
-        # series.append([
-        #     QPointF(1.0, 1.0), QPointF(2.0, 73.0), QPointF(3.0, 268.0),
-        #     QPointF(4.0, 17.0), QPointF(5.0, 120.0), QPointF(6.0, 210.0)])
+        for i, val in enumerate(data):
+            series.append(QPointF(i+1, val))
 
+        chart = QChart()
+        chart.addSeries(series)
+        chart.createDefaultAxes()
+        chart.setTitle("CloseProfit")
 
+        #adding animation
+        chart.setAnimationOptions(QChart.AnimationOption.AllAnimations)
 
+        #adding theme
+        chart.setTheme(QChart.ChartTheme.ChartThemeDark)
 
-        # chart = QChart()
-        # chart.addSeries(series)
-        # chart.createDefaultAxes()
-        # chart.setTitle("Line Chart Example")
-
-        # #adding animation
-        # chart.setAnimationOptions(QChart.AnimationOption.AllAnimations)
-
-
-        # #adding theme
-        # chart.setTheme(QChart.ChartTheme.ChartThemeDark)
-
-
-        # chartview = QChartView(chart)
-        # self.verticalLayout = QtWidgets.QVBoxLayout(self.CloseProfit_tab)
-        # self.verticalLayout.addWidget(chartview)
+        chartview = QChartView(chart)
+        self.verticalLayout = QtWidgets.QVBoxLayout(self.CloseProfit_tab)
+        self.verticalLayout.addWidget(chartview)
 
 
 if __name__ == '__main__':
