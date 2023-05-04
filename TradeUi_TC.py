@@ -5,6 +5,7 @@ from GUI.MainWindow_TC import Ui_MainWindow
 from GUI.Login import Ui_WourLogin
 from GUI.Error_Login import Ui_Dialog_Error
 from GUI.disclamier import Ui_DisCalmier_Dialog
+from GUI.DeadLine import Ui_Dialog_DeadLine
 from PyQt6.QtCore import pyqtSignal
 from Trading_Systeam import GUI_Trading_systeam
 from PyQt6.QtCore import QThread
@@ -13,8 +14,18 @@ import pandas as pd
 import asyncio
 from PyQt6.QtCore import  QPointF
 from PyQt6.QtCharts import QChart, QChartView, QLineSeries
-
 from PyQt6 import QtCore, QtGui, QtWidgets
+from utils.Debug_tool import debug
+from AppSetting import AppSetting
+import datetime
+
+class DeadLine_Dialog(QDialog, Ui_Dialog_DeadLine):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        self.show()
+
+        self.pushButton_accept.clicked.connect(self.accept)
 
 class Error_Dialog(QDialog, Ui_Dialog_Error):
     def __init__(self):
@@ -38,6 +49,9 @@ class Login_Dialog(QDialog, Ui_WourLogin):
         super().__init__()
         self.setupUi(self)
         self.show()
+        
+        # 輸入setting版本號碼
+        self.label_version.setText(f"Version:{AppSetting.get_version()}")
 
         self.pushButton_login.clicked.connect(self.Get_Login_info)
         
@@ -45,7 +59,7 @@ class Login_Dialog(QDialog, Ui_WourLogin):
         self.pushButton_login.clicked.connect(self.accept)
 
         # 如果資料都在直接將其寫入
-        if os.path.isfile(r"C:/bi_.txt") and os.path.isfile(r"C:/LINE_TOEKN.txt"):
+        if os.path.isfile(r"C:/bi_.txt") and os.path.isfile(r"C:/LINE_TOEKN.txt") and os.path.isfile(r"C:/PhoneNumber.txt"):
             with open(r"C:/bi_.txt", 'r') as file:
                 data = file.read()
                 account = data.split("\n")[0]
@@ -54,12 +68,16 @@ class Login_Dialog(QDialog, Ui_WourLogin):
             with open(r"C:/LINE_TOEKN.txt", 'r') as file:
                 LINE_TOEKN = file.read()
                 LINE_TOEKN = LINE_TOEKN.replace("\n","")
-                print(LINE_TOEKN)
+            
+            with open(r"C:/PhoneNumber.txt", 'r') as file:
+                PhoneNumber = file.read()
+                PhoneNumber = PhoneNumber.replace("\n","")
 
             self.checkBox_remeberpa.setChecked(True)
             self.lineEdit_api_key.setText(account)
             self.lineEdit_secret_key.setText(passwd)
             self.lineEdit_LINE.setText(LINE_TOEKN)
+            self.lineEdit_Phone.setText(PhoneNumber)
 
     def Get_Login_info(self):
         """
@@ -68,6 +86,7 @@ class Login_Dialog(QDialog, Ui_WourLogin):
         self.api_key = self.lineEdit_api_key.text()
         self.secret_key = self.lineEdit_secret_key.text()
         self.LINE = self.lineEdit_LINE.text()
+        self.PhoneNumber = self.lineEdit_Phone.text()
 
         if self.checkBox_remeberpa.isChecked():
             with open(r"C:/bi_.txt", 'w') as file:
@@ -76,6 +95,9 @@ class Login_Dialog(QDialog, Ui_WourLogin):
 
             with open(r"C:/LINE_TOEKN.txt", 'w') as file:
                 file.write(self.LINE )
+
+            with open(r"C:/PhoneNumber.txt", 'w') as file:
+                file.write(self.PhoneNumber )
 
     def closeEvent(self, event):
         """
@@ -129,10 +151,13 @@ class TradeUI(QMainWindow, Ui_MainWindow):
         self.systeam = GUI_Trading_systeam(self)
 
         def run_subscriptionData():
-            # 回補資料
-            asyncio.run(self.systeam.asyncDataProvider.subscriptionData(
-                self.systeam.symbol_name))
-        
+            # 嘗試捕捉這個節點的問題,或許出現在這
+            try:
+                asyncio.run(self.systeam.asyncDataProvider.subscriptionData(
+                    self.systeam.symbol_name))
+            except :
+                debug.print_info()
+                
         def run_trading_systeam():
             asyncio.run(self.systeam.main())
             
@@ -219,8 +244,15 @@ if __name__ == '__main__':
             # 如果用戶是執行登入
             if Login_dialog.exec() == 1:
                 if Login_dialog.api_key and Login_dialog.secret_key and Login_dialog.LINE:
-                    BeginTDsys = TradeUI()
-                    sys.exit(app.exec())
+                    # 判斷到期時間
+                    UserDeadline = AppSetting.get_UserDeadline()
+
+                    if UserDeadline[Login_dialog.PhoneNumber]>str(datetime.date.today()):
+                        BeginTDsys = TradeUI()
+                        sys.exit(app.exec())
+                    else:
+                        deadline_dialog = DeadLine_Dialog()
+                        deadline_dialog.exec()
                 else:
                     error_dialog = Error_Dialog()
                     error_dialog.exec()

@@ -50,3 +50,17 @@ class AppSetting():
         }
 
         return data
+
+
+    @staticmethod
+    def get_UserDeadline():
+        data = {
+            "0975730876":"2023-12-31"
+        }
+        
+        
+        return data
+    
+    @staticmethod
+    def get_version() ->str:
+        return '2023-05-04'

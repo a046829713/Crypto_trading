@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>509</height>
+    <height>576</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -26,7 +26,7 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>380</y>
+     <y>480</y>
      <width>161</width>
      <height>41</height>
     </rect>
@@ -56,7 +56,7 @@ QPushButton:hover {
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>340</y>
+     <y>440</y>
      <width>161</width>
      <height>20</height>
     </rect>
@@ -78,7 +78,7 @@ background-color: rgba(255, 255, 255, 0);</string>
    <property name="geometry">
     <rect>
      <x>200</x>
-     <y>380</y>
+     <y>480</y>
      <width>171</width>
      <height>41</height>
     </rect>
@@ -111,12 +111,43 @@ QPushButton:hover {
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>20</y>
+     <y>30</y>
      <width>343</width>
-     <height>301</height>
+     <height>391</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QLabel" name="label_Phone">
+      <property name="font">
+       <font>
+        <pointsize>14</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: rgba(255, 255, 255, 0);
+color: rgb(255, 255, 255);</string>
+      </property>
+      <property name="text">
+       <string>Phone Number</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLineEdit" name="lineEdit_Phone">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>40</height>
+       </size>
+      </property>
+      <property name="styleSheet">
+       <string notr="true"> border-radius: 10px; 
+background-color: rgb(255, 255, 255);</string>
+      </property>
+     </widget>
+    </item>
     <item>
      <widget class="QLabel" name="label_accout">
       <property name="minimumSize">
@@ -236,11 +267,11 @@ background-color: rgb(255, 255, 255);</string>
     </item>
    </layout>
   </widget>
-  <widget class="QLabel" name="label">
+  <widget class="QLabel" name="label_version">
    <property name="geometry">
     <rect>
      <x>270</x>
-     <y>480</y>
+     <y>540</y>
      <width>121</width>
      <height>20</height>
     </rect>

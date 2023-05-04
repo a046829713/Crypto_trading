@@ -6,8 +6,6 @@ from Datatransformer import Datatransformer
 from typing import Optional
 from utils.Debug_tool import debug
 import logging
-import time
-import asyncio
 from binance import AsyncClient, BinanceSocketManager
 from datetime import datetime
 

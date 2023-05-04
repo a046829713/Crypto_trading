@@ -16,6 +16,7 @@ import os
 from binance.exceptions import BinanceAPIException
 import copy
 
+
 # 修正權重模式
 # 增加總投組獲利平倉，或是單一策略平倉?
 # 建立所有商品的優化(GUI > Trading_systeam > Optimizer)
@@ -27,6 +28,9 @@ import copy
 # 轉移資料
 
 # 將 main 改為異步函數
+
+
+# 改成120秒判斷1次?(尚未實做) 減少call的次數 requests.exceptions.ConnectionError: ('Connection aborted.', ConnectionResetError(10054, '遠端主機已強制關閉一個現存的連線。', None, 10054, None))
 
 class Trading_systeam():
     def __init__(self) -> None:
@@ -396,7 +400,7 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
 
         self.all_msg.append(out_str)
         self.GUI.update_trade_info_signal.emit(out_str)
-        self.debug.record_msg(out_str, log_level=logging.error)
+        self.debug.record_msg(out_str, log_level=logging.debug)
 
     def SendClosedProfit(self,data):
         self.GUI.GUI_CloseProfit.emit(data)
