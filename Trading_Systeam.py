@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import sys
 from Infrastructure.LINE_Alert import LINE_Alert
 import pandas as pd
-from utils import BackUp,Debug_tool
+from utils import BackUp, Debug_tool
 import logging
 from Database.SQL_operate import SqlSentense
 import asyncio
@@ -48,13 +48,13 @@ class Trading_systeam():
         self.engine = self.buildEngine()
         self.line_alert = LINE_Alert()
         self.checkout = False
-        self.datatransformer = Datatransformer()  
+        self.datatransformer = Datatransformer()
 
     @BackUp.check_table_if_exits('lastinitcapital')
     def buildEngine(self):
-        capital = self.dataprovider_online.SQL.get_db_data("select *  from `lastinitcapital`;")
+        capital = self.dataprovider_online.SQL.get_db_data(
+            "select *  from `lastinitcapital`;")
         return Quantify_systeam_online(capital[0][-1])
-
 
     def checkDailydata(self):
         """
@@ -143,42 +143,48 @@ class Trading_systeam():
                 self.dataprovider_online.SQL.change_db_data(
                     SqlSentense.insert_optimizeresult(result, optimize_strategy_type))
 
-
     def exportAllKbarsData(self):
         """
             將資料庫裡面的資料全部讀取出來保存成CSV檔案
             只保留1 min的數據
         """
         BackUp.check_file("History")
-        
+
         for each_symbol in self.dataprovider_online.Binanceapp.get_targetsymobls():
-            BackUp.exportKbarsData(each_symbol,self.dataprovider_online)
-    
-    
+            BackUp.exportKbarsData(each_symbol, self.dataprovider_online)
+
+    def exportKbarsData(self, symbol: str, data_type: str = None):
+        BackUp.check_file("History")
+        BackUp.exportKbarsData(
+            symbol, self.dataprovider_online, data_type=data_type)
+
     def importAllKbarsData(self):
         """
             將資料全部寫入MySQL
 
-        """        
+        """
         for each_symbol in self.dataprovider_online.Binanceapp.get_targetsymobls():
             print(each_symbol)
             # 檢查是否在資料庫裏面
-            symbol_name_list = self.dataprovider_online.SQL.get_db_data('show tables;')
+            symbol_name_list = self.dataprovider_online.SQL.get_db_data(
+                'show tables;')
             symbol_name_list = [y[0] for y in symbol_name_list]
-            
+
             tb_symbol_name = each_symbol + '-F'
             tb_symbol_name = tb_symbol_name.lower()
-            
+
             if tb_symbol_name in symbol_name_list:
                 continue
             else:
-                self.dataprovider_online.SQL.change_db_data(SqlSentense.create_table_name(tb_symbol_name))
-            
+                self.dataprovider_online.SQL.change_db_data(
+                    SqlSentense.create_table_name(tb_symbol_name))
+
             file_path = "History\\" + each_symbol.lower() + "-f.csv"
-            df = pd.read_csv(file_path)                
-            df.set_index('Datetime',inplace=True)
-            
-            self.dataprovider_online.SQL.write_Dateframe(df,tb_symbol_name,exists='append')
+            df = pd.read_csv(file_path)
+            df.set_index('Datetime', inplace=True)
+
+            self.dataprovider_online.SQL.write_Dateframe(
+                df, tb_symbol_name, exists='append')
             print("開始刪除")
             os.remove(file_path)
 
@@ -191,8 +197,6 @@ class Trading_systeam():
         all_symbols = dataprovider.get_symbols_history_data()
         example = get_symobl_filter_useful(all_symbols)
         return example
-
-        
 
     def change_money(self):
         """
@@ -218,9 +222,10 @@ class Trading_systeam():
 
         # 將優化完成的資料寫入DB
         print("初始資金:", self.engine.Trader.Portfolio_initcash)
-        self.dataprovider_online.SQL.change_db_data(f"UPDATE `lastinitcapital` SET `capital` = {int(self.engine.Trader.Portfolio_initcash)} WHERE `ID` = '1';")
+        self.dataprovider_online.SQL.change_db_data(
+            f"UPDATE `lastinitcapital` SET `capital` = {int(self.engine.Trader.Portfolio_initcash)} WHERE `ID` = '1';")
         print("更新初始化資金完成")
-        
+
     def check_money_level(self):
         """
             取得實時運作的資金水位 並且發出賴通知
@@ -233,14 +238,13 @@ class Trading_systeam():
             self.line_alert.req_line_alert("警告:請校正資金水位,投資組合水位差距超過百分之10")
             self.change_money()
 
-    
     @BackUp.check_table_if_exits(table_name="sysstatus")
     def timewritersql(self):
         """
             寫入保存時間
         """
         self.dataprovider_online.SQL.change_db_data(
-                f""" UPDATE `sysstatus` SET `systeam_datetime`='{str(datetime.now())}' WHERE `ID`='1';""")
+            f""" UPDATE `sysstatus` SET `systeam_datetime`='{str(datetime.now())}' WHERE `ID`='1';""")
 
     def printfunc(self, *args):
         out_str = ''
@@ -264,10 +268,15 @@ class Trading_systeam():
             eachCatchDf.set_index('Datetime', inplace=True)
             self.new_symbol_map.update({name: eachCatchDf})
 
+
 class AsyncTrading_systeam(Trading_systeam):
     def __init__(self) -> None:
         super().__init__()
-        
+
+
+        # 為了讓GUI有反應
+        self.printfunc("Crypto_trading 交易系統配置中...")
+
         # check if already update, and reload data
         self.checkDailydata()
 
@@ -279,9 +288,9 @@ class AsyncTrading_systeam(Trading_systeam):
             market_symobl, self.dataprovider_online.Binanceapp.getfutures_account_name())
 
         # 將標得注入引擎
-        self.asyncDataProvider = AsyncDataProvider()        
+        self.asyncDataProvider = AsyncDataProvider()
         self.lock = asyncio.Lock()
-        
+
         # 初始化投資組合 (傳入要買的標的物, 並且傳入相關參數)
         self.engine.Portfolio_online_register(
             targetsymbol, self.dataprovider_online.SQL.read_Dateframe("optimizeresult"))
@@ -289,6 +298,7 @@ class AsyncTrading_systeam(Trading_systeam):
         self.symbol_name: set = self.engine.get_symbol_name()
 
     async def main(self):
+        self.printfunc("Crypto_trading 正式交易啟動")
         self.line_alert.req_line_alert('Crypto_trading 正式交易啟動')
         # 先將資料從DB撈取出來
         for name in self.symbol_name:
@@ -305,14 +315,18 @@ class AsyncTrading_systeam(Trading_systeam):
                 if datetime.now().minute != last_min or last_min is None:
                     begin_time = time.time()
                     # 取得原始資料
+                    async with self.lock:
+                        all_data_copy = copy.deepcopy(
+                            self.asyncDataProvider.all_data)
+
                     for name, each_df in self.symbol_map.items():
-                        # 這邊要進入catch裡面合併資料                        
+                        # 這邊要進入catch裡面合併資料
                         # 這邊在轉換的過程中會報錯
-                        # 嘗試使用所以防止,迭代過程中資料改變                        
-                        async with self.lock:                        
-                            original_df, eachCatchDf = self.datatransformer.mergeData(
-                                name, each_df, self.asyncDataProvider.all_data)
-                        self.symbol_map.update({name: original_df})
+                        # 嘗試使用所以防止,迭代過程中資料改變
+
+                        original_df, eachCatchDf = self.datatransformer.mergeData(
+                            name, each_df, all_data_copy)
+                        self.symbol_map[name] = original_df
                         self.get_catch(name, eachCatchDf)
 
                     info = self.engine.get_symbol_info()
@@ -334,18 +348,17 @@ class AsyncTrading_systeam(Trading_systeam):
                         self.checkout = True
 
                     pf = self.engine.Portfolio_online_start()
-                    
+
                     # 將資料發送給GUI
                     self.SendClosedProfit(pf.order['ClosedPostionprofit'])
-                    
+
                     last_status = pf.get_last_status()
-                    
-                    
+
                     self.printfunc('目前交易狀態,校正之後', last_status)
 
                     current_size = self.dataprovider_online.Binanceapp.getfutures_account_positions()
                     self.printfunc("目前binance交易所內的部位狀態:", current_size)
-                    
+
                     # >>比對目前binance 內的部位狀態 進行交易
                     order_finally = self.dataprovider_online.transformer.calculation_size(
                         last_status, current_size, self.symbol_map)
@@ -358,7 +371,7 @@ class AsyncTrading_systeam(Trading_systeam):
 
                     if order_finally:
                         self.dataprovider_online.Binanceapp.execute_orders(
-                            order_finally, self.line_alert, current_size=current_size,symbol_map = self.symbol_map, formal=False)
+                            order_finally, self.line_alert, current_size=current_size, symbol_map=self.symbol_map, formal=False)
 
                     self.printfunc("時間差", time.time() - begin_time)
                     last_min = datetime.now().minute
@@ -369,25 +382,25 @@ class AsyncTrading_systeam(Trading_systeam):
                 if self.dataprovider_online.Binanceapp.trade_count > 10:
                     self.printfunc("緊急狀況處理-交易次數過多")
                     sys.exit()
-                    
+
             except Exception as e:
                 if isinstance(e, BinanceAPIException) and e.code == -1001:
                     pass
                 else:
                     # re-raise the exception if it's not the expected error code
-                    
+
                     raise e
-                
+
                 Debug_tool.debug.print_info()
 
+
 class GUI_Trading_systeam(AsyncTrading_systeam):
-    def __init__(self, GUI) -> None:
-        super().__init__()
+    def __init__(self, GUI) -> None:        
         self.GUI = GUI
         # 用來保存所有的文字檔 並且判斷容量用
         self.all_msg = []
         self.debug = Debug_tool.debug()
-        
+        super().__init__()
 
     def printfunc(self, *args):
         if len(self.all_msg) > 20:
@@ -402,11 +415,11 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
         self.GUI.update_trade_info_signal.emit(out_str)
         self.debug.record_msg(out_str, log_level=logging.debug)
 
-    def SendClosedProfit(self,data):
+    def SendClosedProfit(self, data):
         self.GUI.GUI_CloseProfit.emit(data)
-        
+
+
 if __name__ == '__main__':
 
     app = AsyncTrading_systeam()
     app.main()
-    

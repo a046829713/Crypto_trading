@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, engine
 from sqlalchemy import text
 
+
 def get_mysql_financialdata_conn() -> engine.base.Connection:
     """    
     user: root
@@ -19,8 +20,25 @@ def get_mysql_financialdata_conn() -> engine.base.Connection:
 
     return connect
 
+def checkIfDataBase():
+    address = "mysql+pymysql://root:test@localhost:3306"
+    engine = create_engine(address)
+    connection = engine.connect()
+
+    databases = connection.execute(text("show databases like 'crypto_data';"))
+    if databases.rowcount > 0:
+        pass
+    else:
+        connection.execute(text("CREATE DATABASE crypto_data"))
+        
+
+    
+
+
+
 
 if __name__ == "__main__":
     with get_mysql_financialdata_conn() as conn:
         result = conn.execute(text("select *  from `btcusdt-f-d`;"))
         print(len(list(result)))
+

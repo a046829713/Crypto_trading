@@ -6,18 +6,30 @@ from GUI.Login import Ui_WourLogin
 from GUI.Error_Login import Ui_Dialog_Error
 from GUI.disclamier import Ui_DisCalmier_Dialog
 from GUI.DeadLine import Ui_Dialog_DeadLine
+from GUI.Phone_error import Ui_Dialog_Phone_error
 from PyQt6.QtCore import pyqtSignal
 from Trading_Systeam import GUI_Trading_systeam
 from PyQt6.QtCore import QThread
 from Major.DataProvider import DataProvider
 import pandas as pd
 import asyncio
-from PyQt6.QtCore import  QPointF
+from PyQt6.QtCore import QPointF
 from PyQt6.QtCharts import QChart, QChartView, QLineSeries
 from PyQt6 import QtCore, QtGui, QtWidgets
 from utils.Debug_tool import debug
+from utils.ExecHash import GetHashKey
 from AppSetting import AppSetting
 import datetime
+from Database.clients import checkIfDataBase
+
+class Phone_error_Dialog(QDialog, Ui_Dialog_Phone_error):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        self.show()
+
+        self.pushButton_accept.clicked.connect(self.accept)
+
 
 class DeadLine_Dialog(QDialog, Ui_Dialog_DeadLine):
     def __init__(self):
@@ -27,6 +39,7 @@ class DeadLine_Dialog(QDialog, Ui_Dialog_DeadLine):
 
         self.pushButton_accept.clicked.connect(self.accept)
 
+
 class Error_Dialog(QDialog, Ui_Dialog_Error):
     def __init__(self):
         super().__init__()
@@ -35,26 +48,28 @@ class Error_Dialog(QDialog, Ui_Dialog_Error):
 
         self.pushButton_Error.clicked.connect(self.accept)
 
-class DisCalmier_Dialog(QDialog,Ui_DisCalmier_Dialog):
+
+class DisCalmier_Dialog(QDialog, Ui_DisCalmier_Dialog):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
         self.show()
-        
+
         self.pushButton_agree.clicked.connect(self.accept)
         self.pushButton_disagree.clicked.connect(self.reject)
-        
+
+
 class Login_Dialog(QDialog, Ui_WourLogin):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
         self.show()
-        
+
         # 輸入setting版本號碼
         self.label_version.setText(f"Version:{AppSetting.get_version()}")
 
         self.pushButton_login.clicked.connect(self.Get_Login_info)
-        
+
         # 通常在對話框內使用「確定」或「確認」按鈕時，會在按下按鈕後呼叫 accept() 方法以關閉對話框並返回一個確認信號給父窗口，以通知已經成功執行動作。
         self.pushButton_login.clicked.connect(self.accept)
 
@@ -67,11 +82,11 @@ class Login_Dialog(QDialog, Ui_WourLogin):
 
             with open(r"C:/LINE_TOEKN.txt", 'r') as file:
                 LINE_TOEKN = file.read()
-                LINE_TOEKN = LINE_TOEKN.replace("\n","")
-            
+                LINE_TOEKN = LINE_TOEKN.replace("\n", "")
+
             with open(r"C:/PhoneNumber.txt", 'r') as file:
                 PhoneNumber = file.read()
-                PhoneNumber = PhoneNumber.replace("\n","")
+                PhoneNumber = PhoneNumber.replace("\n", "")
 
             self.checkBox_remeberpa.setChecked(True)
             self.lineEdit_api_key.setText(account)
@@ -94,10 +109,10 @@ class Login_Dialog(QDialog, Ui_WourLogin):
                 file.write(self.secret_key + "\n")
 
             with open(r"C:/LINE_TOEKN.txt", 'w') as file:
-                file.write(self.LINE )
+                file.write(self.LINE)
 
             with open(r"C:/PhoneNumber.txt", 'w') as file:
-                file.write(self.PhoneNumber )
+                file.write(self.PhoneNumber)
 
     def closeEvent(self, event):
         """
@@ -118,22 +133,40 @@ class TradeUI(QMainWindow, Ui_MainWindow):
     update_trade_info_signal = pyqtSignal(str)
     clear_info_signal = pyqtSignal()
     GUI_CloseProfit = pyqtSignal(list)
-    
+
     def __init__(self) -> None:
         super().__init__()
         self.setupUi(self)
         self.show()
 
+        self.systeam = None
+        self.chartview = None
+        
+        # 檢查資料庫是否存在
+        checkIfDataBase()
+        
         # 建立插槽監聽信號
         self.update_trade_info_signal.connect(self.showMsg)
         self.clear_info_signal.connect(self.clear_Msg)
         self.GUI_CloseProfit.connect(self.line_chart)
         self.actionAutoTrading.triggered.connect(self.click_btn_trade)
-        
+
         self.actionSaveData.triggered.connect(self.click_save_data)
         self.actionReload_Day_Data.triggered.connect(self.reload_data_day)
         self.actionReload_Min_Data.triggered.connect(self.reload_data_min)
-        
+        self.actionImport_History_Data.triggered.connect(
+            self.import_history_data)
+
+    def import_history_data(self):
+        self.BuildSysteam()
+        self.import_history_data_Thread = QThread()
+        self.import_history_data_Thread.run = self.systeam.importAllKbarsData()
+        self.import_history_data_Thread.start()
+
+    def BuildSysteam(self):
+        if self.systeam is None:
+            self.systeam = GUI_Trading_systeam(self)
+
     def clear_Msg(self):
         self.trade_info.clear()
 
@@ -148,19 +181,19 @@ class TradeUI(QMainWindow, Ui_MainWindow):
         self.trade_info.append(out_str)
 
     def click_btn_trade(self):
-        self.systeam = GUI_Trading_systeam(self)
+        self.BuildSysteam()
 
         def run_subscriptionData():
             # 嘗試捕捉這個節點的問題,或許出現在這
             try:
                 asyncio.run(self.systeam.asyncDataProvider.subscriptionData(
                     self.systeam.symbol_name))
-            except :
+            except:
                 debug.print_info()
-                
+
         def run_trading_systeam():
             asyncio.run(self.systeam.main())
-            
+
         self.run_subscrip_Thread = QThread()
         self.run_subscrip_Thread.run = run_subscriptionData
         self.run_subscrip_Thread.start()
@@ -169,7 +202,6 @@ class TradeUI(QMainWindow, Ui_MainWindow):
         self.Trading_systeam_Thread.setObjectName = "trade"
         self.Trading_systeam_Thread.run = run_trading_systeam
         self.Trading_systeam_Thread.start()
-        
 
     def reload_data_day(self):
         self.dataprovider = DataProvider(time_type='D')
@@ -208,9 +240,23 @@ class TradeUI(QMainWindow, Ui_MainWindow):
         self.save_data_Thread.run = mergefunc
         self.save_data_Thread.start()
 
+    def _inint_line_chart(self):
+        """ 定義初始化的圖表"""
+        # create the QVBoxLayout layout
+        self.verticalLayout = QtWidgets.QVBoxLayout(self)
+
+        # create the QChartView widget
+        self.chartview = QChartView(self)
+
+        # add the QChartView widget to the layout
+        self.verticalLayout.addWidget(self.chartview)
+
     def line_chart(self, data: list):
-        print("取得line_chart傳送資料:",data)
-        print("取得line_chart傳送資料的型態:",type(data))
+        if self.chartview is None:
+            self._inint_line_chart()
+
+        print("取得line_chart傳送資料:", data)
+        print("取得line_chart傳送資料的型態:", type(data))
         series = QLineSeries()
 
         for i, val in enumerate(data):
@@ -221,15 +267,14 @@ class TradeUI(QMainWindow, Ui_MainWindow):
         chart.createDefaultAxes()
         chart.setTitle("CloseProfit")
 
-        #adding animation
+        # adding animation
         chart.setAnimationOptions(QChart.AnimationOption.AllAnimations)
 
-        #adding theme
+        # adding theme
         chart.setTheme(QChart.ChartTheme.ChartThemeDark)
 
-        chartview = QChartView(chart)
-        self.verticalLayout = QtWidgets.QVBoxLayout(self.CloseProfit_tab)
-        self.verticalLayout.addWidget(chartview)
+        # set the chart to the QChartView widget
+        self.chartview.setChart(chart)
 
 
 if __name__ == '__main__':
@@ -237,8 +282,7 @@ if __name__ == '__main__':
     DisCalmier_dialog = DisCalmier_Dialog()
     if DisCalmier_dialog.exec() == 1:
         while True:
-            
-            
+
             Login_dialog = Login_Dialog()
 
             # 如果用戶是執行登入
@@ -246,13 +290,16 @@ if __name__ == '__main__':
                 if Login_dialog.api_key and Login_dialog.secret_key and Login_dialog.LINE:
                     # 判斷到期時間
                     UserDeadline = AppSetting.get_UserDeadline()
-
-                    if UserDeadline[Login_dialog.PhoneNumber]>str(datetime.date.today()):
-                        BeginTDsys = TradeUI()
-                        sys.exit(app.exec())
+                    if UserDeadline.get(GetHashKey(Login_dialog.PhoneNumber), None) is not None:
+                        if UserDeadline[GetHashKey(Login_dialog.PhoneNumber)] > str(datetime.date.today()):
+                            BeginTDsys = TradeUI()
+                            sys.exit(app.exec())
+                        else:
+                            deadline_dialog = DeadLine_Dialog()
+                            deadline_dialog.exec()
                     else:
-                        deadline_dialog = DeadLine_Dialog()
-                        deadline_dialog.exec()
+                        phone_error_Dialog = Phone_error_Dialog()
+                        phone_error_Dialog.exec()
                 else:
                     error_dialog = Error_Dialog()
                     error_dialog.exec()
