@@ -8,7 +8,7 @@ from utils.Debug_tool import debug
 import logging
 from binance import AsyncClient, BinanceSocketManager
 from datetime import datetime
-
+import asyncio
 
 class DataProvider:
     """
@@ -43,7 +43,7 @@ class DataProvider:
             if reload_type == 'History':
                 SQL_Q = f"""SELECT * FROM ( SELECT * FROM `{tb_symbol_name}` ORDER BY Datetime DESC LIMIT 20 ) t ORDER BY Datetime ASC;"""
                 df = self.SQL.read_Dateframe(SQL_Q)
-                
+
             elif reload_type == 'Online':
                 df = self.SQL.read_Dateframe(
                     f'SELECT * FROM `{tb_symbol_name}` where Datetime > "2022-12-26"')
@@ -121,7 +121,7 @@ class DataProvider:
         """
             用來回補所有symbol的歷史資料
             為了避免寫入過慢 更改成append
-            
+
             2023.04.18
                 TODO:
                     lewis MSG:
@@ -129,7 +129,7 @@ class DataProvider:
                         in SQLAlchemy==2.XX.XX no error but mysql database can't insert data
                         so i reply SQLAlchemy==1.4.44
                         if future can try to fix this bug 
-                    
+
         """
         for symbol_name in self.Binanceapp.get_targetsymobls():
             try:
@@ -209,6 +209,7 @@ class DataProvider_online(DataProvider):
 class AsyncDataProvider():
     def __init__(self) -> None:
         self.all_data = {}
+        self.lock = asyncio.Lock()
 
     async def process_message(self, res):
         filterdata = res['data']['k']
@@ -227,6 +228,12 @@ class AsyncDataProvider():
 
         return data
 
+    async def update_data(self, symbol, data):
+        async with self.lock:
+            if symbol not in self.all_data:
+                self.all_data[symbol] = {}
+            self.all_data[symbol].update({data['Datetime']: data})
+
     async def subscriptionData(self, streams: set):
         """ 用來訂閱系統資料
 
@@ -235,7 +242,7 @@ class AsyncDataProvider():
             output streams (list): ['btcusdt@kline_1m', 'ethusdt@kline_1m', 'bnbusdt@kline_1m']
 
         Returns:
-            _type_: _description_
+            _type_: Not return
         """
 
         def changestreams(streams: set):
@@ -263,7 +270,7 @@ class AsyncDataProvider():
                 res = await stream.recv()
                 symbol = res['stream'].split('@')[0].upper()
                 data = await self.process_message(res)
-                self.all_data[symbol].update({data['Datetime']: data})
+                await self.update_data(symbol, data)
 
                 # if len(self.all_data[symbol]) != last_all[symbol]:
                 #     print(self.all_data[symbol])
