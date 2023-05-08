@@ -289,7 +289,7 @@ class AsyncTrading_systeam(Trading_systeam):
 
         # 將標得注入引擎
         self.asyncDataProvider = AsyncDataProvider()
-        self.lock = asyncio.Lock()
+        
 
         # 初始化投資組合 (傳入要買的標的物, 並且傳入相關參數)
         self.engine.Portfolio_online_register(
@@ -315,10 +315,9 @@ class AsyncTrading_systeam(Trading_systeam):
                 if datetime.now().minute != last_min or last_min is None:
                     begin_time = time.time()
                     # 取得原始資料
-                    async with self.lock:
-                        all_data_copy = copy.deepcopy(
-                            self.asyncDataProvider.all_data)
-
+                    all_data_copy = await self.asyncDataProvider.get_all_data()
+                    print("目前資料集")
+                    print(all_data_copy)
                     for name, each_df in self.symbol_map.items():
                         # 這邊要進入catch裡面合併資料
                         # 這邊在轉換的過程中會報錯

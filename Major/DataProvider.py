@@ -233,6 +233,10 @@ class AsyncDataProvider():
             if symbol not in self.all_data:
                 self.all_data[symbol] = {}
             self.all_data[symbol].update({data['Datetime']: data})
+    
+    async def get_all_data(self) -> dict:
+        async with self.lock:
+            return dict(self.all_data)
 
     async def subscriptionData(self, streams: set):
         """ 用來訂閱系統資料
