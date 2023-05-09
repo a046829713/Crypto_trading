@@ -3,6 +3,8 @@ from utils.Date_time import parser_time
 import time
 from utils.Debug_tool import debug
 from utils.TimeCountMsg import TimeCountMsg
+import logging
+
 
 class Datatransformer:
     def get_tradedata(self, original_df: pd.DataFrame, freq: int = 30):
@@ -53,8 +55,7 @@ class Datatransformer:
                 df = df.drop(columns=[key])
 
         return df
-    
-    
+
     def calculation_size(self, systeam_size: dict, true_size: dict, symbol_map: dict) -> dict:
         """
             用來比較 系統部位 和 Binance 交易所的實際部位
@@ -104,6 +105,7 @@ class Datatransformer:
                 diff_map.update({symbol_name: - float(postition_size)})
 
         return diff_map
+
     @TimeCountMsg.record_timemsg
     def mergeData(self, symbol_name: str, lastdata: pd.DataFrame, socketdata: dict):
         """合併資料用來
@@ -116,11 +118,15 @@ class Datatransformer:
             [1678000140000, '46.77', '46.77', '46.76', '46.76', '6.597', 1678000199999, '308.51848', 9, '0.000', '0.00000', '0']]
         """
         # 先將catch 裡面的資料做轉換 # 由於當次分鐘量不會很大 所以決定不清空 考慮到異步問題
+
         if socketdata.get(symbol_name, None) is not None:
-            df = pd.DataFrame.from_dict(
-                socketdata[symbol_name], orient='index')
-            df.reset_index(drop=True, inplace=True)
-            df['Datetime'] = pd.to_datetime(df['Datetime'])
+            if socketdata[symbol_name]:
+                df = pd.DataFrame.from_dict(
+                    socketdata[symbol_name], orient='index')
+                df.reset_index(drop=True, inplace=True)
+                df['Datetime'] = pd.to_datetime(df['Datetime'])
+            else:
+                df = pd.DataFrame()
         else:
             df = pd.DataFrame()
 

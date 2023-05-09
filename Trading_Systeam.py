@@ -273,7 +273,6 @@ class AsyncTrading_systeam(Trading_systeam):
     def __init__(self) -> None:
         super().__init__()
 
-
         # 為了讓GUI有反應
         self.printfunc("Crypto_trading 交易系統配置中...")
 
@@ -289,7 +288,6 @@ class AsyncTrading_systeam(Trading_systeam):
 
         # 將標得注入引擎
         self.asyncDataProvider = AsyncDataProvider()
-        
 
         # 初始化投資組合 (傳入要買的標的物, 並且傳入相關參數)
         self.engine.Portfolio_online_register(
@@ -316,8 +314,6 @@ class AsyncTrading_systeam(Trading_systeam):
                     begin_time = time.time()
                     # 取得原始資料
                     all_data_copy = await self.asyncDataProvider.get_all_data()
-                    print("目前資料集")
-                    print(all_data_copy)
                     for name, each_df in self.symbol_map.items():
                         # 這邊要進入catch裡面合併資料
                         # 這邊在轉換的過程中會報錯
@@ -384,17 +380,15 @@ class AsyncTrading_systeam(Trading_systeam):
 
             except Exception as e:
                 if isinstance(e, BinanceAPIException) and e.code == -1001:
-                    pass
+                    Debug_tool.debug.print_info()
                 else:
                     # re-raise the exception if it's not the expected error code
-
-                    raise e
-
-                Debug_tool.debug.print_info()
+                    Debug_tool.debug.print_info()
+                    raise
 
 
 class GUI_Trading_systeam(AsyncTrading_systeam):
-    def __init__(self, GUI) -> None:        
+    def __init__(self, GUI) -> None:
         self.GUI = GUI
         # 用來保存所有的文字檔 並且判斷容量用
         self.all_msg = []

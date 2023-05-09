@@ -230,8 +230,6 @@ class AsyncDataProvider():
 
     async def update_data(self, symbol, data):
         async with self.lock:
-            if symbol not in self.all_data:
-                self.all_data[symbol] = {}
             self.all_data[symbol].update({data['Datetime']: data})
     
     async def get_all_data(self) -> dict:
