@@ -247,13 +247,13 @@ class TradeUI(QMainWindow, Ui_MainWindow):
     def _inint_line_chart(self):
         """ 定義初始化的圖表"""
         # create the QVBoxLayout layout
-        self.verticalLayout = QtWidgets.QVBoxLayout(self)
+        self.verticalLayout_Profit = QtWidgets.QVBoxLayout(self.CloseProfit_tab)
 
         # create the QChartView widget
         self.chartview = QChartView(self)
 
         # add the QChartView widget to the layout
-        self.verticalLayout.addWidget(self.chartview)
+        self.verticalLayout_Profit.addWidget(self.chartview)
 
     def line_chart(self, data: list):
         if self.chartview is None:

@@ -314,11 +314,12 @@ class AsyncTrading_systeam(Trading_systeam):
                     begin_time = time.time()
                     # 取得原始資料
                     all_data_copy = await self.asyncDataProvider.get_all_data()
-                    for name, each_df in self.symbol_map.items():
-                        # 這邊要進入catch裡面合併資料
-                        # 這邊在轉換的過程中會報錯
-                        # 嘗試使用所以防止,迭代過程中資料改變
-
+                    
+                    # 避免在self.symbol_map
+                    bbbbtime = time.time()
+                    symbol_map_copy = copy.deepcopy(self.symbol_map)
+                    print("拷貝時間",time.time() - bbbbtime)
+                    for name, each_df in symbol_map_copy.items():
                         original_df, eachCatchDf = self.datatransformer.mergeData(
                             name, each_df, all_data_copy)
                         self.symbol_map[name] = original_df
