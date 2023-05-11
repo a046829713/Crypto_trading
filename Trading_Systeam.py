@@ -1,4 +1,4 @@
-from Major.DataProvider import DataProvider, DataProvider_online, AsyncDataProvider
+from Major.DataProvider import DataProvider_online, AsyncDataProvider
 from Major.Symbol_filter import get_symobl_filter_useful
 from Vecbot_backtest import Quantify_systeam_online, Optimizer
 import time
@@ -11,9 +11,11 @@ import logging
 from Database.SQL_operate import SqlSentense
 import asyncio
 from Datatransformer import Datatransformer
-import threading
 import os
 from binance.exceptions import BinanceAPIException
+from binance import BinanceSocketManager
+
+
 import copy
 
 
@@ -27,10 +29,9 @@ import copy
 # 建構輸入輸出檢查的decorator
 # 轉移資料
 
-# 將 main 改為異步函數
-
 
 # 改成120秒判斷1次?(尚未實做) 減少call的次數 requests.exceptions.ConnectionError: ('Connection aborted.', ConnectionResetError(10054, '遠端主機已強制關閉一個現存的連線。', None, 10054, None))
+
 
 class Trading_systeam():
     def __init__(self) -> None:
@@ -44,7 +45,7 @@ class Trading_systeam():
         # 這次新產生的資料
         self.new_symbol_map = {}
         # formal正式啟動環境
-        self.dataprovider_online = DataProvider_online(formal=True)
+        self.dataprovider_online = DataProvider_online()
         self.engine = self.buildEngine()
         self.line_alert = LINE_Alert()
         self.checkout = False
@@ -68,7 +69,7 @@ class Trading_systeam():
 
         if sql_date != _todaydate:
             # 更新日資料 並且在回補完成後才繼續進行 即時行情的回補
-            DataProvider(time_type='D').reload_all_data()
+            self.dataprovider_online.reload_all_data(time_type='D')
 
     def exportOptimizeResult(self):
         """
@@ -193,8 +194,8 @@ class Trading_systeam():
         # 取得交易標的
 
         """
-        dataprovider = DataProvider(time_type='D')
-        all_symbols = dataprovider.get_symbols_history_data()
+        all_symbols = self.dataprovider_online.get_symbols_history_data(
+            time_type='D')
         example = get_symobl_filter_useful(all_symbols)
         return example
 
@@ -301,7 +302,7 @@ class AsyncTrading_systeam(Trading_systeam):
         # 先將資料從DB撈取出來
         for name in self.symbol_name:
             original_df, eachCatchDf = self.dataprovider_online.get_symboldata(
-                name, save=False)
+                name)
             self.symbol_map.update({name: original_df})
             self.get_catch(name, eachCatchDf)
 
@@ -314,11 +315,9 @@ class AsyncTrading_systeam(Trading_systeam):
                     begin_time = time.time()
                     # 取得原始資料
                     all_data_copy = await self.asyncDataProvider.get_all_data()
-                    
+
                     # 避免在self.symbol_map
-                    bbbbtime = time.time()
                     symbol_map_copy = copy.deepcopy(self.symbol_map)
-                    print("拷貝時間",time.time() - bbbbtime)
                     for name, each_df in symbol_map_copy.items():
                         original_df, eachCatchDf = self.datatransformer.mergeData(
                             name, each_df, all_data_copy)
@@ -414,6 +413,6 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
 
 
 if __name__ == '__main__':
-
-    app = AsyncTrading_systeam()
-    app.main()
+    pass
+    # app = AsyncTrading_systeam()
+    # app.main()

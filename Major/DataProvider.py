@@ -10,6 +10,7 @@ from binance import AsyncClient, BinanceSocketManager
 from datetime import datetime
 import asyncio
 
+
 class DataProvider:
     """
         用來整合 binance 的 API
@@ -17,18 +18,17 @@ class DataProvider:
         和資料轉換
     """
 
-    def __init__(self, time_type: Optional[str] = None, formal=False):
-        self.Binanceapp = Data.custom.Binance_server(formal)
+    def __init__(self):
+        self.Binanceapp = Data.custom.Binance_server(True)
         self.SQL = SQL_operate.DB_operate()
         self.transformer = Datatransformer()
-        self.time_type = time_type
 
-    def reload_data(self, symbol_name='BTCUSDT', iflower=True, reload_type=None):
+    def reload_data(self, symbol_name='BTCUSDT', time_type=None, iflower=True, reload_type=None):
         # 先檢查是否有相關資料 取得目前所有列
         symbol_name_list = self.SQL.get_db_data('show tables;')
         symbol_name_list = [y[0] for y in symbol_name_list]
 
-        if self.time_type == 'D':
+        if time_type == 'D':
             tb_symbol_name = symbol_name + '-F-D'
         else:
             tb_symbol_name = symbol_name + '-F'
@@ -76,34 +76,22 @@ class DataProvider:
 
             df = pd.DataFrame()
 
-        if self.time_type == 'D':
+        if time_type == 'D':
             catch_time = '1d'
         else:
             catch_time = '1m'
 
         # 這邊的資料為原始的UTC資料 無任何加工
-        original_df, eachCatchDf = Data.custom.BinanceDate.download(
-            df, f"{symbol_name}", catch_time)
+        original_df, eachCatchDf = self.Binanceapp.BinanceDate.download(
+            self.Binanceapp.client, df, f"{symbol_name}", catch_time)
 
         return original_df, eachCatchDf
 
-    def get_symboldata(self, symbol_name='BTCUSDT', freq: int = 15, save=True):
-        """
-            取得回補完整且已經轉換過指定時間區段台灣時區之資料
-        """
-        original_df, eachCatchDf = self.reload_data(
-            symbol_name, reload_type="all_data")
-        if save:
-            self.save_data(symbol_name, original_df)
-
-        new_df = self.transformer.get_tradedata(original_df, freq=freq)
-        return new_df
-
-    def save_data(self, symbol_name, original_df, iflower=True, exists="replace"):
+    def save_data(self, symbol_name, original_df, iflower=True, exists="replace", time_type=None):
         """
             保存資料到SQL
         """
-        if self.time_type == 'D':
+        if time_type == 'D':
             tb_symbol_name = symbol_name + '-F-D'
         else:
             tb_symbol_name = symbol_name + '-F'
@@ -117,8 +105,11 @@ class DataProvider:
             self.SQL.write_Dateframe(
                 original_df, tb_symbol_name, exists=exists)
 
-    def reload_all_data(self):
+    def reload_all_data(self, time_type=None):
         """
+            Args:
+            time_type (_type_, optional): _description_. Defaults to None.
+                如果'D' 代表要取用的時間為日線
             用來回補所有symbol的歷史資料
             為了避免寫入過慢 更改成append
 
@@ -134,7 +125,7 @@ class DataProvider:
         for symbol_name in self.Binanceapp.get_targetsymobls():
             try:
                 original_df, eachCatchDf = self.reload_data(
-                    symbol_name, reload_type="History")
+                    symbol_name, time_type=time_type, reload_type="History")
 
                 eachCatchDf.drop(
                     [eachCatchDf.index[0], eachCatchDf.index[-1]], inplace=True)
@@ -142,15 +133,20 @@ class DataProvider:
                 if len(eachCatchDf) != 0:
                     eachCatchDf.set_index('Datetime', inplace=True)
 
-                    self.save_data(symbol_name, eachCatchDf, exists="append")
+                    self.save_data(symbol_name, eachCatchDf,
+                                   exists="append", time_type=time_type)
             except:
                 debug.print_info()
                 debug.record_msg(
                     error_msg=f"symbol = {symbol_name}", log_level=logging.error)
 
-    def get_symbols_history_data(self, iflower=True) -> list:
+    def get_symbols_history_data(self, time_type=None, iflower=True) -> list:
         """
             讀取所有日線資料 用來分析和排序
+        Args:
+            time_type (_type_, optional): _description_. Defaults to None.
+                如果'D' 代表要取用的時間為日線
+            iflower (bool, optional): _description_. Defaults to True.
 
         Returns:
             list: 
@@ -159,15 +155,15 @@ class DataProvider:
                  ....
                 ]
         """
-
         out_list = []
         for symbol_name in self.Binanceapp.get_targetsymobls():
-            if self.time_type == 'D':
+            if time_type == 'D':
                 tb_symbol_name = symbol_name + '-F-D'
             else:
                 tb_symbol_name = symbol_name + '-F'
             if iflower:
                 tb_symbol_name = tb_symbol_name.lower()
+
             each_df = self.SQL.read_Dateframe(tb_symbol_name)
             out_list.append([tb_symbol_name, each_df])
 
@@ -175,29 +171,12 @@ class DataProvider:
 
 
 class DataProvider_online(DataProvider):
-    def get_symboldata(self, symbol_name='BTCUSDT', save=True):
+    def get_symboldata(self, symbol_name='BTCUSDT'):
         """
             回補原始資料 並且保存
         """
         original_df, eachCatchDf = self.reload_data(
             symbol_name, reload_type="Online")
-        if save:
-            self.save_data(symbol_name, original_df)
-
-        return original_df, eachCatchDf
-
-    def reload_data_online(self, df: pd.DataFrame, symbol_name):
-        if self.time_type == 'D':
-            catch_time = '1d'
-        else:
-            catch_time = '1m'
-
-        df.reset_index(inplace=True)
-        df['Datetime'] = df['Datetime'].astype(str)
-
-        # 這邊的資料為原始的UTC資料 無任何加工
-        original_df, eachCatchDf = Data.custom.BinanceDate.download(
-            df, f"{symbol_name}", catch_time)
 
         return original_df, eachCatchDf
 
@@ -231,7 +210,7 @@ class AsyncDataProvider():
     async def update_data(self, symbol, data):
         async with self.lock:
             self.all_data[symbol].update({data['Datetime']: data})
-    
+
     async def get_all_data(self) -> dict:
         async with self.lock:
             return dict(self.all_data)

@@ -19,4 +19,4 @@ while True:
         process = subprocess.Popen(
             [python_path, sys_path, '--autostart'])
 
-    time.sleep(10)
+    time.sleep(30)

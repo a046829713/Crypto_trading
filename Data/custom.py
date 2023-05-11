@@ -147,7 +147,7 @@ class BinanceDate(object):
         return old, new + timedelta(minutes=1)
 
     @classmethod
-    def download(cls, original_df: pd.DataFrame, symbol, kline_size):
+    def download(cls, client: Client, original_df: pd.DataFrame, symbol, kline_size):
         """
         Getting histrical price data through binance api.
 
@@ -162,7 +162,7 @@ class BinanceDate(object):
         Returns:
             pd.DataFrame: OHLCV data for all
         """
-        client = Client()
+
         oldest_point, newest_point = cls.minutes_of_new_data(
             symbol, kline_size, original_df, source="binance", client=client)
 
@@ -213,7 +213,8 @@ class Binance_server(object):
     def __init__(self, formal=False) -> None:
         self.get_clinet(formal)
         self.trade_count = 0
-
+        self.BinanceDate = BinanceDate()
+        
     def get_clinet(self, formal=False):
         if formal:
             # with open(r"/home/abcd/bi.txt", 'r') as file:
@@ -267,7 +268,7 @@ class Binance_server(object):
     def get_targetsymobls(self) -> list:
         """
             to call api get futures symbol and clean data
-            
+
             只收集USDT使用的合約,並且已經掛牌上可以交易的標的
         Returns:
             list: _description_
