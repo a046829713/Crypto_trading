@@ -202,19 +202,18 @@ class BinanceDate(object):
         return new_df, data
 
 
-class Binance_server(object):
-    """
-        用來呼叫幣安的相關應用
+class Binance_connect(object):
+    def SetConnectCLose(self, func):
+        """
+            decorator to connect and close
+        Returns:
+            : _description_
+        """
+        def warpper(*args, **kwargs):
+            return func(*args, **kwargs)
 
-    Args:
-        object (_type_): 
-    """
+        return warpper
 
-    def __init__(self, formal=False) -> None:
-        self.get_clinet(formal)
-        self.trade_count = 0
-        self.BinanceDate = BinanceDate()
-        
     def get_clinet(self, formal=False):
         if formal:
             # with open(r"/home/abcd/bi.txt", 'r') as file:
@@ -226,6 +225,21 @@ class Binance_server(object):
             self.client = Client(account, passwd)
         else:
             self.client = Client()
+
+
+class Binance_server(object):
+    """
+        用來呼叫幣安的相關應用
+        每次連線之前重新建立連線,減少斷線次數
+
+    Args:
+        object (_type_): 
+    """
+
+    def __init__(self, formal=False) -> None:
+        self.get_clinet(formal)
+        self.trade_count = 0
+        self.BinanceDate = BinanceDate()
 
     def getaccount(self) -> dict:
         """ 回傳保證金帳戶
