@@ -1,4 +1,4 @@
-""" 
+"""
     refer to 'finlab_crypto' package
     url : 'https://github.com/finlab-python/finlab_crypto'
 
@@ -22,6 +22,27 @@ from Database import SQL_operate
 from decimal import Decimal
 
 
+def SetConnectCLose(func):
+    """
+        decorator to connect and close
+    Returns:
+        : _description_
+    """
+
+    def warpper(self, *args, **kwargs):
+        with open(r"C:/bi_.txt", 'r') as file:
+            data = file.read()
+            account = data.split("\n")[0]
+            passwd = data.split("\n")[1]
+
+        client = Client(account, passwd)
+        result = func(self, client, *args, **kwargs)
+        client.close_connection()
+        return result
+
+    return warpper
+
+
 class BinanceDate(object):
     """
         'pip install python-binance'
@@ -36,7 +57,7 @@ class BinanceDate(object):
                          klines_type: HistoricalKlinesType = HistoricalKlinesType.SPOT, client: Client = None):
         """
             Get Historical Klines from Binance (spot or futures)
-            to copy binance.client._historical_klines to add tqdm by self 
+            to copy binance.client._historical_klines to add tqdm by self
 
 
         """
@@ -147,6 +168,7 @@ class BinanceDate(object):
         return old, new + timedelta(minutes=1)
 
     @classmethod
+    @SetConnectCLose
     def download(cls, client: Client, original_df: pd.DataFrame, symbol, kline_size):
         """
         Getting histrical price data through binance api.
@@ -202,31 +224,6 @@ class BinanceDate(object):
         return new_df, data
 
 
-class Binance_connect(object):
-    def SetConnectCLose(self, func):
-        """
-            decorator to connect and close
-        Returns:
-            : _description_
-        """
-        def warpper(*args, **kwargs):
-            return func(*args, **kwargs)
-
-        return warpper
-
-    def get_clinet(self, formal=False):
-        if formal:
-            # with open(r"/home/abcd/bi.txt", 'r') as file:
-            with open(r"C:/bi_.txt", 'r') as file:
-                data = file.read()
-                account = data.split("\n")[0]
-                passwd = data.split("\n")[1]
-
-            self.client = Client(account, passwd)
-        else:
-            self.client = Client()
-
-
 class Binance_server(object):
     """
         用來呼叫幣安的相關應用
@@ -237,30 +234,32 @@ class Binance_server(object):
     """
 
     def __init__(self, formal=False) -> None:
-        self.get_clinet(formal)
         self.trade_count = 0
         self.BinanceDate = BinanceDate()
 
-    def getaccount(self) -> dict:
+    @SetConnectCLose
+    def getaccount(self, client: Client) -> dict:
         """ 回傳保證金帳戶
         Returns:
             _type_: _description_
         """
-        return self.client.get_margin_account()
+        return client.get_margin_account()
 
-    def getfuturesinfo(self) -> dict:
+    @SetConnectCLose
+    def getfuturesinfo(self, client: Client) -> dict:
         """ 回傳交易所的合約
 
         Returns:
             _type_: _description_
         """
-        return self.client.futures_exchange_info()
+        return client.futures_exchange_info()
 
-    def getMinimumOrderQuantity(self):
+    @SetConnectCLose
+    def getMinimumOrderQuantity(self, client: Client):
         """
             取得最小下單數量限制
         """
-        data = self.client.futures_exchange_info()
+        data = client.futures_exchange_info()
 
         out_dict = {}
         for symbol in data['symbols']:
@@ -268,7 +267,8 @@ class Binance_server(object):
 
         return out_dict
 
-    def get_symbolinfo(self, symbol: str):
+    @SetConnectCLose
+    def get_symbolinfo(self, symbol: str, client: Client):
         """ 回傳想要查詢的商品資料
 
         Args:
@@ -277,7 +277,7 @@ class Binance_server(object):
         Returns:
             _type_: _description_
         """
-        return self.client.get_symbol_info(symbol)
+        return client.get_symbol_info(symbol)
 
     def get_targetsymobls(self) -> list:
         """
@@ -302,11 +302,12 @@ class Binance_server(object):
                                     out_list.append(each_data['symbol'])
         return out_list
 
-    def getfutures_account_positions(self):
+    @SetConnectCLose
+    def getfutures_account_positions(self, client: Client):
         """
             取得合約部位 >> 裡面還可以看到其他資訊
         """
-        data = self.client.futures_account()
+        data = client.futures_account()
         out_put = {}
         for i in data['positions']:
             if i['initialMargin'] == '0':
@@ -315,11 +316,12 @@ class Binance_server(object):
 
         return out_put
 
-    def getfutures_account_name(self):
+    @SetConnectCLose
+    def getfutures_account_name(self, client: Client):
         """
             取得合約部位 >> 裡面還可以看到其他資訊
         """
-        data = self.client.futures_account()
+        data = client.futures_account()
         out_put = []
         for i in data['positions']:
             if i['initialMargin'] == '0':
@@ -351,7 +353,8 @@ class Binance_server(object):
 
         return out_dict
 
-    def execute_orders(self, order_finally: dict, line_alert, model=ORDER_TYPE_MARKET, current_size=dict(), symbol_map=dict(), formal=False):
+    @SetConnectCLose
+    def execute_orders(self, client: Client, order_finally: dict, line_alert, model=ORDER_TYPE_MARKET, current_size=dict(), symbol_map=dict(), formal=False):
         """
             Execute orders to Binance.
             use for futures 
@@ -411,7 +414,7 @@ class Binance_server(object):
         leverage_map = {}
         for i in current_size.keys():
             # 获取 BTCUSDT 合约的当前部位信息
-            position = self.client.futures_position_information(symbol=i)
+            position = client.futures_position_information(symbol=i)
 
             # 获取当前杠杆倍数
             leverage = int(position[0]['leverage'])
@@ -425,7 +428,7 @@ class Binance_server(object):
                 def _change_leverage(_symbol, _leverage: int):
                     time.sleep(0.3)
                     try:
-                        Response = self.client.futures_change_leverage(
+                        Response = client.futures_change_leverage(
                             symbol=_symbol, leverage=_leverage)
                         print(Response)
 
@@ -435,7 +438,7 @@ class Binance_server(object):
                                 _change_leverage(
                                     _symbol=_symbol, _leverage=_leverage+1)
                         else:
-                            Response = self.client.futures_change_leverage(
+                            Response = client.futures_change_leverage(
                                 symbol=_symbol, leverage=_leverage-1)
 
                     except BinanceAPIException as e:
@@ -453,7 +456,7 @@ class Binance_server(object):
                 # 如果商品已經存在 直接呼叫
                 # 判斷是否需要更改槓桿 不需要管正負號
 
-                Response = self.client.futures_change_leverage(
+                Response = client.futures_change_leverage(
                     symbol=each_symbol, leverage=leverage_map.get(each_symbol))
 
                 print("直接取得原始槓桿:", Response)
@@ -463,7 +466,7 @@ class Binance_server(object):
                         break
                     time.sleep(0.3)
                     beginleverage = beginleverage - 1
-                    Response = self.client.futures_change_leverage(
+                    Response = client.futures_change_leverage(
                         symbol=each_symbol, leverage=beginleverage)
 
                     print("調整槓桿:", Response)
@@ -507,7 +510,7 @@ class Binance_server(object):
             print(args)
             if formal:
                 # 丟入最後create 單裡面
-                result = self.client.futures_create_order(**args)
+                result = client.futures_create_order(**args)
                 self.save_order_result(result)
 
             else:
@@ -563,7 +566,8 @@ class Binance_server(object):
         except:
             debug.print_info(error_msg="保存系統order單錯誤")
 
-    def get_futuresaccountbalance(self) -> float:
-        for i in self.client.futures_account_balance():
+    @SetConnectCLose
+    def get_futuresaccountbalance(self, client: Client) -> float:
+        for i in client.futures_account_balance():
             if i['asset'] == 'USDT':
                 return float(i['balance'])

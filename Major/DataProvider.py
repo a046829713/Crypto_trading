@@ -83,7 +83,7 @@ class DataProvider:
 
         # 這邊的資料為原始的UTC資料 無任何加工
         original_df, eachCatchDf = self.Binanceapp.BinanceDate.download(
-            self.Binanceapp.client, df, f"{symbol_name}", catch_time)
+            df, f"{symbol_name}", catch_time)
 
         return original_df, eachCatchDf
 

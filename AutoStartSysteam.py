@@ -4,19 +4,23 @@ import os
 from utils.Debug_tool import debug
 import logging
 
-python_path = r'C:\Users\user\Desktop\程式專區\TradingSysteam\Scripts\python'
-sys_path = r'C:\Users\user\Desktop\程式專區\TradingSysteam\Crypto_trading\TradeUi_TC.py'
+# 获取当前文件夹的绝对路径
+current_folder = os.getcwd()
 
-process = subprocess.Popen(
-    [python_path, sys_path])
+print(current_folder)
+
+# 设置要运行的可执行文件路径
+exe_path = os.path.join(current_folder, 'TradingSysteam.exe')
+print(exe_path)
+
+
+process = subprocess.Popen([exe_path])
 
 while True:
     if process.poll() is None:
         pass
     else:
-        debug.record_msg("System crashed, restart the program.",
-                         log_level=logging.error)
-        process = subprocess.Popen(
-            [python_path, sys_path, '--autostart'])
+        debug.record_msg("System crashed, restart the program.", log_level=logging.error)
+        process = subprocess.Popen([exe_path, '--autostart'])
 
     time.sleep(30)

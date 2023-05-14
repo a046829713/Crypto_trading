@@ -8,7 +8,7 @@ from GUI.disclamier import Ui_DisCalmier_Dialog
 from GUI.DeadLine import Ui_Dialog_DeadLine
 from GUI.Phone_error import Ui_Dialog_Phone_error
 from PyQt6.QtCore import pyqtSignal
-from Trading_Systeam import GUI_Trading_systeam
+from Trading_Systeam import GUI_Trading_systeam, Trading_systeam
 from PyQt6.QtCore import QThread
 from Major.DataProvider import DataProvider
 import pandas as pd
@@ -162,9 +162,8 @@ class TradeUI(QMainWindow, Ui_MainWindow):
             self.click_btn_trade()
 
     def import_history_data(self):
-        self.BuildSysteam()
         self.import_history_data_Thread = QThread()
-        self.import_history_data_Thread.run = self.systeam.importAllKbarsData()
+        self.import_history_data_Thread.run = Trading_systeam().importAllKbarsData()
         self.import_history_data_Thread.start()
 
     def BuildSysteam(self):
@@ -247,7 +246,8 @@ class TradeUI(QMainWindow, Ui_MainWindow):
     def _inint_line_chart(self):
         """ 定義初始化的圖表"""
         # create the QVBoxLayout layout
-        self.verticalLayout_Profit = QtWidgets.QVBoxLayout(self.CloseProfit_tab)
+        self.verticalLayout_Profit = QtWidgets.QVBoxLayout(
+            self.CloseProfit_tab)
 
         # create the QChartView widget
         self.chartview = QChartView(self)
@@ -280,35 +280,38 @@ class TradeUI(QMainWindow, Ui_MainWindow):
 
 
 if __name__ == '__main__':
-    if '--autostart' in sys.argv:
-        app = QApplication(sys.argv)
-        BeginTDsys = TradeUI('--autostart')
-        sys.exit(app.exec())
-    else:
-        app = QApplication(sys.argv)
-        DisCalmier_dialog = DisCalmier_Dialog()
-        if DisCalmier_dialog.exec() == 1:
-            while True:
-
-                Login_dialog = Login_Dialog()
-
-                # 如果用戶是執行登入
-                if Login_dialog.exec() == 1:
-                    if Login_dialog.api_key and Login_dialog.secret_key and Login_dialog.LINE:
-                        # 判斷到期時間
-                        UserDeadline = AppSetting.get_UserDeadline()
-                        if UserDeadline.get(GetHashKey(Login_dialog.PhoneNumber), None) is not None:
-                            if UserDeadline[GetHashKey(Login_dialog.PhoneNumber)] > str(datetime.date.today()):
-                                BeginTDsys = TradeUI("--human")
-                                sys.exit(app.exec())
-                            else:
-                                deadline_dialog = DeadLine_Dialog()
-                                deadline_dialog.exec()
-                        else:
-                            phone_error_Dialog = Phone_error_Dialog()
-                            phone_error_Dialog.exec()
-                    else:
-                        error_dialog = Error_Dialog()
-                        error_dialog.exec()
+    try:
+        if '--autostart' in sys.argv:
+            app = QApplication(sys.argv)
+            BeginTDsys = TradeUI('--autostart')
+            sys.exit(app.exec())
         else:
-            sys.exit()
+            app = QApplication(sys.argv)
+            DisCalmier_dialog = DisCalmier_Dialog()
+            if DisCalmier_dialog.exec() == 1:
+                while True:
+
+                    Login_dialog = Login_Dialog()
+
+                    # 如果用戶是執行登入
+                    if Login_dialog.exec() == 1:
+                        if Login_dialog.api_key and Login_dialog.secret_key and Login_dialog.LINE:
+                            # 判斷到期時間
+                            UserDeadline = AppSetting.get_UserDeadline()
+                            if UserDeadline.get(GetHashKey(Login_dialog.PhoneNumber), None) is not None:
+                                if UserDeadline[GetHashKey(Login_dialog.PhoneNumber)] > str(datetime.date.today()):
+                                    BeginTDsys = TradeUI("--human")
+                                    sys.exit(app.exec())
+                                else:
+                                    deadline_dialog = DeadLine_Dialog()
+                                    deadline_dialog.exec()
+                            else:
+                                phone_error_Dialog = Phone_error_Dialog()
+                                phone_error_Dialog.exec()
+                        else:
+                            error_dialog = Error_Dialog()
+                            error_dialog.exec()
+            else:
+                sys.exit()
+    except Exception as e:
+        debug.print_info()
