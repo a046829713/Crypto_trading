@@ -11,7 +11,6 @@ from PyQt6.QtCore import pyqtSignal
 from Trading_Systeam import GUI_Trading_systeam, Trading_systeam
 from PyQt6.QtCore import QThread
 from Major.DataProvider import DataProvider
-import pandas as pd
 import asyncio
 from PyQt6.QtCore import QPointF
 from PyQt6.QtCharts import QChart, QChartView, QLineSeries
@@ -21,7 +20,7 @@ from utils.ExecHash import GetHashKey
 from AppSetting import AppSetting
 import datetime
 from Database.clients import checkIfDataBase
-
+import time
 
 class Phone_error_Dialog(QDialog, Ui_Dialog_Phone_error):
     def __init__(self):
@@ -146,6 +145,14 @@ class TradeUI(QMainWindow, Ui_MainWindow):
         # 檢查資料庫是否存在
         checkIfDataBase()
 
+        # 檢察系統是否啟動
+        self.Trading_systeam_Thread = None
+        # 取得起始日期
+        # 進入日期檢查點
+        self.GuiStartDay = str(datetime.date.today())
+        self.DailyChange()
+
+
         # 建立插槽監聽信號
         self.update_trade_info_signal.connect(self.showMsg)
         self.clear_info_signal.connect(self.clear_Msg)
@@ -160,6 +167,24 @@ class TradeUI(QMainWindow, Ui_MainWindow):
 
         if activate == '--autostart':
             self.click_btn_trade()
+
+    def DailyChange(self):
+        """
+            每天都要重新關閉,怕資料量過大,並且會重新讀取每天的強勢標的
+        """
+        def _dailyChange():
+            while True:
+                if self.Trading_systeam_Thread is not None:
+                    if str(datetime.date.today()) !=self.GuiStartDay:
+                        self.click_save_data()
+                # 每5分鐘判斷一次就好
+                time.sleep(300)
+            
+
+        self.DailyChange_Thread = QThread()
+        self.DailyChange_Thread.run = _dailyChange
+        self.DailyChange_Thread.start()
+
 
     def import_history_data(self):
         self.import_history_data_Thread = QThread()
@@ -226,7 +251,7 @@ class TradeUI(QMainWindow, Ui_MainWindow):
 
         def mergefunc():
             for name, each_df in self.systeam.new_symbol_map.items():
-                # 不保存頭尾 # 異步模式 需要檢查這樣是否OK
+                # 不保存頭尾 # 異步模式 
                 each_df.drop(
                     [each_df.index[0], each_df.index[-1]], inplace=True)
 

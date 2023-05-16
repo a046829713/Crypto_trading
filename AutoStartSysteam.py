@@ -4,6 +4,9 @@ import os
 from utils.Debug_tool import debug
 import logging
 
+
+
+# =============================================================================================
 # 获取当前文件夹的绝对路径
 current_folder = os.getcwd()
 
@@ -24,3 +27,4 @@ while True:
         process = subprocess.Popen([exe_path, '--autostart'])
 
     time.sleep(30)
+

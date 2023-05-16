@@ -27,10 +27,10 @@ import copy
 # 待修正時間校準問題
 # 為了方便轉移 還是需要打包起來
 # 建構輸入輸出檢查的decorator
-# 轉移資料
 
 
-# 改成120秒判斷1次?(尚未實做) 減少call的次數 requests.exceptions.ConnectionError: ('Connection aborted.', ConnectionResetError(10054, '遠端主機已強制關閉一個現存的連線。', None, 10054, None))
+
+
 
 
 class Trading_systeam():
