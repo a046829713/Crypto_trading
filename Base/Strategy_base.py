@@ -350,13 +350,19 @@ class Np_Order_Strategy(object):
         self.volume_array = self.original_data[:, 4]
 
     def set_parameter(self, parameter: dict):
+        """
+
+            不可使用None
+        Args:
+            parameter (dict): {'highest_n1': 570.0, 'lowest_n2': 690.0, 'ATR_short1': 150.0, 'ATR_long2': 110.0}
+        """
         self.parameter = parameter
-        self.highest_n1 = self.parameter.get('highest_n1', np.nan)
-        self.lowest_n2 = self.parameter.get('lowest_n2', np.nan)
-        self.ATR_short1 = self.parameter.get('ATR_short1', np.nan)
-        self.ATR_long2 = self.parameter.get('ATR_long2', np.nan)
-        self.std_n3 = self.parameter.get('std_n3', np.nan)
-        self.volume_n3 = self.parameter.get('volume_n3', np.nan)
+        self.highest_n1 = int(self.parameter.get('highest_n1')) if 'highest_n1' in self.parameter else np.nan
+        self.lowest_n2 = int(self.parameter.get('lowest_n2')) if 'lowest_n2' in self.parameter else np.nan
+        self.ATR_short1 = float(self.parameter.get('ATR_short1')) if 'ATR_short1' in self.parameter else np.nan
+        self.ATR_long2 = float(self.parameter.get('ATR_long2')) if 'ATR_long2' in self.parameter else np.nan
+        self.std_n3 = int(self.parameter.get('std_n3')) if 'std_n3' in self.parameter else np.nan
+        self.volume_n3 = int(self.parameter.get('volume_n3')) if 'volume_n3' in self.parameter else np.nan
 
         if not np.isnan(self.highest_n1):
             self.highestarr = vecbot_count.max_rolling(

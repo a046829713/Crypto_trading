@@ -22,6 +22,24 @@ import datetime
 from Database.clients import checkIfDataBase
 import time
 
+def checkifUserDeadlineEnd():
+    with open(r'C:\PhoneNumber.txt','r') as file:
+        number = file.read()
+
+    UserDeadline = AppSetting.get_UserDeadline()
+    if UserDeadline.get(GetHashKey(number), None) is not None:
+        if UserDeadline[GetHashKey(number)] > str(datetime.date.today()):
+            return True
+        
+    return False
+
+
+
+
+
+
+
+
 class Phone_error_Dialog(QDialog, Ui_Dialog_Phone_error):
     def __init__(self):
         super().__init__()
@@ -307,9 +325,13 @@ class TradeUI(QMainWindow, Ui_MainWindow):
 if __name__ == '__main__':
     try:
         if '--autostart' in sys.argv:
-            app = QApplication(sys.argv)
-            BeginTDsys = TradeUI('--autostart')
-            sys.exit(app.exec())
+            # 檢查是否過期
+            if checkifUserDeadlineEnd():
+                app = QApplication(sys.argv)
+                BeginTDsys = TradeUI('--autostart')
+                sys.exit(app.exec())
+            else:
+                sys.exit()
         else:
             app = QApplication(sys.argv)
             DisCalmier_dialog = DisCalmier_Dialog()
@@ -340,3 +362,7 @@ if __name__ == '__main__':
                 sys.exit()
     except Exception as e:
         debug.print_info()
+
+    
+
+    

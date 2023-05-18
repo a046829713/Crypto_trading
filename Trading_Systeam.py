@@ -14,24 +14,18 @@ from Datatransformer import Datatransformer
 import os
 from binance.exceptions import BinanceAPIException
 from binance import BinanceSocketManager
-
-
 import copy
+import json
 
 
-# 修正權重模式
 # 增加總投組獲利平倉，或是單一策略平倉?
-# 建立所有商品的優化(GUI > Trading_systeam > Optimizer)
-# 判斷資料集的最後一天是否需要回補?
 # 增加匯出 optimizeresult 的功能,或許可以增加GUI
-# 待修正時間校準問題
 # 為了方便轉移 還是需要打包起來
 # 建構輸入輸出檢查的decorator
 
 
-
-
-
+# 建構波動率策略
+# 優化資料庫儲存結構
 
 class Trading_systeam():
     def __init__(self) -> None:
@@ -87,6 +81,7 @@ class Trading_systeam():
         try:
             df = pd.read_csv("optimizeresult.csv")
             df.set_index("strategyName", inplace=True)
+
             self.dataprovider_online.SQL.change_db_data(
                 "DELETE FROM `optimizeresult`;"
             )
@@ -414,5 +409,5 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
 
 if __name__ == '__main__':
     pass
-    # app = AsyncTrading_systeam()
-    # app.main()
+    app = Trading_systeam()
+    app.exportOptimizeResult()

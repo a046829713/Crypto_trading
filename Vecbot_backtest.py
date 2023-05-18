@@ -12,7 +12,7 @@ from AppSetting import AppSetting
 import copy
 from datetime import datetime
 from utils.TimeCountMsg import TimeCountMsg
-
+import json
 
 class Optimizer(object):
     def __init__(self, strategyName: str, symbol: str, optimize_strategy_type: str) -> None:
@@ -214,6 +214,7 @@ class Quantify_systeam_online(object):
         argsdf.set_index('strategyName', inplace=True)
         argsData = argsdf.to_dict('index')
 
+        
         for each_symbol in target_symobl:
             for _strategy in ["TurtleStrategy","VCPStrategy"]:
                 if _strategy == 'TurtleStrategy':
@@ -221,16 +222,14 @@ class Quantify_systeam_online(object):
                     eachargdata = argsData[strategyName]
                     strategy = Strategy_atom(
                         strategyName, eachargdata['Strategytype'], eachargdata['symbol'], eachargdata['freq_time'], eachargdata['size'], eachargdata['fee'], eachargdata['slippage'])
-                    strategypa = {"highest_n1": eachargdata['highest_n1'], "lowest_n2": eachargdata['lowest_n2'],
-                                "ATR_short1": eachargdata['ATR_short1'], "ATR_long2": eachargdata['ATR_long2']}
+                    strategypa = json.loads(eachargdata['All_args'])
 
                 else:
                     strategyName = f"{each_symbol}-15K-OB-VCP"
                     eachargdata = argsData[strategyName]                    
                     strategy = Strategy_atom(
                         strategyName, eachargdata['Strategytype'], eachargdata['symbol'], eachargdata['freq_time'], eachargdata['size'], eachargdata['fee'], eachargdata['slippage'])
-                    strategypa = {"highest_n1": eachargdata['highest_n1'], "lowest_n2": eachargdata['lowest_n2'],
-                                "std_n3": int(eachargdata['std_n3']), "volume_n3": int(eachargdata['volume_n3'])}
+                    strategypa = json.loads(eachargdata['All_args'])
                 self.Trader.register(
                     strategy, strategypa)
     
