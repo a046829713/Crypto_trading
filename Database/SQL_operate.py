@@ -5,6 +5,7 @@ from utils import Debug_tool
 import pandas as pd
 import time
 
+
 class DB_operate():
     def wirte_data(self, quoteSymbol: str, out_list: list):
         """
@@ -97,22 +98,18 @@ class SqlSentense():
     @staticmethod
     def createOptimizResult() -> str:
         sql_query = """
-            CREATE TABLE `crypto_data`.`optimizeresult` (
-                `strategyName` VARCHAR(30) NOT NULL PRIMARY KEY,
-                `freq_time` INT NOT NULL,
-                `size` DECIMAL(10, 5) NOT NULL,
-                `fee` DECIMAL(10, 5) NOT NULL,
-                `slippage` DECIMAL(10, 5) NOT NULL,
-                `symbol` VARCHAR(20) NOT NULL,
-                `Strategytype` VARCHAR(20) NOT NULL,
-                `highest_n1` INT NOT NULL,
-                `lowest_n2` INT NOT NULL,
-                `ATR_short1` DECIMAL(10, 5)  DEFAULT NULL,
-                `ATR_long2` DECIMAL(10, 5)  DEFAULT NULL,
-                `updatetime` DATE NOT NULL,
-                `std_n3` int DEFAULT NULL,
-                `volume_n3` int DEFAULT NULL
-            );   
+            CREATE TABLE `optimizeresult` (
+            `strategyName` varchar(30) NOT NULL,
+            `freq_time` int NOT NULL,
+            `size` decimal(10,5) NOT NULL,
+            `fee` decimal(10,5) NOT NULL,
+            `slippage` decimal(10,5) NOT NULL,
+            `symbol` varchar(20) NOT NULL,
+            `Strategytype` varchar(20) NOT NULL,
+            `updatetime` date NOT NULL,
+            `All_args` varchar(500) DEFAULT NULL,
+            PRIMARY KEY (`strategyName`)
+            ) ;
 
 
         """
@@ -199,9 +196,8 @@ class SqlSentense():
                                 """
         return sql_query
 
-
     @staticmethod
-    def create_table_name(tb_symbol_name:str) -> str:
+    def create_table_name(tb_symbol_name: str) -> str:
         """ to create 1 min"""
         sql_query = f"""CREATE TABLE `crypto_data`.`{tb_symbol_name}`(
                 `Datetime` DATETIME NOT NULL,
@@ -218,10 +214,9 @@ class SqlSentense():
                 `ignore` FLOAT NOT NULL,
                 PRIMARY KEY(`Datetime`)
                 );"""
-                
+
         return sql_query
-    
-    
+
     @staticmethod
     def createlastinitcapital() -> str:
         sql_query = """CREATE TABLE `lastinitcapital` (
@@ -229,5 +224,5 @@ class SqlSentense():
         `capital` int NOT NULL,
         PRIMARY KEY (`ID`)
         );"""
-        
+
         return sql_query
