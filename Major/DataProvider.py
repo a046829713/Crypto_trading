@@ -169,6 +169,17 @@ class DataProvider:
 
         return out_list
 
+    def get_symboldata(self, symbol_name='BTCUSDT', freq: int = 15):
+        """
+            非即時交易的時候用來產生回測資料
+            並且保存至本地端點
+        """
+        original_df, eachCatchDf = self.reload_data(
+            symbol_name, reload_type="all_data")
+
+        new_df = self.transformer.get_tradedata(original_df, freq=freq)
+        new_df.to_csv(f"{symbol_name}-F-{freq}-Min.csv")
+
 
 class DataProvider_online(DataProvider):
     def get_symboldata(self, symbol_name='BTCUSDT'):
@@ -257,3 +268,6 @@ class AsyncDataProvider():
                 #     print(self.all_data[symbol])
                 #     print('*' * 120)
                 #     last_all[symbol] = len(self.all_data[symbol])
+
+
+

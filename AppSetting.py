@@ -64,4 +64,4 @@ class AppSetting():
     
     @staticmethod
     def get_version() ->str:
-        return '2023-05-04'
+        return '2023-05-20'

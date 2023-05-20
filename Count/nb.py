@@ -423,33 +423,26 @@ def more_fast_logic_order(
 
 @njit
 def logic_order(
-    strategytype: str,
+    shiftorder: np.ndarray,
     open_array: np.ndarray,
-    high_array: np.ndarray,
-    low_array: np.ndarray,
-    close_array: np.ndarray,
-    std_arr: np.ndarray,
-    Volume_array: np.ndarray,
-    Volume_avgarr: np.ndarray,
-    highestarr: np.ndarray,
-    lowestarr: np.ndarray,
     Length: int,
     init_cash: float,
     slippage: float,
     size: float,
     fee: float,
-    ATR_short1,
-    ATR_long2
+
 ):
     """
         撰寫邏輯的演算法
-        strategytype : TurtleStrategy
         init_cash = init_cash  # 起始資金
         exitsprice (設計時認為應該要添加滑價)
         傳入參數不可以為None 需要為數值型態 np.nan
+
+
+        2023.05.20 認為這裡單純的計算 回測報告就好
+        因為策略的延伸所造成的不便性太大
     """
-    
-    
+
     marketpostion_array = np.empty(shape=Length)
     entryprice_array = np.empty(shape=Length)
     buy_Fees_array = np.empty(shape=Length)
@@ -483,21 +476,6 @@ def logic_order(
     fee = fee  # 手續費率
     direction = "buyonly"
 
-    if strategytype == 'TurtleStrategy':
-        
-        # 迴圈可以先產生的資料
-        ATR_short = get_ATR(
-            Length, high_array, low_array, close_array, ATR_short1)
-
-        ATR_long = get_ATR(
-            Length, high_array, low_array, close_array, ATR_long2)
-
-        # 取得order單為當前主要目的
-        shiftorder = TurtleStrategy(
-            high_array, highestarr, ATR_short, ATR_long, low_array, lowestarr)
-    else:
-        shiftorder = VCPStrategy(
-            std_arr, Volume_array, Volume_avgarr, high_array, highestarr, low_array, lowestarr)
     # 主循環區域
     for i in range(Length):
         Open = open_array[i]
@@ -578,11 +556,23 @@ def logic_order(
     return neworders, marketpostion_array, entryprice_array, buy_Fees_array, sell_Fees_array, OpenPostionprofit_array, ClosedPostionprofit_array, profit_array, Gross_profit_array, Gross_loss_array, all_Fees_array, netprofit_array
 
 
-
 @njit
 def TurtleStrategy(high_array, highestarr, ATR_short, ATR_long, low_array, lowestarr):
     """
         海龜交易法
+    """
+    trends = np.where((high_array - highestarr > 0) &
+                      (ATR_short-ATR_long > 0), 1, 0)
+    orders = np.where((low_array - lowestarr) < 0, -1, trends)
+    shiftorder = np.roll(orders, 1)
+    shiftorder[0] = 0
+    return shiftorder
+
+
+@njit
+def TurtleStrategy01(high_array, highestarr, ATR_short, ATR_long, low_array, lowestarr):
+    """
+        海龜交易法優化01
     """
     trends = np.where((high_array - highestarr > 0) &
                       (ATR_short-ATR_long > 0), 1, 0)

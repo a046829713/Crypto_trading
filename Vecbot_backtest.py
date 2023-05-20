@@ -14,6 +14,7 @@ from datetime import datetime
 from utils.TimeCountMsg import TimeCountMsg
 import json
 
+
 class Optimizer(object):
     def __init__(self, strategyName: str, symbol: str, optimize_strategy_type: str) -> None:
         """
@@ -102,8 +103,8 @@ class Quantify_systeam(object):
         # self.setting = AppSetting.get_setting()['Quantify_systeam']['history']
         # Attributes_data = self.setting['Attributes']
 
-        self.strategy1 = Strategy_base(
-            'BTCUSDT-15K-OB', 'VCPStrategy', 'BTCUSDT', 15,  1.0,  0.002, 0.0025)
+        # self.strategy1 = Strategy_base(
+        #     'BTCUSDT-15K-OB', 'VCPStrategy', 'BTCUSDT', 15,  1.0,  0.002, 0.0025)
 
         # ///////////////////////////////////////////////////
         # strategyName2 = "COMPUSDT-15K-OB"
@@ -145,10 +146,10 @@ class Quantify_systeam(object):
             普通回測模式
         """
         ordermap = Np_Order_Strategy(Strategy_base(
-            'BTCUSDT-15K-OB', 'VCPStrategy', 'BTCUSDT', 15,  1.0,  0.002, 0.0025, lookback_date='2020-01-01'))
-        # ordermap.set_parameter(self.strategypa1)
+            'BTCUSDT-15K-OB', 'VCPStrategy', 'BTCUSDT', 15,  1.0,  0.002, 0.0025))
+
         ordermap.set_parameter(
-            {'highest_n1': 300, 'lowest_n2': 600, 'std_n3': 50, 'volume_n3': 150}
+            {"highest_n1": 700.0, "lowest_n2": 550.0, "std_n3": 90.0, "volume_n3": 110.0}
         )
 
         pf = ordermap.logic_order()
@@ -181,7 +182,7 @@ class Quantify_systeam_online(object):
         所以獨立出來
     """
 
-    def __init__(self,initcash:int) -> None:
+    def __init__(self, initcash: int) -> None:
         """
             這邊的lookback_date 是指策略最早的接收日期，如果資料讀取沒有這麼多不影響
             DataProvider 的資料提供的優先層級更大
@@ -214,9 +215,8 @@ class Quantify_systeam_online(object):
         argsdf.set_index('strategyName', inplace=True)
         argsData = argsdf.to_dict('index')
 
-        
         for each_symbol in target_symobl:
-            for _strategy in ["TurtleStrategy","VCPStrategy"]:
+            for _strategy in ["TurtleStrategy", "VCPStrategy"]:
                 if _strategy == 'TurtleStrategy':
                     strategyName = f"{each_symbol}-15K-OB"
                     eachargdata = argsData[strategyName]
@@ -226,13 +226,13 @@ class Quantify_systeam_online(object):
 
                 else:
                     strategyName = f"{each_symbol}-15K-OB-VCP"
-                    eachargdata = argsData[strategyName]                    
+                    eachargdata = argsData[strategyName]
                     strategy = Strategy_atom(
                         strategyName, eachargdata['Strategytype'], eachargdata['symbol'], eachargdata['freq_time'], eachargdata['size'], eachargdata['fee'], eachargdata['slippage'])
                     strategypa = json.loads(eachargdata['All_args'])
                 self.Trader.register(
                     strategy, strategypa)
-    
+
     @TimeCountMsg.record_timemsg
     def Portfolio_online_start(self):
         pf = self.Trader.logic_order()
@@ -259,4 +259,4 @@ class Quantify_systeam_online(object):
 
 if __name__ == "__main__":
     systeam = Quantify_systeam()
-    systeam.optimize()
+    systeam.Backtesting()
