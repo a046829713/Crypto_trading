@@ -46,11 +46,14 @@ class Optimizer(object):
                                 "lowest_n2": np.arange(50, 800, 20, dtype=np.int16),
                                 'ATR_short1': np.arange(10, 200, 10, dtype=np.float_),
                                 'ATR_long2': np.arange(10, 200, 10, dtype=np.float_)}
-        else:
+        elif self.strategy.strategytype == 'VCPStrategy':
             inputs_parameter = {"highest_n1": np.arange(50, 800, 50, dtype=np.int16),
                                 "lowest_n2": np.arange(50, 800, 50, dtype=np.int16),
                                 'std_n3': np.arange(50, 200, 10, dtype=np.int16),
                                 'volume_n3': np.arange(50, 200, 10, dtype=np.int16)}
+        elif self.strategy.strategytype == 'DynamicStrategy':
+            inputs_parameter = {'ATR_short1': np.arange(10, 1000, 10, dtype=np.float_),
+                                'ATR_long2': np.arange(10, 1000, 10, dtype=np.float_)}
 
         all_parameter = Hyper_optimization.generator_parameter(
             inputs_parameter)
@@ -59,13 +62,14 @@ class Optimizer(object):
         num = 0
         all_i = 0
         for each_parameter in all_parameter:
+            print(each_parameter)
             num += 1
             if num > 500 * all_i:
                 all_i += 1
                 print(f"總數量{all_length},目前完成進度: {(num / all_length) * 100} %")
             ordermap.set_parameter(each_parameter)
             UI = ordermap.more_fast_logic_order()
-
+            print(UI)
             if UI == 0:
                 continue
             if UI < 0:
@@ -74,6 +78,8 @@ class Optimizer(object):
 
         UI_list = [i[1] for i in out_list]
 
+        self.result.update({"updatetime": str(datetime.now()).split()[0]})
+        
         # 當完全沒有參數可以決定的時候
         if UI_list:
             max_data = max(UI_list)
@@ -81,16 +87,19 @@ class Optimizer(object):
             for i in out_list:
                 if i[1] == max_data:
                     print(i)
-                    self.result.update(i[0])
+                    self.result.update({"All_args": json.dumps(i[0])})
         else:
             if self.strategy.strategytype == 'TurtleStrategy':
                 self.result.update(
                     {'highest_n1': 610, 'lowest_n2': 350, 'ATR_short1': 130.0, 'ATR_long2': 50.0})
-            else:
+            elif self.strategy.strategytype == 'VCPStrategy':
                 self.result.update(
                     {'highest_n1': 300, 'lowest_n2': 600, 'std_n3': 50, 'volume_n3': 150})
+            elif self.strategy.strategytype == 'DynamicStrategy':
+                self.result.update(
+                    {"All_args": json.dumps({"ATR_short1": 300.0, "ATR_long2": 600.0})})
 
-        self.result.update({"updatetime": str(datetime.now()).split()[0]})
+        
         return self.result
 
 
@@ -146,10 +155,10 @@ class Quantify_systeam(object):
             普通回測模式
         """
         ordermap = Np_Order_Strategy(Strategy_base(
-            'BTCUSDT-15K-OB', 'VCPStrategy', 'BTCUSDT', 15,  1.0,  0.002, 0.0025))
+            'ETHUSDT-15K-OB-DY', 'DynamicStrategy', 'ETHUSDT', 15,  1.0,  0.002, 0.0025))
 
         ordermap.set_parameter(
-            {"highest_n1": 700.0, "lowest_n2": 550.0, "std_n3": 90.0, "volume_n3": 110.0}
+            {"ATR_short1": 390.0, "ATR_long2": 680.0}
         )
 
         pf = ordermap.logic_order()

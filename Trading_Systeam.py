@@ -69,6 +69,7 @@ class Trading_systeam():
         """
             將sql的優化資料匯出
         """
+
         df = self.dataprovider_online.SQL.read_Dateframe("optimizeresult")
         df.set_index("strategyName", inplace=True)
         df.to_csv("optimizeresult.csv")
@@ -112,6 +113,7 @@ class Trading_systeam():
         strategydf = self.dataprovider_online.SQL.read_Dateframe(
             "select strategyName, symbol from optimizeresult")
         strategylist = strategydf['strategyName'].to_list()
+        print(strategylist)
         symbollist = strategydf['symbol'].to_list()
 
         # 使用 Optimizer # 建立DB
@@ -120,11 +122,13 @@ class Trading_systeam():
             # 判斷每次要優化的策略名稱
             if optimize_strategy_type == 'TurtleStrategy':
                 target_strategy_name = eachsymbol + "-15K-OB"
-            else:
+            elif optimize_strategy_type == 'VCPStrategy':
                 target_strategy_name = eachsymbol + "-15K-OB-VCP"
+            elif optimize_strategy_type == 'DynamicStrategy':
+                target_strategy_name = eachsymbol + "-15K-OB-DY"
 
-            # if target_strategy_name in strategylist:
-            #     continue
+            if target_strategy_name in strategylist:
+                continue
 
             result = Optimizer(target_strategy_name, eachsymbol,
                                optimize_strategy_type).optimize()
@@ -136,6 +140,7 @@ class Trading_systeam():
                         result, optimize_strategy_type)
                 )
             else:
+
                 self.dataprovider_online.SQL.change_db_data(
                     SqlSentense.insert_optimizeresult(result, optimize_strategy_type))
 
@@ -352,7 +357,8 @@ class AsyncTrading_systeam(Trading_systeam):
                     # >>比對目前binance 內的部位狀態 進行交易
                     order_finally = self.dataprovider_online.transformer.calculation_size(
                         last_status, current_size, self.symbol_map)
-
+                    
+                    print("測試order_finally", order_finally)
                     # 將order_finally 跟下單最小單位相比
                     order_finally = self.dataprovider_online.Binanceapp.change_min_postion(
                         order_finally)
@@ -406,8 +412,10 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
     def SendClosedProfit(self, data):
         self.GUI.GUI_CloseProfit.emit(data)
 
+    def SendProcessBarUpdate(self,num):
+        pass
 
 if __name__ == '__main__':
-    pass
+
     app = Trading_systeam()
-    app.exportOptimizeResult()
+    app.OptimizeAllSymbols('DynamicStrategy')

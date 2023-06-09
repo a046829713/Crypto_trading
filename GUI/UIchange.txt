@@ -5,3 +5,5 @@ pyuic6 -x .\GUI\Error_Login.ui -o .\GUI\Error_Login.py
 pyuic6 -x .\GUI\disclamier.ui -o .\GUI\disclamier.py
 pyuic6 -x .\GUI\DeadLine.ui -o .\GUI\DeadLine.py
 pyuic6 -x .\GUI\Phone_error.ui -o .\GUI\Phone_error.py
+pyuic6 -x .\GUI\Accept.ui -o .\GUI\Accept.py
+pyuic6 -x .\GUI\Reload.ui -o .\GUI\Reload.py

@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import Sequence
 
+
 class Portfolio_count():
     pass
 
@@ -143,48 +144,6 @@ class Event_count():
 
 class vecbot_count():
     @staticmethod
-    def Highest(data_array: np.ndarray, step: int) -> np.ndarray:
-        """取得rolling的滾動值 和官方的不一樣,並且完成不可視的未來
-
-        Args:
-            data_array (np.ndarray): original data like "Open" "High"
-            step (int): to window
-
-        Returns:
-            np.ndarray: _description_
-        """
-        high_array = np.empty(shape=data_array.shape[0])
-        # 由前向後滾動
-        for i in range(0, data_array.shape[0]):
-            if i < step:
-                high_array[i] = np.nan
-                continue
-            else:
-                high_array[i] = np.max(data_array[i-step:i])
-        return high_array
-
-    @staticmethod
-    def Lowest(data_array: np.ndarray, step: int) -> np.ndarray:
-        """取得rolling的滾動值 和官方的不一樣,並且完成不可視的未來
-
-        Args:
-            data_array (np.ndarray): original data like "Open" "High"
-            step (int): to window
-
-        Returns:
-            np.ndarray: _description_
-        """
-        low_array = np.empty(shape=data_array.shape[0])
-        # 由前向後滾動
-        for i in range(0, data_array.shape[0]):
-            if i < step:
-                low_array[i] = np.nan
-                continue
-            else:
-                low_array[i] = np.min(data_array[i-step:i])
-        return low_array
-
-    @staticmethod
     def max_rolling(a, window, axis=1):
         try:
             max_arr = np.empty(shape=a.shape[0])
@@ -272,3 +231,73 @@ class vecbot_count():
                 return 0
             else:
                 raise e
+
+    @staticmethod
+    def get_active_max_rolling(prices, window_sizes):
+        """
+        取得動態最大值
+        [nan, nan, 5.0, nan, 6.0, 6.0, 5.0, 8.0, 8.0]
+        """
+        out_list = np.empty(shape=prices.shape[0])
+        last_num = np.nan
+        for index, window_size in enumerate(window_sizes):
+            if index - window_size < 0:
+                target = np.nan
+            else:
+                target = np.max(prices[index - window_size: index])
+            if not np.isnan(last_num):
+                if np.isnan(target):
+                    out_list[index] = last_num
+                else:
+                    out_list[index] = target
+            else:
+                # 如果最後的值還是空值就只好加入進去
+                out_list[index] = target
+                last_num = target
+        return out_list
+
+    @staticmethod
+    def get_active_min_rolling(prices, window_sizes):
+        """
+        取得動態最大值
+        [nan, nan, 5.0, nan, 6.0, 6.0, 5.0, 8.0, 8.0]
+        """
+        out_list = np.empty(shape=prices.shape[0])
+        last_num = np.nan
+        for index, window_size in enumerate(window_sizes):
+            if index - window_size < 0:
+                target = np.nan
+            else:
+                target = np.min(prices[index - window_size: index])
+            if not np.isnan(last_num):
+                if np.isnan(target):
+                    out_list[index] = last_num
+                else:
+                    out_list[index] = target
+            else:
+                # 如果最後的值還是空值就只好加入進去
+                out_list[index] = target
+                last_num = target
+        return out_list
+
+    @staticmethod
+    def batch_normalize_and_scale(data, batch_size=1000, scale_min=1, scale_max=1000):
+        # 初始化一個與原始數據形狀相同的陣列來儲存結果
+        result = np.empty_like(data)
+
+        # 對每一個批次進行標準化和縮放
+        for i in range(0, len(data), batch_size):
+            batch = data[i: i + batch_size]
+            batch = np.nan_to_num(batch)
+            batch_original = np.max(batch) - np.min(batch)
+
+            if batch_original == 0:
+                result[i: i + batch_size] = (scale_min + scale_max) / 2
+            else:
+                batch_change = scale_max - scale_min
+                rescaled = batch_change / batch_original
+                new_batch = (batch - np.min(batch)) * rescaled
+                new_batch = np.where(new_batch < 1, 1, new_batch)
+                result[i: i + batch_size] = new_batch
+
+        return result.astype(int)

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Accept_Dialog</class>
+ <widget class="QDialog" name="Accept_Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>218</width>
+    <height>185</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>確認視窗</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>Images/binance.png</normaloff>Images/binance.png</iconset>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1,
+                                    stop: 0 #4c4c4c, stop: 1 #1f1f1f);</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="Main_label">
+     <property name="font">
+      <font>
+       <pointsize>14</pointsize>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: rgba(255, 255, 255, 0);
+color: rgb(255, 255, 255);</string>
+     </property>
+     <property name="text">
+      <string>文字插入區域</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item alignment="Qt::AlignHCenter">
+    <widget class="QDialogButtonBox" name="check_buttonBox">
+     <property name="styleSheet">
+      <string notr="true">QDialogButtonBox QPushButton {
+	font: 700 12pt &quot;Microsoft JhengHei UI&quot;;
+    background-color: #CCCCCC;
+    color: #333333;
+}
+
+QDialogButtonBox QPushButton:hover {
+    background-color: #D6D6D6;
+}</string>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,13 @@
+2023-05-21 13:38 ERROR Traceback (most recent call last):
+  File "Trading_Systeam.py", line 334, in main
+    pf = self.engine.Portfolio_online_start()
+  File "utils\TimeCountMsg.py", line 10, in wrapper
+    result = func(*args, **kwargs)
+  File "Vecbot_backtest.py", line 238, in Portfolio_online_start
+    pf = self.Trader.logic_order()
+  File "Base\Strategy_base.py", line 622, in logic_order
+    self.add_data()
+  File "Base\Strategy_base.py", line 562, in add_data
+    if datetime_ in pf.order.index:
+AttributeError: 'NoneType' object has no attribute 'order'
+

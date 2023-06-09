@@ -310,23 +310,13 @@ def get_order(marketpostion: np.array) -> np.array:
 
 @njit
 def more_fast_logic_order(
-    strategytype: str,
+    shiftorder: np.ndarray,
     open_array: np.ndarray,
-    high_array: np.ndarray,
-    low_array: np.ndarray,
-    close_array: np.ndarray,
-    std_arr: np.ndarray,
-    Volume_array: np.ndarray,
-    Volume_avgarr: np.ndarray,
-    highestarr: np.ndarray,
-    lowestarr: np.ndarray,
     Length: int,
     init_cash: float,
     slippage: float,
     size: float,
     fee: float,
-    ATR_short1,
-    ATR_long2
 ):
 
     marketpostion_array = np.full(Length, 0, dtype=np.int_)
@@ -346,20 +336,7 @@ def more_fast_logic_order(
     fee = fee  # 手續費率
     direction = "buyonly"
 
-    # 取得order單為當前主要目的 將需要判斷的方向放入 這邊是選擇策略的主要地方
-    if strategytype == 'TurtleStrategy':
-        # 迴圈可以先產生的資料
-        ATR_short = get_ATR(
-            Length, high_array, low_array, close_array, ATR_short1)
 
-        ATR_long = get_ATR(
-            Length, high_array, low_array, close_array, ATR_long2)
-
-        shiftorder = TurtleStrategy(
-            high_array, highestarr, ATR_short, ATR_long, low_array, lowestarr)
-    else:
-        shiftorder = VCPStrategy(
-            std_arr, Volume_array, Volume_avgarr, high_array, highestarr, low_array, lowestarr)
     # 主循環區域
     for i in range(Length):
         current_order = shiftorder[i]  # 實際送出訂單位置
@@ -609,6 +586,17 @@ def VCPStrategy(std_arr: np.array, Volume: np.array, Volume_avgarr: np.array, Hi
     trends = np.where((High - highestarr > 0) & vc_pattern, 1, 0)
     orders = np.where((Low - lowestarr) < 0, -1, trends)
 
+    shiftorder = np.roll(orders, 1)
+    shiftorder[0] = 0
+    return shiftorder
+
+
+
+@njit
+def DynamicStrategy(high_array: np.array, low_array: np.array, ATR_shortArr: np.array, ATR_longArr: np.array, highestarr: np.array, lowestarr1: np.array, lowestarr2: np.array):
+    trends = np.where((high_array - highestarr > 0) & (ATR_shortArr-ATR_longArr > 0), 1, 0)    
+    orders = np.where((ATR_shortArr > ATR_longArr) & (low_array < lowestarr1), -1, trends)
+    orders = np.where((ATR_shortArr <= ATR_longArr) & (low_array < lowestarr2), -1, orders)    
     shiftorder = np.roll(orders, 1)
     shiftorder[0] = 0
     return shiftorder

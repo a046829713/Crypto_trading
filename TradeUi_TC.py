@@ -7,6 +7,8 @@ from GUI.Error_Login import Ui_Dialog_Error
 from GUI.disclamier import Ui_DisCalmier_Dialog
 from GUI.DeadLine import Ui_Dialog_DeadLine
 from GUI.Phone_error import Ui_Dialog_Phone_error
+from GUI.Accept import Ui_Accept_Dialog
+from GUI.Reload import Ui_Reload_Dialog
 from PyQt6.QtCore import pyqtSignal
 from Trading_Systeam import GUI_Trading_systeam, Trading_systeam
 from PyQt6.QtCore import QThread
@@ -22,22 +24,45 @@ import datetime
 from Database.clients import checkIfDataBase
 import time
 
+
 def checkifUserDeadlineEnd():
-    with open(r'C:\PhoneNumber.txt','r') as file:
+    with open(r'C:\PhoneNumber.txt', 'r') as file:
         number = file.read()
 
     UserDeadline = AppSetting.get_UserDeadline()
     if UserDeadline.get(GetHashKey(number), None) is not None:
         if UserDeadline[GetHashKey(number)] > str(datetime.date.today()):
             return True
-        
+
     return False
 
 
+class Reload_Dialog(QDialog, Ui_Reload_Dialog):
+    update_info = pyqtSignal(int)
+
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        # 將關閉按鈕移除
+        self.setWindowFlags(self.windowFlags() & ~
+                            QtCore.Qt.WindowType.WindowCloseButtonHint)
+        self.show()
 
 
-
-
+class Accept_Dialog(QDialog, Ui_Accept_Dialog):
+    def __init__(self, maincontent: str):
+        """
+        將要秀給使用者的訊息顯示出來
+        Args:
+            maincontent (str): 
+        """
+        super().__init__()
+        self.setupUi(self)
+        # 當設定對話模式之後,如果使用者不點擊確認按鈕會形成堵塞
+        self.setModal(True)
+        self.show()
+        self.Main_label.setText(maincontent)
+        self.check_buttonBox.accepted.connect(self.accept)
 
 
 class Phone_error_Dialog(QDialog, Ui_Dialog_Phone_error):
@@ -54,7 +79,6 @@ class DeadLine_Dialog(QDialog, Ui_Dialog_DeadLine):
         super().__init__()
         self.setupUi(self)
         self.show()
-
         self.pushButton_accept.clicked.connect(self.accept)
 
 
@@ -170,18 +194,21 @@ class TradeUI(QMainWindow, Ui_MainWindow):
         self.GuiStartDay = str(datetime.date.today())
         self.DailyChange()
 
-
         # 建立插槽監聽信號
         self.update_trade_info_signal.connect(self.showMsg)
         self.clear_info_signal.connect(self.clear_Msg)
         self.GUI_CloseProfit.connect(self.line_chart)
-        self.actionAutoTrading.triggered.connect(self.click_btn_trade)
 
+        self.actionAutoTrading.triggered.connect(self.click_btn_trade)
         self.actionSaveData.triggered.connect(self.click_save_data)
         self.actionReload_Day_Data.triggered.connect(self.reload_data_day)
         self.actionReload_Min_Data.triggered.connect(self.reload_data_min)
         self.actionImport_History_Data.triggered.connect(
             self.import_history_data)
+
+        # 優化結果保存
+        self.actionimport.triggered.connect(self.importOptimizeResult)
+        self.actionexport.triggered.connect(self.exportOptimizeResult)
 
         if activate == '--autostart':
             self.click_btn_trade()
@@ -193,25 +220,57 @@ class TradeUI(QMainWindow, Ui_MainWindow):
         def _dailyChange():
             while True:
                 if self.Trading_systeam_Thread is not None:
-                    if str(datetime.date.today()) !=self.GuiStartDay:
+                    if str(datetime.date.today()) != self.GuiStartDay:
                         self.click_save_data()
                 # 每5分鐘判斷一次就好
                 time.sleep(300)
-            
 
         self.DailyChange_Thread = QThread()
         self.DailyChange_Thread.run = _dailyChange
         self.DailyChange_Thread.start()
 
+    def thread_finished(self):
+        self.exportOptimizeResultThread.quit()
+        self.exportOptimizeResultThread.wait()
+
+    def exportOptimizeResult(self):
+        self.BuildSysteam("exportOptimizeResult")
+
+    def _exportOptimizeResult(self):
+        self.exportOptimizeResultThread = QThread()
+        self.exportOptimizeResultThread.finished.connect(
+            self.exportOptimizeResultThread.deleteLater)
+        self.exportOptimizeResultThread.finished.connect(self.thread_finished)
+        self.exportOptimizeResultThread.run = self.systeam._exportOptimizeResult
+        self.exportOptimizeResultThread.start()
+
+        Accept_dialog = Accept_Dialog("優化資料導出完成")
+        Accept_dialog.exec()
+
+    def importOptimizeResult(self):
+        self.importOptimizeResultThread = QThread()
+        self.importOptimizeResultThread.run = Trading_systeam().importOptimizeResult()
+        self.importOptimizeResultThread.start()
 
     def import_history_data(self):
         self.import_history_data_Thread = QThread()
         self.import_history_data_Thread.run = Trading_systeam().importAllKbarsData()
         self.import_history_data_Thread.start()
 
-    def BuildSysteam(self):
+    def BuildSysteam(self, judgeevent: str):
         if self.systeam is None:
-            self.systeam = GUI_Trading_systeam(self)
+            self.reload_dialog = Reload_Dialog()
+
+            def _run_systeam():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                self.systeam = GUI_Trading_systeam(self)
+
+            self.run_systeam_Thread = QThread()
+            self.run_systeam_Thread.run = _run_systeam
+            self.run_systeam_Thread.start()
+
+        # self.run_systeam_Thread.finished.connect(self._exportOptimizeResult)
 
     def clear_Msg(self):
         self.trade_info.clear()
@@ -230,7 +289,6 @@ class TradeUI(QMainWindow, Ui_MainWindow):
         self.BuildSysteam()
 
         def run_subscriptionData():
-            # 嘗試捕捉這個節點的問題,或許出現在這
             try:
                 asyncio.run(self.systeam.asyncDataProvider.subscriptionData(
                     self.systeam.symbol_name))
@@ -250,9 +308,10 @@ class TradeUI(QMainWindow, Ui_MainWindow):
         self.Trading_systeam_Thread.start()
 
     def reload_data_day(self):
-        self.dataprovider = DataProvider(time_type='D')
+        self.dataprovider = DataProvider()
         self.data_Thread = QThread()
-        self.data_Thread.run = self.dataprovider.reload_all_data
+        self.data_Thread.run = lambda: self.dataprovider.reload_all_data(
+            time_type='D')
         self.data_Thread.start()
 
     def reload_data_min(self):
@@ -269,7 +328,7 @@ class TradeUI(QMainWindow, Ui_MainWindow):
 
         def mergefunc():
             for name, each_df in self.systeam.new_symbol_map.items():
-                # 不保存頭尾 # 異步模式 
+                # 不保存頭尾 # 異步模式
                 each_df.drop(
                     [each_df.index[0], each_df.index[-1]], inplace=True)
 
@@ -362,7 +421,3 @@ if __name__ == '__main__':
                 sys.exit()
     except Exception as e:
         debug.print_info()
-
-    
-
-    

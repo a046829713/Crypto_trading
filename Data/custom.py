@@ -335,6 +335,10 @@ class Binance_server(object):
             {"SOLUSDT": 1.35}
             SOLUSDT 最小下單數量 1
 
+            在 Binance 上，每種交易對都有最小下單數量限制，無論你是增加還是減少下單數量，都需要符合這個限制。
+            這個限制是為了確保市場的流動性和穩定性。這也意味著，如果你想減少你的下單數量，那麼你減少後的數量仍然需要達到或超過這個最小限制。
+            例如，如果一個交易對的最小下單數量限制是0.001，那麼你在更改下單數量時，無論是增加還是減少，你的下單數量都必須達到或超過0.001。
+            你可以在 Binance 的「交易規則和費率」頁面上查詢每個交易對的最小下單數量限制。
         """
         # 取得最小單位限制
         MinimumQuantity = self.getMinimumOrderQuantity()
@@ -471,6 +475,15 @@ class Binance_server(object):
 
                     print("調整槓桿:", Response)
 
+        # ===========================================================================================
+        # 還要測試下單
+        # for symbol, ready_to_order_size in order_finally.items():
+        #     Response = client.futures_change_leverage(
+        #         symbol=symbol, leverage=10)
+        #     print("新手無法使用超過20倍之槓桿")
+        #     print(Response)
+
+        # ===========================================================================================
         for symbol, ready_to_order_size in order_finally.items():
             # 取得下單模式
             if model == 'MARKET':

@@ -126,25 +126,15 @@ class SqlSentense():
             'std_n3': 50, 'volume_n3': 150, 'updatetime': '2023-04-05'}
         """
 
-        if strategy_type == 'TurtleStrategy':
-            sql_query = f"""
+        sql_query = f"""
 
-                INSERT INTO `crypto_data`.`optimizeresult`
-                    (`freq_time`, `size`, `fee`, `slippage`, `symbol`, `Strategytype`, `strategyName`, `highest_n1`, `lowest_n2`, `ATR_short1`, `ATR_long2`, `updatetime`)
-                VALUES
-                {tuple(result.values())};
-                
-                """
-        elif strategy_type == 'VCPStrategy':
+            INSERT INTO `crypto_data`.`optimizeresult`
+                (`freq_time`, `size`, `fee`, `slippage`, `symbol`, `Strategytype`, `strategyName`, `updatetime`,`All_args`)
+            VALUES
+            {tuple(result.values())};
+            
+            """
 
-            sql_query = f"""
-
-                INSERT INTO `crypto_data`.`optimizeresult`
-                    (`freq_time`, `size`, `fee`, `slippage`, `symbol`, `Strategytype`, `strategyName`, `highest_n1`, `lowest_n2`, `std_n3`, `volume_n3`, `updatetime`)
-                VALUES
-                {tuple(result.values())};
-                
-                """
         return sql_query
 
     @staticmethod
@@ -162,38 +152,20 @@ class SqlSentense():
         Returns:
             str: 返回要執行的SQL 語句
         """
-        if strategy_type == 'TurtleStrategy':
-            sql_query = f"""UPDATE `crypto_data`.`optimizeresult`
-                                    SET
-                                    `updatetime` = '{result['updatetime']}',
-                                    `freq_time` = {result['freq_time']},
-                                    `size` = {result['size']},
-                                    `fee` = {result['fee']},
-                                    `slippage` = {result['slippage']},
-                                    `symbol` = '{result['symbol']}',
-                                    `Strategytype` = '{result['Strategytype']}',
-                                    `highest_n1` = {result['highest_n1']},
-                                    `lowest_n2` = {result['lowest_n2']},
-                                    `ATR_short1` = {result['ATR_short1']},
-                                    `ATR_long2` = {result['ATR_long2']}
-                                    WHERE `strategyName` = '{result['strategyName']}';
-                                """
-        elif strategy_type == 'VCPStrategy':
-            sql_query = f"""UPDATE `crypto_data`.`optimizeresult`
-                                    SET
-                                    `updatetime` = '{result['updatetime']}',
-                                    `freq_time` = {result['freq_time']},
-                                    `size` = {result['size']},
-                                    `fee` = {result['fee']},
-                                    `slippage` = {result['slippage']},
-                                    `symbol` = '{result['symbol']}',
-                                    `Strategytype` = '{result['Strategytype']}',
-                                    `highest_n1` = {result['highest_n1']},
-                                    `lowest_n2` = {result['lowest_n2']},
-                                    `std_n3` = {result['std_n3']},
-                                    `volume_n3` = {result['volume_n3']}
-                                    WHERE `strategyName` = '{result['strategyName']}';
-                                """
+
+        sql_query = f"""UPDATE `crypto_data`.`optimizeresult`
+                                SET
+                                `updatetime` = '{result['updatetime']}',
+                                `freq_time` = {result['freq_time']},
+                                `size` = {result['size']},
+                                `fee` = {result['fee']},
+                                `slippage` = {result['slippage']},
+                                `symbol` = '{result['symbol']}',
+                                `Strategytype` = '{result['Strategytype']}',
+                                `All_args` = '{result['All_args']}'
+                                WHERE `strategyName` = '{result['strategyName']}';
+                            """
+
         return sql_query
 
     @staticmethod

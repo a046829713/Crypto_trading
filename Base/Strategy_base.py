@@ -65,19 +65,22 @@ class Strategy_base(object):
         if self.symobl_type == 'Futures':
             self.symobl_type = "F"
 
-        self.df = pd.read_csv(
-            f"{self.symbol_name}-{self.symobl_type}-{self.freq_time}-Min.csv")
-
-        self.df.set_index("Datetime", inplace=True)
-
-        # self.df = DB_operate().read_Dateframe(
-        #     f"select Datetime, Open, High, Low, Close, Volume from `{self.symbol_name.lower()}-{self.symobl_type.lower()}`;")
+        # 歷史資料模式
+        # self.df = pd.read_csv(
+        #     f"{self.symbol_name}-{self.symobl_type}-{self.freq_time}-Min.csv")
 
         # self.df.set_index("Datetime", inplace=True)
 
-        # self.df = Datatransformer().get_tradedata(
-        #     original_df=self.df, freq=self.freq_time)
-        # self.df.index = self.df.index.astype(str)
+
+        # 及時使用資料庫模式
+        self.df = DB_operate().read_Dateframe(
+            f"select Datetime, Open, High, Low, Close, Volume from `{self.symbol_name.lower()}-{self.symobl_type.lower()}`;")
+
+        self.df.set_index("Datetime", inplace=True)
+
+        self.df = Datatransformer().get_tradedata(
+            original_df=self.df, freq=self.freq_time)
+        self.df.index = self.df.index.astype(str)
 
         if self.lookback_date:
             self.df = self.df[self.df.index > self.lookback_date]
@@ -355,70 +358,99 @@ class Np_Order_Strategy(object):
         """
 
             不可使用None
+            # 並且不能放入nb計算的都可以在這裡計算
         Args:
             parameter (dict): {'highest_n1': 570.0, 'lowest_n2': 690.0, 'ATR_short1': 150.0, 'ATR_long2': 110.0}
         """
         self.parameter = parameter
 
-        # 轉換參數
-        self.highest_n1 = int(self.parameter.get(
-            'highest_n1')) if 'highest_n1' in self.parameter else np.nan
-        self.lowest_n2 = int(self.parameter.get(
-            'lowest_n2')) if 'lowest_n2' in self.parameter else np.nan
-        self.ATR_short1 = float(self.parameter.get(
-            'ATR_short1')) if 'ATR_short1' in self.parameter else np.nan
-        self.ATR_long2 = float(self.parameter.get(
-            'ATR_long2')) if 'ATR_long2' in self.parameter else np.nan
-        self.std_n3 = int(self.parameter.get('std_n3')
-                          ) if 'std_n3' in self.parameter else np.nan
-        self.volume_n3 = int(self.parameter.get(
-            'volume_n3')) if 'volume_n3' in self.parameter else np.nan
+        if self.strategy_info.strategytype == 'TurtleStrategy':
+            # 轉換參數
+            self.highest_n1 = int(self.parameter.get(
+                'highest_n1'))
+            self.lowest_n2 = int(self.parameter.get(
+                'lowest_n2'))
+            self.ATR_short1 = float(self.parameter.get(
+                'ATR_short1'))
+            self.ATR_long2 = float(self.parameter.get(
+                'ATR_long2'))
 
-        #  還是要判斷哪個策略
-        if self.strategy_info.strategytype in ['TurtleStrategy', 'VCPStrategy']:
-            if not np.isnan(self.highest_n1):
-                self.highestarr = vecbot_count.max_rolling(
-                    self.high_array, self.highest_n1)
+        elif self.strategy_info.strategytype == 'VCPStrategy':
+            # 轉換參數
+            self.highest_n1 = int(self.parameter.get(
+                'highest_n1'))
+            self.lowest_n2 = int(self.parameter.get(
+                'lowest_n2'))
+            self.std_n3 = int(self.parameter.get('std_n3')
+                              )
+            self.volume_n3 = int(self.parameter.get(
+                'volume_n3'))
 
-            if not np.isnan(self.lowest_n2):
-                self.lowestarr = vecbot_count.min_rolling(
-                    self.low_array, self.lowest_n2)
+        elif self.strategy_info.strategytype == 'DynamicStrategy':
+            # 轉換參數
+            self.ATR_short1 = int(self.parameter.get(
+                'ATR_short1'))
+            self.ATR_long2 = int(self.parameter.get(
+                'ATR_long2'))
 
-            if not np.isnan(self.std_n3):
-                self.std_arr = vecbot_count.std_rolling(
-                    self.close_array, self.std_n3)
+        if self.strategy_info.strategytype == 'TurtleStrategy':
 
-            if not np.isnan(self.volume_n3):
-                self.Volume_avgarr = vecbot_count.mean_rolling(
-                    self.volume_array, self.volume_n3)
+            self.highestarr = vecbot_count.max_rolling(
+                self.high_array, self.highest_n1)
+
+            self.lowestarr = vecbot_count.min_rolling(
+                self.low_array, self.lowest_n2)
+
+        elif self.strategy_info.strategytype == 'VCPStrategy':
+            self.highestarr = vecbot_count.max_rolling(
+                self.high_array, self.highest_n1)
+
+            self.lowestarr = vecbot_count.min_rolling(
+                self.low_array, self.lowest_n2)
+
+            self.std_arr = vecbot_count.std_rolling(
+                self.close_array, self.std_n3)
+
+            self.Volume_avgarr = vecbot_count.mean_rolling(
+                self.volume_array, self.volume_n3)
+
+        elif self.strategy_info.strategytype == 'DynamicStrategy':
+
+            self.ATR_shortArr = nb.get_ATR(
+                self.Length, self.high_array, self.low_array, self.close_array, self.ATR_short1)
+
+            self.ATR_longArr = nb.get_ATR(
+                self.Length, self.high_array, self.low_array, self.close_array, self.ATR_long2)
+
+            self.highestarr = vecbot_count.get_active_max_rolling(
+                self.high_array, vecbot_count.batch_normalize_and_scale(self.ATR_shortArr))
+
+            self.lowestarr1 = vecbot_count.get_active_min_rolling(
+                self.low_array, vecbot_count.batch_normalize_and_scale(self.ATR_shortArr))
+
+            self.lowestarr2 = vecbot_count.get_active_min_rolling(
+                self.low_array, vecbot_count.batch_normalize_and_scale(self.ATR_longArr))
 
     def more_fast_logic_order(self):
         """
             用來創造閹割版的快速回測
             有遇到資料過小的情況 可能未來就不會再出現類似的情況了(資料長度越來越長)
         """
-        if isinstance(self.lowestarr, int) or isinstance(self.highestarr, int) or isinstance(self.volume_array, int) or isinstance(self.std_arr, int):
-            return 0
+        # if isinstance(self.lowestarr, int) or isinstance(self.highestarr, int) or isinstance(self.volume_array, int) or isinstance(self.std_arr, int):
+        #     return 0
+        # 取得order單
+        self.get_shiftorder()
 
         # 如果回測其他策略會需要修改
         return nb.more_fast_logic_order(
-            self.strategy_info.strategytype,
+            self.shiftorder,
             self.open_array,
-            self.high_array,
-            self.low_array,
-            self.close_array,
-            self.std_arr,
-            self.volume_array,
-            self.Volume_avgarr,
-            self.highestarr,
-            self.lowestarr,
             self.Length,
             self.strategy_info.init_cash,
             self.strategy_info.slippage,
             self.strategy_info.size,
             self.strategy_info.fee,
-            self.ATR_short1,
-            self.ATR_long2
+
         )
 
     def change_params(self) -> dict:
@@ -468,6 +500,10 @@ class Np_Order_Strategy(object):
         elif self.strategy_info.strategytype == 'VCPStrategy':
             self.shiftorder = nb.VCPStrategy(
                 self.std_arr, self.volume_array, self.Volume_avgarr, self.high_array, self.highestarr, self.low_array, self.lowestarr)
+
+        elif self.strategy_info.strategytype == 'DynamicStrategy':
+            self.shiftorder = nb.DynamicStrategy(self.high_array, self.low_array, self.ATR_shortArr,
+                                                 self.ATR_longArr, self.highestarr, self.lowestarr1, self.lowestarr2)
 
     def logic_order(self):
         """

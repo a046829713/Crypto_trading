@@ -1,4 +1,6 @@
 pyinstaller --onefile .\Alert_Msg.py
 pyinstaller --name=TradeUi --onefile --noconsole TradeUi.py
 pyinstaller --name=TradingSysteam --onefile --noconsole .\TradeUi_TC.py
+pyinstaller --name=TradingSysteam --onefile .\TradeUi_TC.py
 pyinstaller --name=AutoStartSysteam --onefile --noconsole .\AutoStartSysteam.py
+pyinstaller --name=AutoStartSysteam --onefile .\AutoStartSysteam.py

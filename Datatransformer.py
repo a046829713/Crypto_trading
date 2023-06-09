@@ -84,6 +84,7 @@ class Datatransformer:
         for each_symbol, each_value in combin_dict.items():
             combin_dict[each_symbol] = round(combin_dict[each_symbol], 2)
 
+        
         diff_map = {}
         for symbol_name, postition_size in combin_dict.items():
             if true_size.get(symbol_name, None) is None:
@@ -92,9 +93,10 @@ class Datatransformer:
                 diff_map.update({symbol_name: postition_size})
             else:
                 # 當目前保證金浮動的時候會有不足的現象
-                # 以當前商品的價值 小於5美金跳過(幣安最小5美金)(不論是增加或是減少)(將來可以將reduce only的下單減少方式改回)
                 # 為避免價格快速浮動小於5美金故調整成10美金
-                if abs(symbol_map[symbol_name]['Close'].iloc[-1] * (postition_size - float(true_size[symbol_name]))) < 10:
+                # 當我的部位是要減少的時候 不需要小於5美金的規定
+                diff = postition_size - float(true_size[symbol_name])
+                if diff > 0 and abs(symbol_map[symbol_name]['Close'].iloc[-1] * (diff)) < 10:
                     continue
                 diff_map.update(
                     {symbol_name: postition_size - float(true_size[symbol_name])})
