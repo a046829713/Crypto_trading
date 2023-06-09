@@ -273,25 +273,35 @@ class Trading_systeam():
 class AsyncTrading_systeam(Trading_systeam):
     def __init__(self) -> None:
         super().__init__()
+        self.check_and_reload_dailydata()
+        self.process_target_symbol()
+        self.init_async_data_provider()
+        self.register_portfolio()
 
-        # check if already update, and reload data
+    def check_and_reload_dailydata(self):
+        """ check if already update, and reload data"""
         self.checkDailydata()
+        self.SendProcessBarUpdate(20)
 
+    def process_target_symbol(self):
         # 取得要交易的標的
         market_symobl = list(map(lambda x: x[0], self.get_target_symbol()))
-
         # 取得binance實際擁有標的,合併 (因為原本有部位的也要持續追蹤)
-        targetsymbol = self.datatransformer.target_symobl(
+        self.targetsymbol = self.datatransformer.target_symobl(
             market_symobl, self.dataprovider_online.Binanceapp.getfutures_account_name())
+        self.SendProcessBarUpdate(40)
 
+    def init_async_data_provider(self):
         # 將標得注入引擎
         self.asyncDataProvider = AsyncDataProvider()
+        self.SendProcessBarUpdate(60)
 
+    def register_portfolio(self):
         # 初始化投資組合 (傳入要買的標的物, 並且傳入相關參數)
         self.engine.Portfolio_online_register(
-            targetsymbol, self.dataprovider_online.SQL.read_Dateframe("optimizeresult"))
-
+            self.targetsymbol, self.dataprovider_online.SQL.read_Dateframe("optimizeresult"))
         self.symbol_name: set = self.engine.get_symbol_name()
+        self.SendProcessBarUpdate(80)
 
     async def main(self):
         self.printfunc("Crypto_trading 正式交易啟動")
@@ -354,7 +364,7 @@ class AsyncTrading_systeam(Trading_systeam):
                     # >>比對目前binance 內的部位狀態 進行交易
                     order_finally = self.dataprovider_online.transformer.calculation_size(
                         last_status, current_size, self.symbol_map)
-                    
+
                     print("測試order_finally", order_finally)
                     # 將order_finally 跟下單最小單位相比
                     order_finally = self.dataprovider_online.Binanceapp.change_min_postion(
@@ -409,8 +419,9 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
     def SendClosedProfit(self, data):
         self.GUI.GUI_CloseProfit.emit(data)
 
-    def SendProcessBarUpdate(self,num):
-        pass
+    def SendProcessBarUpdate(self, num: int):
+        self.GUI.reload_dialog.update_info.emit(num)
+
 
 if __name__ == '__main__':
 
