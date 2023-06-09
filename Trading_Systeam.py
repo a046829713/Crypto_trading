@@ -274,9 +274,6 @@ class AsyncTrading_systeam(Trading_systeam):
     def __init__(self) -> None:
         super().__init__()
 
-        # 為了讓GUI有反應
-        self.printfunc("Crypto_trading 交易系統配置中...")
-
         # check if already update, and reload data
         self.checkDailydata()
 

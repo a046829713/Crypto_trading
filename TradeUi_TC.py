@@ -46,6 +46,7 @@ class Reload_Dialog(QDialog, Ui_Reload_Dialog):
         # 將關閉按鈕移除
         self.setWindowFlags(self.windowFlags() & ~
                             QtCore.Qt.WindowType.WindowCloseButtonHint)
+        self.Main_progressBar.setValue(0)
         self.show()
 
 
@@ -241,11 +242,11 @@ class TradeUI(QMainWindow, Ui_MainWindow):
         self.exportOptimizeResultThread.finished.connect(
             self.exportOptimizeResultThread.deleteLater)
         self.exportOptimizeResultThread.finished.connect(self.thread_finished)
-        self.exportOptimizeResultThread.run = self.systeam._exportOptimizeResult
+        self.exportOptimizeResultThread.run = self.systeam.exportOptimizeResult
         self.exportOptimizeResultThread.start()
 
-        Accept_dialog = Accept_Dialog("優化資料導出完成")
-        Accept_dialog.exec()
+        self.Accept_dialog = Accept_Dialog("優化資料導出完成")
+        self.Accept_dialog.exec()
 
     def importOptimizeResult(self):
         self.importOptimizeResultThread = QThread()
@@ -257,9 +258,29 @@ class TradeUI(QMainWindow, Ui_MainWindow):
         self.import_history_data_Thread.run = Trading_systeam().importAllKbarsData()
         self.import_history_data_Thread.start()
 
+    def _close_reload_dialog(self):
+        # 當系統建置之後,關閉原本的畫面
+        self.reload_dialog.close()
+
+    def update_progress_bar(self, value):
+        """
+            用來更新回補畫面的進度條
+
+        Args:
+            value (_type_): _description_
+        """
+        self.reload_dialog.Main_progressBar.setValue(value)
+
     def BuildSysteam(self, judgeevent: str):
+        """
+            應該會有兩種情況
+        Args:
+            judgeevent (str): 事件名稱:
+
+        """
         if self.systeam is None:
             self.reload_dialog = Reload_Dialog()
+            self.reload_dialog.update_info.connect(self.update_progress_bar)
 
             def _run_systeam():
                 loop = asyncio.new_event_loop()
@@ -268,9 +289,23 @@ class TradeUI(QMainWindow, Ui_MainWindow):
 
             self.run_systeam_Thread = QThread()
             self.run_systeam_Thread.run = _run_systeam
-            self.run_systeam_Thread.start()
 
-        # self.run_systeam_Thread.finished.connect(self._exportOptimizeResult)
+            if judgeevent == 'exportOptimizeResult':
+                self.run_systeam_Thread.finished.connect(
+                    self._close_reload_dialog)
+                self.run_systeam_Thread.finished.connect(
+                    self._exportOptimizeResult)
+            elif judgeevent == 'Trading':
+                self.run_systeam_Thread.finished.connect(
+                    self._close_reload_dialog)
+                self.run_systeam_Thread.finished.connect(
+                    self._Trading)
+            self.run_systeam_Thread.start()
+        else:
+            if judgeevent == 'exportOptimizeResult':
+                self._exportOptimizeResult()
+            elif judgeevent == 'Trading':
+                self._Trading()
 
     def clear_Msg(self):
         self.trade_info.clear()
@@ -286,8 +321,9 @@ class TradeUI(QMainWindow, Ui_MainWindow):
         self.trade_info.append(out_str)
 
     def click_btn_trade(self):
-        self.BuildSysteam()
+        self.BuildSysteam("Trading")
 
+    def _Trading(self):
         def run_subscriptionData():
             try:
                 asyncio.run(self.systeam.asyncDataProvider.subscriptionData(
