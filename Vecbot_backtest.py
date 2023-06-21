@@ -13,6 +13,7 @@ import copy
 from datetime import datetime
 from utils.TimeCountMsg import TimeCountMsg
 import json
+from Datatransformer import Datatransformer
 
 
 class Optimizer(object):
@@ -62,14 +63,12 @@ class Optimizer(object):
         num = 0
         all_i = 0
         for each_parameter in all_parameter:
-            print(each_parameter)
             num += 1
             if num > 500 * all_i:
                 all_i += 1
                 print(f"總數量{all_length},目前完成進度: {(num / all_length) * 100} %")
             ordermap.set_parameter(each_parameter)
             UI = ordermap.more_fast_logic_order()
-            print(UI)
             if UI == 0:
                 continue
             if UI < 0:
@@ -79,15 +78,15 @@ class Optimizer(object):
         UI_list = [i[1] for i in out_list]
 
         self.result.update({"updatetime": str(datetime.now()).split()[0]})
-        
+
         # 當完全沒有參數可以決定的時候
         if UI_list:
             max_data = max(UI_list)
 
             for i in out_list:
                 if i[1] == max_data:
-                    print(i)
-                    self.result.update({"All_args": json.dumps(i[0])})
+                    self.result.update({"All_args": json.dumps(
+                        Datatransformer().trans_int16(i[0]))})
         else:
             if self.strategy.strategytype == 'TurtleStrategy':
                 self.result.update(
@@ -99,7 +98,6 @@ class Optimizer(object):
                 self.result.update(
                     {"All_args": json.dumps({"ATR_short1": 300.0, "ATR_long2": 600.0})})
 
-        
         return self.result
 
 
@@ -225,7 +223,7 @@ class Quantify_systeam_online(object):
         argsData = argsdf.to_dict('index')
 
         for each_symbol in target_symobl:
-            for _strategy in ["TurtleStrategy", "VCPStrategy"]:
+            for _strategy in ["VCPStrategy", 'DynamicStrategy']:
                 if _strategy == 'TurtleStrategy':
                     strategyName = f"{each_symbol}-15K-OB"
                     eachargdata = argsData[strategyName]
@@ -233,12 +231,19 @@ class Quantify_systeam_online(object):
                         strategyName, eachargdata['Strategytype'], eachargdata['symbol'], eachargdata['freq_time'], eachargdata['size'], eachargdata['fee'], eachargdata['slippage'])
                     strategypa = json.loads(eachargdata['All_args'])
 
-                else:
+                elif _strategy == 'VCPStrategy':
                     strategyName = f"{each_symbol}-15K-OB-VCP"
                     eachargdata = argsData[strategyName]
                     strategy = Strategy_atom(
                         strategyName, eachargdata['Strategytype'], eachargdata['symbol'], eachargdata['freq_time'], eachargdata['size'], eachargdata['fee'], eachargdata['slippage'])
                     strategypa = json.loads(eachargdata['All_args'])
+                elif _strategy == 'DynamicStrategy':
+                    strategyName = f"{each_symbol}-15K-OB-DY"
+                    eachargdata = argsData[strategyName]
+                    strategy = Strategy_atom(
+                        strategyName, eachargdata['Strategytype'], eachargdata['symbol'], eachargdata['freq_time'], eachargdata['size'], eachargdata['fee'], eachargdata['slippage'])
+                    strategypa = json.loads(eachargdata['All_args'])
+                
                 self.Trader.register(
                     strategy, strategypa)
 

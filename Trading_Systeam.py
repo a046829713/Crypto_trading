@@ -113,8 +113,6 @@ class Trading_systeam():
         strategydf = self.dataprovider_online.SQL.read_Dateframe(
             "select strategyName, symbol from optimizeresult")
         strategylist = strategydf['strategyName'].to_list()
-        print(strategylist)
-        symbollist = strategydf['symbol'].to_list()
 
         # 使用 Optimizer # 建立DB
         for eachsymbol in all_symbols:
@@ -426,4 +424,4 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
 if __name__ == '__main__':
 
     app = Trading_systeam()
-    app.OptimizeAllSymbols('DynamicStrategy')
+    app.OptimizeAllSymbols('VCPStrategy')

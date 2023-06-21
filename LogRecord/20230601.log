@@ -1,9 +1,0 @@
-2023-06-01 14:00 ERROR Traceback (most recent call last):
-  File "C:\Users\user\Desktop\程式專區\TradingSysteam\Crypto_trading\Trading_Systeam.py", line 369, in main
-    self.dataprovider_online.Binanceapp.execute_orders(
-  File "C:\Users\user\Desktop\程式專區\TradingSysteam\Crypto_trading\Data\custom.py", line 39, in warpper
-    result = func(self, client, *args, **kwargs)
-  File "C:\Users\user\Desktop\程式專區\TradingSysteam\Crypto_trading\Data\custom.py", line 465, in execute_orders
-    if (float(current_size[each_symbol]) + ready_to_order_size) * symbol_map[each_symbol]['Close'].iloc[-1] < float(Response['maxNotionalValue']):
-KeyError: 'XMRUSDT'
-

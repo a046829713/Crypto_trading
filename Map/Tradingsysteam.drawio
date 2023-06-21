@@ -1,51 +1,73 @@
-<mxfile host="app.diagrams.net" modified="2023-05-11T07:15:10.120Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36" etag="klfv2RlzehPLrU_xfCB4" version="21.2.9" type="device">
+<mxfile host="app.diagrams.net" modified="2023-06-21T03:32:09.369Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" etag="68NqJtI2L3kdeCNJSrEq" version="21.5.0" type="device">
   <diagram name="第 1 页" id="luMZmVBvZCn-gKmod2Wi">
     <mxGraphModel dx="2261" dy="788" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="t5MqxrgyaX5uheQcPYb9-2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="x7qQuys_Iyx2ELAfLeF6-1" target="t5MqxrgyaX5uheQcPYb9-1" edge="1">
+        <mxCell id="NCrJ0XN4Q1wcAv16IYwQ-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="NCrJ0XN4Q1wcAv16IYwQ-3" target="NCrJ0XN4Q1wcAv16IYwQ-8" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="x7qQuys_Iyx2ELAfLeF6-1" value="&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; line-height: 19px;&quot;&gt;&lt;div style=&quot;line-height: 19px;&quot;&gt;Father:DataProvider&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="260" y="210" width="290" height="60" as="geometry" />
+        <mxCell id="NCrJ0XN4Q1wcAv16IYwQ-3" value="TradingSysteam" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="1130" y="180" width="460" height="410" as="geometry" />
         </mxCell>
-        <mxCell id="YeGRoMZNGMUW2OoXfC3H-44" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="t5MqxrgyaX5uheQcPYb9-1" target="t5MqxrgyaX5uheQcPYb9-3">
+        <mxCell id="NCrJ0XN4Q1wcAv16IYwQ-4" value="&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; line-height: 19px;&quot;&gt;DataProvider_online&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="NCrJ0XN4Q1wcAv16IYwQ-3" vertex="1">
+          <mxGeometry x="20" y="50" width="420" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="NCrJ0XN4Q1wcAv16IYwQ-5" value="&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; line-height: 19px;&quot;&gt;Quantify_systeam_online&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="NCrJ0XN4Q1wcAv16IYwQ-3" vertex="1">
+          <mxGeometry x="20" y="140" width="420" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="NCrJ0XN4Q1wcAv16IYwQ-6" value="&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; line-height: 19px;&quot;&gt;LINE_Alert&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="NCrJ0XN4Q1wcAv16IYwQ-3" vertex="1">
+          <mxGeometry x="20" y="230" width="420" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="NCrJ0XN4Q1wcAv16IYwQ-7" value="&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; line-height: 19px;&quot;&gt;Datatransformer&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="NCrJ0XN4Q1wcAv16IYwQ-3" vertex="1">
+          <mxGeometry x="20" y="320" width="420" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="NCrJ0XN4Q1wcAv16IYwQ-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="NCrJ0XN4Q1wcAv16IYwQ-8" target="NCrJ0XN4Q1wcAv16IYwQ-10" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="NCrJ0XN4Q1wcAv16IYwQ-8" value="&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-weight: normal; font-size: 14px; line-height: 19px;&quot;&gt;AsyncTrading_systeam&lt;/div&gt;" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="1130" y="650" width="460" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="NCrJ0XN4Q1wcAv16IYwQ-9" value="&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; line-height: 19px;&quot;&gt;AsyncDataProvider&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="NCrJ0XN4Q1wcAv16IYwQ-8" vertex="1">
+          <mxGeometry x="20" y="40" width="420" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="NCrJ0XN4Q1wcAv16IYwQ-10" value="&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-weight: normal; font-size: 14px; line-height: 19px;&quot;&gt;GUI_Trading_systeam&lt;/div&gt;" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="1130" y="820" width="460" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="NCrJ0XN4Q1wcAv16IYwQ-14" value="&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-weight: normal; font-size: 14px; line-height: 19px;&quot;&gt;PortfolioOnline&lt;/div&gt;" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="590" y="80" width="360" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="NCrJ0XN4Q1wcAv16IYwQ-22" value="&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; line-height: 19px;&quot;&gt;PortfolioTrader&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="NCrJ0XN4Q1wcAv16IYwQ-14" vertex="1">
+          <mxGeometry x="40" y="60" width="280" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="NCrJ0XN4Q1wcAv16IYwQ-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="NCrJ0XN4Q1wcAv16IYwQ-5" target="NCrJ0XN4Q1wcAv16IYwQ-14" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="NCrJ0XN4Q1wcAv16IYwQ-20" value="&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-weight: normal; font-size: 14px; line-height: 19px;&quot;&gt;Strategy_atom&lt;/div&gt;" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="590" y="420" width="360" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="NCrJ0XN4Q1wcAv16IYwQ-21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="NCrJ0XN4Q1wcAv16IYwQ-5" target="NCrJ0XN4Q1wcAv16IYwQ-20" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="NCrJ0XN4Q1wcAv16IYwQ-24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="NCrJ0XN4Q1wcAv16IYwQ-22" edge="1">
           <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="405" y="450" />
-              <mxPoint x="65" y="450" />
-            </Array>
+            <mxPoint x="520" y="180" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="YeGRoMZNGMUW2OoXfC3H-45" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="t5MqxrgyaX5uheQcPYb9-1" target="t5MqxrgyaX5uheQcPYb9-7">
+        <mxCell id="NCrJ0XN4Q1wcAv16IYwQ-25" value="PortfolioTrader" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="220" y="80" width="294" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="NCrJ0XN4Q1wcAv16IYwQ-26" value="&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; line-height: 19px;&quot;&gt;Np_Order_Strategy&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="NCrJ0XN4Q1wcAv16IYwQ-25" vertex="1">
+          <mxGeometry x="30" y="40" width="234" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="NCrJ0XN4Q1wcAv16IYwQ-27" value="&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; line-height: 19px;&quot;&gt;Portfolio_Order_Info&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="NCrJ0XN4Q1wcAv16IYwQ-25" vertex="1">
+          <mxGeometry x="32" y="120" width="230" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="NCrJ0XN4Q1wcAv16IYwQ-28" value="&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-weight: normal; font-size: 14px; line-height: 19px;&quot;&gt;Np_Order_Info&lt;/div&gt;" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="-100" y="95" width="200" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="NCrJ0XN4Q1wcAv16IYwQ-29" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="NCrJ0XN4Q1wcAv16IYwQ-26" target="NCrJ0XN4Q1wcAv16IYwQ-28" edge="1">
           <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="YeGRoMZNGMUW2OoXfC3H-47" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="t5MqxrgyaX5uheQcPYb9-1" target="t5MqxrgyaX5uheQcPYb9-5">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="405" y="450" />
-              <mxPoint x="745" y="450" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="t5MqxrgyaX5uheQcPYb9-1" value="&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; line-height: 19px;&quot;&gt;DataProvider_online&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="260" y="330" width="290" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="YeGRoMZNGMUW2OoXfC3H-43" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="t5MqxrgyaX5uheQcPYb9-3" target="YeGRoMZNGMUW2OoXfC3H-40">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="t5MqxrgyaX5uheQcPYb9-3" value="&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; line-height: 19px;&quot;&gt;&lt;div style=&quot;line-height: 19px;&quot;&gt;Data.&lt;span style=&quot;color: #4ec9b0;&quot;&gt;custom&lt;/span&gt;.&lt;span style=&quot;color: #4ec9b0;&quot;&gt;Binance_server&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="-80" y="550" width="290" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="t5MqxrgyaX5uheQcPYb9-5" value="&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; line-height: 19px;&quot;&gt;&lt;div style=&quot;line-height: 19px;&quot;&gt;Datatransformer&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="600" y="540" width="290" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="t5MqxrgyaX5uheQcPYb9-7" value="&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; line-height: 19px;&quot;&gt;&lt;div style=&quot;line-height: 19px;&quot;&gt;SQL_operate.&lt;span style=&quot;color: #4ec9b0;&quot;&gt;DB_operate&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="260" y="540" width="290" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="YeGRoMZNGMUW2OoXfC3H-40" value="&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; line-height: 19px;&quot;&gt;&lt;div style=&quot;line-height: 19px;&quot;&gt;&lt;div style=&quot;line-height: 19px;&quot;&gt;BinanceDate&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="-80" y="690" width="290" height="60" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

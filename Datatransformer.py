@@ -3,7 +3,8 @@ from utils.Date_time import parser_time
 import time
 from utils.Debug_tool import debug
 from utils.TimeCountMsg import TimeCountMsg
-import logging
+import numpy as np
+
 
 
 class Datatransformer:
@@ -84,7 +85,6 @@ class Datatransformer:
         for each_symbol, each_value in combin_dict.items():
             combin_dict[each_symbol] = round(combin_dict[each_symbol], 2)
 
-        
         diff_map = {}
         for symbol_name, postition_size in combin_dict.items():
             if true_size.get(symbol_name, None) is None:
@@ -157,3 +157,14 @@ class Datatransformer:
             return list(set(market_symobl))
         else:
             return ['BTCUSDT']
+
+    def trans_int16(self, data: dict):
+        """
+            用來轉變字串(json dumps 的時候)
+            轉換np.int16
+        """
+        if isinstance(data, dict):
+            for key, value in data.items():
+                if isinstance(value, np.int16):
+                    data[key] = int(value)
+        return data

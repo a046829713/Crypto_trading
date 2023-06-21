@@ -279,30 +279,6 @@ class Np_Order_Info(object):
         return ui_
 
 
-class small_Np_Order_Info(Np_Order_Info):
-    """ 用來處理最佳化訂單的相關資訊
-    Args:
-        object (_type_): _description_
-    """
-
-    def __init__(self,
-                 datetime_list,
-                 orders: np.ndarray,
-                 ClosedPostionprofit: np.ndarray,
-                 ) -> None:
-        # 取得order儲存列
-        self.order = pd.DataFrame(datetime_list, columns=['Datetime'])
-        self.order['Order'] = orders
-        self.order['ClosedPostionprofit'] = ClosedPostionprofit
-
-        # 壓縮資訊減少運算
-        self.order = self.order[self.order['Order'] != 0]
-        self.order.set_index("Datetime", inplace=True)
-
-        # 取得需要二次運算的資料(計算勝率，賠率....繪圖)
-        self.ClosedPostionprofit_array = self.order['ClosedPostionprofit'].to_numpy(
-        )
-
 
 class Portfolio_Order_Info(Np_Order_Info):
     def __init__(self, datetime_list, orders, stragtegy_names, Portfolio_profit, Portfolio_ClosedPostionprofit, Portfolio_initcash, sizes):
