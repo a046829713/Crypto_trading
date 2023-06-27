@@ -64,4 +64,9 @@ class AppSetting():
     
     @staticmethod
     def get_version() ->str:
-        return '2023-06-06'
+        return '2023-06-27'
+    
+
+    @staticmethod
+    def get_emergency_times() ->str:
+        return 20

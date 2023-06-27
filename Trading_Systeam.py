@@ -15,7 +15,7 @@ import os
 from binance.exceptions import BinanceAPIException
 from binance import BinanceSocketManager
 import copy
-import json
+from AppSetting import AppSetting
 
 
 # 增加總投組獲利平倉，或是單一策略平倉?
@@ -380,7 +380,8 @@ class AsyncTrading_systeam(Trading_systeam):
                 else:
                     time.sleep(1)
 
-                if self.dataprovider_online.Binanceapp.trade_count > 10:
+                print("目前緊急交易次數:",AppSetting.get_emergency_times())
+                if self.dataprovider_online.Binanceapp.trade_count > AppSetting.get_emergency_times():
                     self.printfunc("緊急狀況處理-交易次數過多")
                     sys.exit()
 
@@ -390,7 +391,7 @@ class AsyncTrading_systeam(Trading_systeam):
                 else:
                     # re-raise the exception if it's not the expected error code
                     Debug_tool.debug.print_info()
-                    raise
+                    raise e
 
 
 class GUI_Trading_systeam(AsyncTrading_systeam):

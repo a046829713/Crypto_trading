@@ -378,17 +378,17 @@ class Np_Order_Strategy(object):
                 self.low_array, self.lowest_n2)
 
         elif self.strategy_info.strategytype == 'VCPStrategy':
-            self.highestarr = vecbot_count.max_rolling(
-                self.high_array, self.highest_n1)
-
-            self.lowestarr = vecbot_count.min_rolling(
-                self.low_array, self.lowest_n2)
-
             self.std_arr = vecbot_count.std_rolling(
                 self.close_array, self.std_n3)
-
+            
             self.Volume_avgarr = vecbot_count.mean_rolling(
                 self.volume_array, self.volume_n3)
+            
+            self.highestarr = vecbot_count.get_active_max_rolling(
+                self.high_array, vecbot_count.batch_normalize_and_scale(self.Volume_avgarr))
+
+            self.lowestarr = vecbot_count.get_active_min_rolling(
+                self.low_array, vecbot_count.batch_normalize_and_scale(self.Volume_avgarr))
 
         elif self.strategy_info.strategytype == 'DynamicStrategy':
 

@@ -90,10 +90,10 @@ class Optimizer(object):
         else:
             if self.strategy.strategytype == 'TurtleStrategy':
                 self.result.update(
-                    {'highest_n1': 610, 'lowest_n2': 350, 'ATR_short1': 130.0, 'ATR_long2': 50.0})
+                    {"All_args": json.dumps({'highest_n1': 610, 'lowest_n2': 350, 'ATR_short1': 130.0, 'ATR_long2': 50.0})})
             elif self.strategy.strategytype == 'VCPStrategy':
                 self.result.update(
-                    {'highest_n1': 300, 'lowest_n2': 600, 'std_n3': 50, 'volume_n3': 150})
+                    {"All_args": json.dumps({'highest_n1': 300, 'lowest_n2': 600, 'std_n3': 50, 'volume_n3': 150})})
             elif self.strategy.strategytype == 'DynamicStrategy':
                 self.result.update(
                     {"All_args": json.dumps({"ATR_short1": 300.0, "ATR_long2": 600.0})})
@@ -153,33 +153,64 @@ class Quantify_systeam(object):
             普通回測模式
         """
         ordermap = Np_Order_Strategy(Strategy_base(
-            'ETHUSDT-15K-OB-DY', 'DynamicStrategy', 'ETHUSDT', 15,  1.0,  0.002, 0.0025))
+            'BTCUSDT-15K-OB-VCP', 'VCPStrategy', 'BTCUSDT', 15,  1.0,  0.002, 0.0025))
 
         ordermap.set_parameter(
-            {"ATR_short1": 390.0, "ATR_long2": 680.0}
+            {"highest_n1": 250.0, "lowest_n2": 700.0,
+                "std_n3": 150.0, "volume_n3": 250.0}
         )
 
         pf = ordermap.logic_order()
         Picture_maker(pf)
 
+    def Portfolio_online_register(self, target_symobl: list, argsdf: pd.DataFrame):
+        """
+            和正式略有不同(但是想查看模擬投資組合)
+            example :
+                target_symobl
+                    ['XMRUSDT', 'BTCUSDT', 'BTCDOMUSDT', 'BNBUSDT', 'ETHUSDT']
+        """
+        argsdf.set_index('strategyName', inplace=True)
+        argsData = argsdf.to_dict('index')
+
+        for each_symbol in target_symobl:
+            print(each_symbol)
+            for _strategy in ['TurtleStrategy','DynamicStrategy']:
+                if _strategy == 'TurtleStrategy':
+                    strategyName = f"{each_symbol}-15K-OB"
+                    eachargdata = argsData[strategyName]
+                    strategy = Strategy_base(
+                        strategyName, eachargdata['Strategytype'], eachargdata['symbol'], eachargdata['freq_time'], eachargdata['size'], eachargdata['fee'], eachargdata['slippage'])
+                    strategypa = json.loads(eachargdata['All_args'])
+
+                elif _strategy == 'VCPStrategy':
+                    strategyName = f"{each_symbol}-15K-OB-VCP"
+                    eachargdata = argsData[strategyName]
+                    strategy = Strategy_base(
+                        strategyName, eachargdata['Strategytype'], eachargdata['symbol'], eachargdata['freq_time'], eachargdata['size'], eachargdata['fee'], eachargdata['slippage'])
+                    strategypa = json.loads(eachargdata['All_args'])
+                elif _strategy == 'DynamicStrategy':
+                    strategyName = f"{each_symbol}-15K-OB-DY"
+                    eachargdata = argsData[strategyName]
+                    strategy = Strategy_base(
+                        strategyName, eachargdata['Strategytype'], eachargdata['symbol'], eachargdata['freq_time'], eachargdata['size'], eachargdata['fee'], eachargdata['slippage'])
+                    strategypa = json.loads(eachargdata['All_args'])
+
+                self.Trader.register(
+                    strategy, strategypa)
+
     def PortfolioBacktesting(self):
         """
             投資組合模擬非正式
         """
-        app = PortfolioTrader(Portfolio_initcash=15757)
+        # self.Trader = PortfolioTrader(Portfolio_initcash=25000)
+        # 用來查看正式的交易環境及狀況
+        print("開始模擬交易")
+        self.Trader = PortfolioOnline(Portfolio_initcash=25000)
 
-        app.register(
-            self.strategy1, self.strategypa1)
-        app.register(
-            self.strategy2, self.strategypa2)
-        # app.register(
-        #     self.strategy3, self.strategypa3)
-        # app.register(
-        #     self.strategy4, self.strategypa4)
-        # app.register(
-        #     self.strategy5, self.strategypa5)
-
-        pf = app.logic_order()
+        self.Portfolio_online_register(
+            ['LTCUSDT', 'KSMUSDT','MKRUSDT', 'BTCUSDT', 'BTCDOMUSDT', 'COMPUSDT', 'XMRUSDT', 'YFIUSDT', 'AAVEUSDT', 'ETHUSDT', 'BCHUSDT'], pd.read_csv("optimizeresult.csv"))
+        pf = self.Trader.logic_order()
         Picture_maker(pf)
 
 
@@ -243,7 +274,7 @@ class Quantify_systeam_online(object):
                     strategy = Strategy_atom(
                         strategyName, eachargdata['Strategytype'], eachargdata['symbol'], eachargdata['freq_time'], eachargdata['size'], eachargdata['fee'], eachargdata['slippage'])
                     strategypa = json.loads(eachargdata['All_args'])
-                
+
                 self.Trader.register(
                     strategy, strategypa)
 
@@ -273,4 +304,4 @@ class Quantify_systeam_online(object):
 
 if __name__ == "__main__":
     systeam = Quantify_systeam()
-    systeam.Backtesting()
+    systeam.PortfolioBacktesting()

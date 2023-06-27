@@ -411,77 +411,77 @@ class Binance_server(object):
         print('目前交易次數', self.trade_count)
         print(f"進入下單,目前下單模式:{model}")
 
-        balance_money = self.get_futuresaccountbalance()
-        # 下單前檢查leverage
-        # 商品槓桿
-        # 將已經持倉的部位傳入(讀取所有的槓桿)
-        leverage_map = {}
-        for i in current_size.keys():
-            # 获取 BTCUSDT 合约的当前部位信息
-            position = client.futures_position_information(symbol=i)
+        # balance_money = self.get_futuresaccountbalance()
+        # # 下單前檢查leverage
+        # # 商品槓桿
+        # # 將已經持倉的部位傳入(讀取所有的槓桿)
+        # leverage_map = {}
+        # for i in current_size.keys():
+        #     # 获取 BTCUSDT 合约的当前部位信息
+        #     position = client.futures_position_information(symbol=i)
 
-            # 获取当前杠杆倍数
-            leverage = int(position[0]['leverage'])
+        #     # 获取当前杠杆倍数
+        #     leverage = int(position[0]['leverage'])
 
-            leverage_map.update({i: leverage})
+        #     leverage_map.update({i: leverage})
 
-        for each_symbol, ready_to_order_size in order_finally.items():
-            print(each_symbol)
+        # for each_symbol, ready_to_order_size in order_finally.items():
+        #     print(each_symbol)
 
-            if leverage_map.get(each_symbol, None) is None:
-                def _change_leverage(_symbol, _leverage: int):
-                    time.sleep(0.3)
-                    try:
-                        Response = client.futures_change_leverage(
-                            symbol=_symbol, leverage=_leverage)
-                        print(Response)
+        #     if leverage_map.get(each_symbol, None) is None:
+        #         def _change_leverage(_symbol, _leverage: int):
+        #             time.sleep(0.3)
+        #             try:
+        #                 Response = client.futures_change_leverage(
+        #                     symbol=_symbol, leverage=_leverage)
+        #                 print(Response)
 
-                        # 比下單資金更大才行
-                        if float(Response['maxNotionalValue']) > ready_to_order_size * symbol_map[each_symbol]['Close'].iloc[-1]:
-                            if float(Response['maxNotionalValue']) > balance_money * 2:
-                                _change_leverage(
-                                    _symbol=_symbol, _leverage=_leverage+1)
-                        else:
-                            Response = client.futures_change_leverage(
-                                symbol=_symbol, leverage=_leverage-1)
+        #                 # 比下單資金更大才行
+        #                 if float(Response['maxNotionalValue']) > ready_to_order_size * symbol_map[each_symbol]['Close'].iloc[-1]:
+        #                     if float(Response['maxNotionalValue']) > balance_money * 2:
+        #                         _change_leverage(
+        #                             _symbol=_symbol, _leverage=_leverage+1)
+        #                 else:
+        #                     Response = client.futures_change_leverage(
+        #                         symbol=_symbol, leverage=_leverage-1)
 
-                    except BinanceAPIException as e:
-                        if e.code == -4028:
-                            print(
-                                "Invalid leverage value. Please choose a valid leverage value.")
-                        elif e.code == -2027:
-                            print(
-                                "Exceeded the maximum allowable position at current leverage.")
-                        else:
-                            raise e
+        #             except BinanceAPIException as e:
+        #                 if e.code == -4028:
+        #                     print(
+        #                         "Invalid leverage value. Please choose a valid leverage value.")
+        #                 elif e.code == -2027:
+        #                     print(
+        #                         "Exceeded the maximum allowable position at current leverage.")
+        #                 else:
+        #                     raise e
 
-                _change_leverage(each_symbol, 1)
-            else:
-                # 如果商品已經存在 直接呼叫
-                # 判斷是否需要更改槓桿 不需要管正負號
+        #         _change_leverage(each_symbol, 1)
+        #     else:
+        #         # 如果商品已經存在 直接呼叫
+        #         # 判斷是否需要更改槓桿 不需要管正負號
 
-                Response = client.futures_change_leverage(
-                    symbol=each_symbol, leverage=leverage_map.get(each_symbol))
+        #         Response = client.futures_change_leverage(
+        #             symbol=each_symbol, leverage=leverage_map.get(each_symbol))
 
-                print("直接取得原始槓桿:", Response)
-                beginleverage = leverage_map.get(each_symbol)
-                while True:
-                    if (float(current_size[each_symbol]) + ready_to_order_size) * symbol_map[each_symbol]['Close'].iloc[-1] < float(Response['maxNotionalValue']):
-                        break
-                    time.sleep(0.3)
-                    beginleverage = beginleverage - 1
-                    Response = client.futures_change_leverage(
-                        symbol=each_symbol, leverage=beginleverage)
+        #         print("直接取得原始槓桿:", Response)
+        #         beginleverage = leverage_map.get(each_symbol)
+        #         while True:
+        #             if (float(current_size[each_symbol]) + ready_to_order_size) * symbol_map[each_symbol]['Close'].iloc[-1] < float(Response['maxNotionalValue']):
+        #                 break
+        #             time.sleep(0.3)
+        #             beginleverage = beginleverage - 1
+        #             Response = client.futures_change_leverage(
+        #                 symbol=each_symbol, leverage=beginleverage)
 
-                    print("調整槓桿:", Response)
+        #             print("調整槓桿:", Response)
 
         # ===========================================================================================
         # 還要測試下單
-        # for symbol, ready_to_order_size in order_finally.items():
-        #     Response = client.futures_change_leverage(
-        #         symbol=symbol, leverage=10)
-        #     print("新手無法使用超過20倍之槓桿")
-        #     print(Response)
+        for symbol, ready_to_order_size in order_finally.items():
+            Response = client.futures_change_leverage(
+                symbol=symbol, leverage=10)
+            print("新手無法使用超過20倍之槓桿")
+            print(Response)
 
         # ===========================================================================================
         for symbol, ready_to_order_size in order_finally.items():
@@ -520,7 +520,7 @@ class Binance_server(object):
                             symbol=symbol,
                             quantity=order_quantity)
 
-            print(args)
+            
             if formal:
                 # 丟入最後create 單裡面
                 result = client.futures_create_order(**args)
