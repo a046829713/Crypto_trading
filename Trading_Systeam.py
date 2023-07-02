@@ -24,8 +24,7 @@ from AppSetting import AppSetting
 # 建構輸入輸出檢查的decorator
 
 
-# 建構波動率策略
-# 優化資料庫儲存結構
+# 檢查交易資料是否不斷重新生成
 
 class Trading_systeam():
     def __init__(self) -> None:
@@ -64,6 +63,18 @@ class Trading_systeam():
         if sql_date != _todaydate:
             # 更新日資料 並且在回補完成後才繼續進行 即時行情的回補
             self.dataprovider_online.reload_all_data(time_type='D')
+        else:
+            # 判斷幣安裡面所有可交易的標的
+            allsymobl = self.dataprovider_online.Binanceapp.get_targetsymobls()
+            all_tables = self.dataprovider_online.SQL.read_Dateframe(
+                """show tables""")
+            all_tables = [
+                i for i in all_tables['Tables_in_crypto_data'].to_list() if '-f-d' in i]
+
+            # 當有新的商品出現之後,會導致有錯誤,錯誤修正
+            if list(filter(lambda x: False if x.lower() + "-f-d" in all_tables else True, allsymobl)):
+                self.dataprovider_online.reload_all_data(time_type='D')
+                
 
     def exportOptimizeResult(self):
         """
@@ -74,7 +85,7 @@ class Trading_systeam():
         df.set_index("strategyName", inplace=True)
         df.to_csv("optimizeresult.csv")
 
-    @BackUp.check_table_if_exits(table_name="optimizeresult")
+    @ BackUp.check_table_if_exits(table_name="optimizeresult")
     def importOptimizeResult(self):
         """
             將sql的優化資料導入
@@ -124,6 +135,8 @@ class Trading_systeam():
                 target_strategy_name = eachsymbol + "-15K-OB-VCP"
             elif optimize_strategy_type == 'DynamicStrategy':
                 target_strategy_name = eachsymbol + "-15K-OB-DY"
+            elif optimize_strategy_type == 'DynamicVCPStrategy':
+                target_strategy_name = eachsymbol + "-15K-OB-DYVCP"
 
             if target_strategy_name in strategylist:
                 continue
@@ -324,20 +337,22 @@ class AsyncTrading_systeam(Trading_systeam):
                     # 避免在self.symbol_map
                     symbol_map_copy = copy.deepcopy(self.symbol_map)
                     for name, each_df in symbol_map_copy.items():
+                        # 這裡的name 就是商品名稱,就是symbol_name EX:COMPUSDT,AAVEUSDT
                         original_df, eachCatchDf = self.datatransformer.mergeData(
                             name, each_df, all_data_copy)
                         self.symbol_map[name] = original_df
                         self.get_catch(name, eachCatchDf)
 
+                    
                     info = self.engine.get_symbol_info()
                     for strategy_name, symbol_name, freq_time in info:
                         # 取得可交易之資料
                         trade_data = self.dataprovider_online.get_trade_data(
                             self.symbol_map[symbol_name], freq_time)
-
-                        # ! 判斷是否要將trade_data資料減少
+                        
                         # 將資料注入
-                        self.engine.register_data(strategy_name, trade_data)
+                        # 由於最新不確定突破或跌破,所以只給入已發生結束的歷史資料
+                        self.engine.register_data(strategy_name, trade_data[:-1])
 
                     self.printfunc("開始進入回測")
                     # 註冊完資料之後進入回測
@@ -346,8 +361,7 @@ class AsyncTrading_systeam(Trading_systeam):
                         # 檢查資金水位
                         self.check_money_level()
                         self.checkout = True
-
-                    pf = self.engine.Portfolio_online_start()
+                        pf = self.engine.Portfolio_online_start()
 
                     # 將資料發送給GUI
                     self.SendClosedProfit(pf.order['ClosedPostionprofit'])
@@ -380,9 +394,9 @@ class AsyncTrading_systeam(Trading_systeam):
                 else:
                     time.sleep(1)
 
-                print("目前緊急交易次數:",AppSetting.get_emergency_times())
                 if self.dataprovider_online.Binanceapp.trade_count > AppSetting.get_emergency_times():
                     self.printfunc("緊急狀況處理-交易次數過多")
+                    self.line_alert.req_line_alert('緊急狀況處理-交易次數過多')
                     sys.exit()
 
             except Exception as e:
@@ -425,4 +439,5 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
 if __name__ == '__main__':
 
     app = Trading_systeam()
-    app.OptimizeAllSymbols('VCPStrategy')
+    # app.OptimizeAllSymbols('DynamicVCPStrategy')
+    app.checkDailydata()

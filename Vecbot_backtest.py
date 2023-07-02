@@ -55,6 +55,9 @@ class Optimizer(object):
         elif self.strategy.strategytype == 'DynamicStrategy':
             inputs_parameter = {'ATR_short1': np.arange(10, 1000, 10, dtype=np.float_),
                                 'ATR_long2': np.arange(10, 1000, 10, dtype=np.float_)}
+        elif self.strategy.strategytype == 'DynamicVCPStrategy':
+            inputs_parameter = {'std_n3': np.arange(10, 1000, 10, dtype=np.int16),
+                                'volume_n3': np.arange(10, 1000, 10, dtype=np.int16)}
 
         all_parameter = Hyper_optimization.generator_parameter(
             inputs_parameter)
@@ -73,6 +76,8 @@ class Optimizer(object):
                 continue
             if UI < 0:
                 continue
+
+            print([each_parameter, UI])
             out_list.append([each_parameter, UI])
 
         UI_list = [i[1] for i in out_list]
@@ -82,7 +87,7 @@ class Optimizer(object):
         # 當完全沒有參數可以決定的時候
         if UI_list:
             max_data = max(UI_list)
-
+            print(max_data)
             for i in out_list:
                 if i[1] == max_data:
                     self.result.update({"All_args": json.dumps(
@@ -97,67 +102,25 @@ class Optimizer(object):
             elif self.strategy.strategytype == 'DynamicStrategy':
                 self.result.update(
                     {"All_args": json.dumps({"ATR_short1": 300.0, "ATR_long2": 600.0})})
-
+            elif self.strategy.strategytype == 'DynamicVCPStrategy':
+                self.result.update(
+                    {"All_args": json.dumps({'std_n3': 50, 'volume_n3': 150})})
         return self.result
 
 
 class Quantify_systeam(object):
     def __init__(self) -> None:
-        """
-            設定基礎時間跟基本資訊
-        """
-
-        # self.setting = AppSetting.get_setting()['Quantify_systeam']['history']
-        # Attributes_data = self.setting['Attributes']
-
-        # self.strategy1 = Strategy_base(
-        #     'BTCUSDT-15K-OB', 'VCPStrategy', 'BTCUSDT', 15,  1.0,  0.002, 0.0025)
-
-        # ///////////////////////////////////////////////////
-        # strategyName2 = "COMPUSDT-15K-OB"
-        # strategyAt_Data2 = Attributes_data[strategyName2]
-
-        # self.strategy2 = Strategy_base(
-        #     strategyName2, strategyAt_Data2['symbol'], strategyAt_Data2['freq_time'], strategyAt_Data2['size'], strategyAt_Data2['fee'], strategyAt_Data2['slippage'], lookback_date=strategyAt_Data2['lookback_date'])
-
-        # ///////////////////////////////////////////////////
-        # strategyName3 = "SOLUSDT-15K-OB"
-        # strategyAt_Data3 = Attributes_data[strategyName3]
-
-        # self.strategy3 = Strategy_base(
-        #     strategyName3, strategyAt_Data3['symbol'], strategyAt_Data3['freq_time'], strategyAt_Data3['size'], strategyAt_Data3['fee'], strategyAt_Data3['slippage'], lookback_date=strategyAt_Data3['lookback_date'])
-
-        # ///////////////////////////////////////////////////
-        # strategyName4 = "AAVEUSDT-15K-OB"
-        # strategyAt_Data4 = Attributes_data[strategyName4]
-
-        # self.strategy4 = Strategy_base(
-        #     strategyName4, strategyAt_Data4['symbol'], strategyAt_Data4['freq_time'], strategyAt_Data4['size'], strategyAt_Data4['fee'], strategyAt_Data4['slippage'], lookback_date=strategyAt_Data4['lookback_date'])
-
-        # ///////////////////////////////////////////////////
-        # strategyName5 = "DEFIUSDT-15K-OB"
-        # strategyAt_Data5 = Attributes_data[strategyName5]
-
-        # self.strategy5 = Strategy_base(
-        #     strategyName5, strategyAt_Data5['symbol'], strategyAt_Data5['freq_time'], strategyAt_Data5['size'], strategyAt_Data5['fee'], strategyAt_Data5['slippage'], lookback_date=strategyAt_Data5['lookback_date'])
-
-        # parameter_data = self.setting['parameter']
-        # self.strategypa1 = parameter_data[strategyName1]
-        # self.strategypa2 = parameter_data[strategyName2]
-        # self.strategypa3 = parameter_data[strategyName3]
-        # self.strategypa4 = parameter_data[strategyName4]
-        # self.strategypa5 = parameter_data[strategyName5]
+        pass
 
     def Backtesting(self):
         """
             普通回測模式
         """
         ordermap = Np_Order_Strategy(Strategy_base(
-            'BTCUSDT-15K-OB-VCP', 'VCPStrategy', 'BTCUSDT', 15,  1.0,  0.002, 0.0025))
+            'ETHUSDT-15K-OB-VCP', 'VCPStrategy', 'ETHUSDT', 15,  1.0,  0.002, 0.0025))
 
         ordermap.set_parameter(
-            {"highest_n1": 250.0, "lowest_n2": 700.0,
-                "std_n3": 150.0, "volume_n3": 250.0}
+            {'std_n3': 10, 'volume_n3': 90}
         )
 
         pf = ordermap.logic_order()
@@ -175,7 +138,7 @@ class Quantify_systeam(object):
 
         for each_symbol in target_symobl:
             print(each_symbol)
-            for _strategy in ['TurtleStrategy','DynamicStrategy']:
+            for _strategy in ['VCPStrategy']:
                 if _strategy == 'TurtleStrategy':
                     strategyName = f"{each_symbol}-15K-OB"
                     eachargdata = argsData[strategyName]
@@ -209,7 +172,7 @@ class Quantify_systeam(object):
         self.Trader = PortfolioOnline(Portfolio_initcash=25000)
 
         self.Portfolio_online_register(
-            ['LTCUSDT', 'KSMUSDT','MKRUSDT', 'BTCUSDT', 'BTCDOMUSDT', 'COMPUSDT', 'XMRUSDT', 'YFIUSDT', 'AAVEUSDT', 'ETHUSDT', 'BCHUSDT'], pd.read_csv("optimizeresult.csv"))
+            ['LTCUSDT', 'KSMUSDT', 'MKRUSDT', 'BTCUSDT', 'BTCDOMUSDT', 'COMPUSDT', 'XMRUSDT', 'YFIUSDT', 'AAVEUSDT', 'ETHUSDT', 'BCHUSDT'], pd.read_csv("optimizeresult.csv"))
         pf = self.Trader.logic_order()
         Picture_maker(pf)
 
@@ -280,6 +243,7 @@ class Quantify_systeam_online(object):
 
     @TimeCountMsg.record_timemsg
     def Portfolio_online_start(self):
+        print("回測已經進入")
         pf = self.Trader.logic_order()
         return pf
 

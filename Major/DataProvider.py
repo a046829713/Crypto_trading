@@ -182,6 +182,10 @@ class DataProvider:
 
 
 class DataProvider_online(DataProvider):
+    def __init__(self):
+        super().__init__()
+
+
     def get_symboldata(self, symbol_name='BTCUSDT'):
         """
             回補原始資料 並且保存
@@ -194,6 +198,9 @@ class DataProvider_online(DataProvider):
     def get_trade_data(self, original_df, freq):
         new_df = self.transformer.get_tradedata(original_df, freq=freq)
         return new_df
+
+
+
 
 
 class AsyncDataProvider():

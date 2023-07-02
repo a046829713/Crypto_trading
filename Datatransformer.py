@@ -108,7 +108,7 @@ class Datatransformer:
 
         return diff_map
 
-    @TimeCountMsg.record_timemsg
+    
     def mergeData(self, symbol_name: str, lastdata: pd.DataFrame, socketdata: dict):
         """合併資料用來
 

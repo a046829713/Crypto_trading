@@ -71,7 +71,6 @@ class Strategy_base(object):
 
         # self.df.set_index("Datetime", inplace=True)
 
-
         # 及時使用資料庫模式
         self.df = DB_operate().read_Dateframe(
             f"select Datetime, Open, High, Low, Close, Volume from `{self.symbol_name.lower()}-{self.symobl_type.lower()}`;")
@@ -279,7 +278,6 @@ class Np_Order_Info(object):
         return ui_
 
 
-
 class Portfolio_Order_Info(Np_Order_Info):
     def __init__(self, datetime_list, orders, stragtegy_names, Portfolio_profit, Portfolio_ClosedPostionprofit, Portfolio_initcash, sizes):
         self.order = pd.DataFrame(datetime_list, columns=['Datetime'])
@@ -369,6 +367,13 @@ class Np_Order_Strategy(object):
             self.ATR_long2 = int(self.parameter.get(
                 'ATR_long2'))
 
+        elif self.strategy_info.strategytype == 'DynamicVCPStrategy':
+            self.std_n3 = int(self.parameter.get('std_n3')
+                              )
+            self.volume_n3 = int(self.parameter.get('volume_n3'))
+        
+        
+        
         if self.strategy_info.strategytype == 'TurtleStrategy':
 
             self.highestarr = vecbot_count.max_rolling(
@@ -378,17 +383,17 @@ class Np_Order_Strategy(object):
                 self.low_array, self.lowest_n2)
 
         elif self.strategy_info.strategytype == 'VCPStrategy':
+            self.highestarr = vecbot_count.max_rolling(
+                self.high_array, self.highest_n1)
+
+            self.lowestarr = vecbot_count.min_rolling(
+                self.low_array, self.lowest_n2)
+
             self.std_arr = vecbot_count.std_rolling(
                 self.close_array, self.std_n3)
-            
+
             self.Volume_avgarr = vecbot_count.mean_rolling(
                 self.volume_array, self.volume_n3)
-            
-            self.highestarr = vecbot_count.get_active_max_rolling(
-                self.high_array, vecbot_count.batch_normalize_and_scale(self.Volume_avgarr))
-
-            self.lowestarr = vecbot_count.get_active_min_rolling(
-                self.low_array, vecbot_count.batch_normalize_and_scale(self.Volume_avgarr))
 
         elif self.strategy_info.strategytype == 'DynamicStrategy':
 
@@ -406,6 +411,20 @@ class Np_Order_Strategy(object):
 
             self.lowestarr2 = vecbot_count.get_active_min_rolling(
                 self.low_array, vecbot_count.batch_normalize_and_scale(self.ATR_longArr))
+        
+        elif self.strategy_info.strategytype == 'DynamicVCPStrategy':
+            self.std_arr = vecbot_count.std_rolling(
+                self.close_array, self.std_n3)
+
+            self.Volume_avgarr = vecbot_count.mean_rolling(
+                self.volume_array, self.volume_n3)
+
+            self.highestarr = vecbot_count.get_active_max_rolling(
+                self.high_array, vecbot_count.batch_normalize_and_scale(self.Volume_avgarr))
+
+            self.lowestarr = vecbot_count.get_active_min_rolling(
+                self.low_array, vecbot_count.batch_normalize_and_scale(self.Volume_avgarr))
+
 
     def more_fast_logic_order(self):
         """
@@ -473,7 +492,7 @@ class Np_Order_Strategy(object):
             self.shiftorder = nb.TurtleStrategy(
                 self.high_array, self.highestarr, ATR_short, ATR_long, self.low_array, self.lowestarr)
 
-        elif self.strategy_info.strategytype == 'VCPStrategy':
+        elif self.strategy_info.strategytype in ['VCPStrategy', 'DynamicVCPStrategy']:
             self.shiftorder = nb.VCPStrategy(
                 self.std_arr, self.volume_array, self.Volume_avgarr, self.high_array, self.highestarr, self.low_array, self.lowestarr)
 
