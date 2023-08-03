@@ -439,5 +439,5 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
 if __name__ == '__main__':
 
     app = Trading_systeam()
-    # app.OptimizeAllSymbols('DynamicVCPStrategy')
-    app.checkDailydata()
+    app.OptimizeAllSymbols('DynamicVCPStrategy')
+    
