@@ -138,7 +138,9 @@ class Quantify_systeam(object):
 
         for each_symbol in target_symobl:
             print(each_symbol)
-            for _strategy in ['VCPStrategy']:
+            # 這邊用來決定要運行甚麼策略
+            for _strategy in ['DynamicStrategy','VCPStrategy']:
+                print("測試策略",_strategy)
                 if _strategy == 'TurtleStrategy':
                     strategyName = f"{each_symbol}-15K-OB"
                     eachargdata = argsData[strategyName]
@@ -158,7 +160,14 @@ class Quantify_systeam(object):
                     strategy = Strategy_base(
                         strategyName, eachargdata['Strategytype'], eachargdata['symbol'], eachargdata['freq_time'], eachargdata['size'], eachargdata['fee'], eachargdata['slippage'])
                     strategypa = json.loads(eachargdata['All_args'])
+                elif _strategy == 'DynamicVCPStrategy':
+                    strategyName = f"{each_symbol}-15K-OB-DYVCP" # 
+                    eachargdata = argsData[strategyName]
+                    strategy = Strategy_base(
+                        strategyName, eachargdata['Strategytype'], eachargdata['symbol'], eachargdata['freq_time'], eachargdata['size'], eachargdata['fee'], eachargdata['slippage'])
+                    strategypa = json.loads(eachargdata['All_args'])
 
+                
                 self.Trader.register(
                     strategy, strategypa)
 
@@ -171,6 +180,7 @@ class Quantify_systeam(object):
         print("開始模擬交易")
         self.Trader = PortfolioOnline(Portfolio_initcash=25000)
 
+        # ['LTCUSDT', 'KSMUSDT', 'MKRUSDT', 'BTCUSDT', 'BTCDOMUSDT', 'COMPUSDT', 'XMRUSDT', 'YFIUSDT', 'AAVEUSDT', 'ETHUSDT', 'BCHUSDT']
         self.Portfolio_online_register(
             ['LTCUSDT', 'KSMUSDT', 'MKRUSDT', 'BTCUSDT', 'BTCDOMUSDT', 'COMPUSDT', 'XMRUSDT', 'YFIUSDT', 'AAVEUSDT', 'ETHUSDT', 'BCHUSDT'], pd.read_csv("optimizeresult.csv"))
         pf = self.Trader.logic_order()
@@ -217,7 +227,8 @@ class Quantify_systeam_online(object):
         argsData = argsdf.to_dict('index')
 
         for each_symbol in target_symobl:
-            for _strategy in ["VCPStrategy", 'DynamicStrategy']:
+            # 這邊用來決定要運行甚麼策略
+            for _strategy in ["VCPStrategy", 'TurtleStrategy']:
                 if _strategy == 'TurtleStrategy':
                     strategyName = f"{each_symbol}-15K-OB"
                     eachargdata = argsData[strategyName]
@@ -231,6 +242,7 @@ class Quantify_systeam_online(object):
                     strategy = Strategy_atom(
                         strategyName, eachargdata['Strategytype'], eachargdata['symbol'], eachargdata['freq_time'], eachargdata['size'], eachargdata['fee'], eachargdata['slippage'])
                     strategypa = json.loads(eachargdata['All_args'])
+                
                 elif _strategy == 'DynamicStrategy':
                     strategyName = f"{each_symbol}-15K-OB-DY"
                     eachargdata = argsData[strategyName]

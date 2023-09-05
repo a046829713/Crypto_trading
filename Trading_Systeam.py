@@ -80,12 +80,12 @@ class Trading_systeam():
         """
             將sql的優化資料匯出
         """
-
+        print("測試進入")
         df = self.dataprovider_online.SQL.read_Dateframe("optimizeresult")
         df.set_index("strategyName", inplace=True)
         df.to_csv("optimizeresult.csv")
 
-    @ BackUp.check_table_if_exits(table_name="optimizeresult")
+    @BackUp.check_table_if_exits(table_name="optimizeresult")
     def importOptimizeResult(self):
         """
             將sql的優化資料導入
@@ -125,9 +125,9 @@ class Trading_systeam():
             "select strategyName, symbol from optimizeresult")
         strategylist = strategydf['strategyName'].to_list()
 
+        print(strategylist)
         # 使用 Optimizer # 建立DB
         for eachsymbol in all_symbols:
-            print(eachsymbol)
             # 判斷每次要優化的策略名稱
             if optimize_strategy_type == 'TurtleStrategy':
                 target_strategy_name = eachsymbol + "-15K-OB"
@@ -151,7 +151,6 @@ class Trading_systeam():
                         result, optimize_strategy_type)
                 )
             else:
-
                 self.dataprovider_online.SQL.change_db_data(
                     SqlSentense.insert_optimizeresult(result, optimize_strategy_type))
 
@@ -386,7 +385,7 @@ class AsyncTrading_systeam(Trading_systeam):
 
                     if order_finally:
                         self.dataprovider_online.Binanceapp.execute_orders(
-                            order_finally, self.line_alert, current_size=current_size, symbol_map=self.symbol_map, formal=False)
+                            order_finally, self.line_alert, current_size=current_size, symbol_map=self.symbol_map, formal=True)
 
                     self.printfunc("時間差", time.time() - begin_time)
                     last_min = datetime.now().minute

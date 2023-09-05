@@ -223,11 +223,13 @@ class vecbot_count():
             strides = a.strides + (a.strides[-1],)
             rolling = np.lib.stride_tricks.as_strided(
                 a, shape=shape, strides=strides)
+            
             max_arr[window-1:] = np.roll(np.mean(rolling, axis=1), 1)
             max_arr[:window] = np.nan
             return max_arr
         except Exception as e:
             if "negative dimensions are not allowed" in str(e):
+                print(a)
                 return 0
             else:
                 raise e

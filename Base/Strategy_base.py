@@ -371,7 +371,7 @@ class Np_Order_Strategy(object):
             self.std_n3 = int(self.parameter.get('std_n3')
                               )
             self.volume_n3 = int(self.parameter.get('volume_n3'))
-        
+            print("參數檢查:",self.std_n3,self.volume_n3)
         
         
         if self.strategy_info.strategytype == 'TurtleStrategy':
