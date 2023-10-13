@@ -1,4 +1,5 @@
 import matplotlib
+matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -9,7 +10,6 @@ from matplotlib import cbook  # 引入cbook以做為距離計算
 
 # 初始化
 plt.style.use('seaborn-deep')
-
 
 class Picture_maker():
     def __init__(self, Order_info: Np_Order_Info) -> None:

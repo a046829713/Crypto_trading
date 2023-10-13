@@ -39,11 +39,26 @@ class Trading_systeam():
         self.new_symbol_map = {}
         # formal正式啟動環境
         self.dataprovider_online = DataProvider_online()
+        
         self.engine = self.buildEngine()
         self.line_alert = LINE_Alert()
         self.checkout = False
         self.datatransformer = Datatransformer()
+        self.check_all_need_table()
 
+    def check_all_need_table(self):
+        """
+            感覺設計上,一開始在建立trading_systeam的時候,就要建立檢查table的機制,感覺會比用裝飾器來檢查資料庫更好
+
+        Returns:
+            _type_: _description_
+        """
+
+        BackUp.check_all_need_table()
+    
+    
+    
+    
     @BackUp.check_table_if_exits('lastinitcapital')
     def buildEngine(self):
         capital = self.dataprovider_online.SQL.get_db_data(
@@ -416,6 +431,7 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
         super().__init__()
 
     def printfunc(self, *args):
+        # 取代AsyncTrading_systeam 裡面的printfunc
         if len(self.all_msg) > 20:
             self.all_msg = []
             self.GUI.clear_info_signal.emit()
@@ -438,5 +454,7 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
 if __name__ == '__main__':
 
     app = Trading_systeam()
-    app.OptimizeAllSymbols('DynamicVCPStrategy')
+
+    
+    app.OptimizeAllSymbols('TurtleStrategy')
     

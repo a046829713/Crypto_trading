@@ -317,6 +317,31 @@ class Binance_server(object):
         return out_put
 
     @SetConnectCLose
+    def getfutures_funding_rate(self, client: Client):
+        """
+        
+            取得資金費率
+        Args:
+            client (Client): _description_
+        """
+        data = client.futures_mark_price()
+        
+        out_list = [(_each_data['symbol'],_each_data['lastFundingRate']) for _each_data in data]
+
+        sort_example = sorted(out_list, key=lambda x: float(x[1]),reverse=True)
+        
+        sort_example = [filter_symbol for filter_symbol in sort_example if float(filter_symbol[1]) <0]
+        
+        can_trade_symbol_low_level = self.get_targetsymobls()
+        
+        sort_example = [filter_symbol for filter_symbol in sort_example if filter_symbol[0] in can_trade_symbol_low_level]
+        
+        return sort_example
+    
+    
+    
+    
+    @SetConnectCLose
     def getfutures_account_name(self, client: Client):
         """
             取得合約部位 >> 裡面還可以看到其他資訊
@@ -534,48 +559,83 @@ class Binance_server(object):
             下單完成之後伺服器會回傳一串dict
             保存至本地磚資料夾
 
+            2023/10/9 發現格式更改,故決定將其改成字串保存減少報錯的機率
+            
+            1. 將原始的table刪除
+                CREATE TABLE `crypto_data`.`orderresult`(
+                `orderId` BIGINT NOT NULL,
+                `symbol` varchar(255) NOT NULL,
+                `status` varchar(255) NOT NULL,
+                `clientOrderId` varchar(255) NOT NULL,
+                `price` varchar(255) NOT NULL,
+                `avgPrice` varchar(255) NOT NULL,
+                `origQty` varchar(255) NOT NULL,
+                `executedQty` varchar(255) NOT NULL,
+                `cumQty` varchar(255) NOT NULL,
+                `cumQuote` varchar(255) NOT NULL,
+                `timeInForce` varchar(255) NOT NULL,
+                `type` varchar(255) NOT NULL,
+                `reduceOnly` BOOLEAN NOT NULL,
+                `closePosition` BOOLEAN NOT NULL,
+                `side` varchar(255) NOT NULL,
+                `positionSide` varchar(255) NOT NULL,
+                `stopPrice` varchar(255) NOT NULL,
+                `workingType` varchar(255) NOT NULL,
+                `priceProtect` BOOLEAN NOT NULL,
+                `origType` varchar(255) NOT NULL,
+                `updateTime` BIGINT NOT NULL,
+                PRIMARY KEY(`orderId`)
+                );
+
+            2. 建立新的table
+                CREATE TABLE `crypto_data`.`orderresult`(
+                `orderId` BIGINT NOT NULL,
+                `order_info` varchar(500) NOT NULL,
+                PRIMARY KEY(`orderId`)
+                );
         Args:
-            order_data (dict): # {'orderId': 22019361762, 'symbol': 'SOLUSDT', 'status': 'NEW', 'clientOrderId': 'yfobvBPbosaT0Zz38XNxHv', 'price': '0', 'avgPrice': '0.0000', 'origQty': '1', 'executedQty': '0', 'cumQty': '0', 'cumQuote': '0', 'timeInForce': 'GTC', 'type': 'MARKET', 'reduceOnly': False, 'closePosition': False, 'side': 'BUY', 'positionSide': 'BOTH', 'stopPrice': '0', 'workingType': 'CONTRACT_PRICE', 'priceProtect': False, 'origType': 'MARKET', 'updateTime': 1675580975203}
+            order_data (dict): # 
+            版本1:{'orderId': 22019361762, 'symbol': 'SOLUSDT', 'status': 'NEW', 'clientOrderId': 'yfobvBPbosaT0Zz38XNxHv', 'price': '0', 'avgPrice': '0.0000', 'origQty': '1', 'executedQty': '0', 'cumQty': '0', 'cumQuote': '0', 'timeInForce': 'GTC', 'type': 'MARKET', 'reduceOnly': False, 'closePosition': False, 'side': 'BUY', 'positionSide': 'BOTH', 'stopPrice': '0', 'workingType': 'CONTRACT_PRICE', 'priceProtect': False, 'origType': 'MARKET', 'updateTime': 1675580975203}
+            
+            # 實際拿到的respone(24個欄位)
+            (15154865689, 'ZECUSDT', 'NEW', '7Xvs36qJXADB3vbPtz6xCZ', '0.00', '0.00', '0.609', '0.000', '0.000', '0.00000', 'GTC', 'MARKET', False, False, 'BUY', 'BOTH', '0.00', 'CONTRACT_PRICE', False, 'MARKET', 'NONE', 'NONE', 0, 1696819981601);
+        
+            當下官方的文檔為26個欄位:
+            {
+                "clientOrderId": "testOrder",
+                "cumQty": "0",
+                "cumQuote": "0",
+                "executedQty": "0",
+                "orderId": 22542179,
+                "avgPrice": "0.00000",
+                "origQty": "10",
+                "price": "0",
+                "reduceOnly": False,
+                "side": "BUY",
+                "positionSide": "SHORT",
+                "status": "NEW",
+                "stopPrice": "9300",       
+                "closePosition": False,   
+                "symbol": "BTCUSDT",
+                "timeInForce": "GTD",
+                "type": "TRAILING_STOP_MARKET",
+                "origType": "TRAILING_STOP_MARKET",
+                "activatePrice": "9020",   
+                "priceRate": "0.3",         
+                "updateTime": 1566818724722,
+                "workingType": "CONTRACT_PRICE",
+                "priceProtect": False,          
+                "priceMatch": "NONE",             
+                "selfTradePreventionMode": "NONE", 
+                "goodTillDate": 1693207680000      
+            }
         """
         try:
             SQL = SQL_operate.DB_operate()
-            getAllTablesName = SQL.get_db_data('show tables;')
-            getAllTablesName = [y[0] for y in getAllTablesName]
-
-            if 'orderresult' not in getAllTablesName:
-                SQL.change_db_data(
-                    """
-                        CREATE TABLE `crypto_data`.`orderresult`(
-                        `orderId` BIGINT NOT NULL,
-                        `symbol` varchar(255) NOT NULL,
-                        `status` varchar(255) NOT NULL,
-                        `clientOrderId` varchar(255) NOT NULL,
-                        `price` varchar(255) NOT NULL,
-                        `avgPrice` varchar(255) NOT NULL,
-                        `origQty` varchar(255) NOT NULL,
-                        `executedQty` varchar(255) NOT NULL,
-                        `cumQty` varchar(255) NOT NULL,
-                        `cumQuote` varchar(255) NOT NULL,
-                        `timeInForce` varchar(255) NOT NULL,
-                        `type` varchar(255) NOT NULL,
-                        `reduceOnly` BOOLEAN NOT NULL,
-                        `closePosition` BOOLEAN NOT NULL,
-                        `side` varchar(255) NOT NULL,
-                        `positionSide` varchar(255) NOT NULL,
-                        `stopPrice` varchar(255) NOT NULL,
-                        `workingType` varchar(255) NOT NULL,
-                        `priceProtect` BOOLEAN NOT NULL,
-                        `origType` varchar(255) NOT NULL,
-                        `updateTime` BIGINT NOT NULL,
-                        PRIMARY KEY(`orderId`)
-                        );
-                    """
-                )
-
-            data = list(order_data.keys())
-            out_data = str(tuple([order_data[each_key] for each_key in data]))
+            orderId = order_data.pop('orderId')
+            order_info = json.dumps(order_data)
             SQL.change_db_data(
-                f""" INSERT INTO `orderresult` VALUES {out_data};""")
+                f""" INSERT INTO `orderresult` (`orderId`, `order_info`) VALUES ({orderId}, '{order_info}');""")
         except:
             debug.print_info(error_msg="保存系統order單錯誤")
 

@@ -6,13 +6,14 @@ from Count import nb
 import copy
 from Database.SQL_operate import DB_operate
 from Datatransformer import Datatransformer
-import inspect
+
+
 
 
 class Strategy_base(object):
     """
-    取得策略的基本資料及訊息
-    回測使用 跟atom 不相同
+        取得策略的基本資料及訊息
+        回測使用 跟atom 不相同
     """
 
     def __init__(self,
@@ -25,7 +26,8 @@ class Strategy_base(object):
                  slippage: float,
                  init_cash: float = 10000.0,
                  symobl_type: str = "Futures",
-                 lookback_date: str = None) -> None:
+                 lookback_date: str = None,
+                 use_data:bool = True) -> None:
         """
         to get strategy info msg
 
@@ -50,8 +52,9 @@ class Strategy_base(object):
         self.init_cash = init_cash
         self.symobl_type = symobl_type
         self.lookback_date = lookback_date
-        self.data, self.array_data = self.simulationdata()
-        self.datetimes = Event_count.get_index(self.data)
+        if use_data:
+            self.data, self.array_data = self.simulationdata()
+            self.datetimes = Event_count.get_index(self.data)
 
     def simulationdata(self):
         """
@@ -67,7 +70,7 @@ class Strategy_base(object):
 
         # 歷史資料模式
         # self.df = pd.read_csv(
-        #     f"{self.symbol_name}-{self.symobl_type}-{self.freq_time}-Min.csv")
+        #     f"DQN\{self.symbol_name}-{self.symobl_type}-{self.freq_time}-Min.csv")
 
         # self.df.set_index("Datetime", inplace=True)
 
@@ -79,6 +82,7 @@ class Strategy_base(object):
 
         self.df = Datatransformer().get_tradedata(
             original_df=self.df, freq=self.freq_time)
+        
         self.df.index = self.df.index.astype(str)
 
         if self.lookback_date:
@@ -510,9 +514,12 @@ class Np_Order_Strategy(object):
         # 取得order單
         self.get_shiftorder()
 
+        print(self.shiftorder[:500])
         # 轉換參數
         params = self.change_params()
 
+        
+        print(params)
         orders, marketpostion_array, entryprice_array, buy_Fees_array, sell_Fees_array, OpenPostionprofit_array, ClosedPostionprofit_array, profit_array, Gross_profit_array, Gross_loss_array, all_Fees_array, netprofit_array = nb.logic_order(
             **params
         )
@@ -673,7 +680,6 @@ class PortfolioTrader(object):
 
                                 size = self.risk_model(
                                     ClosedPostionprofit[-1], rsikpercent, each_strategy_value['avgloss'])
-
                         else:
                             size = 0
                         # size = 1
@@ -761,3 +767,6 @@ class PortfolioOnline(PortfolioTrader):
 
         self.strategys_parameter.update(
             {strategy_info.strategy_name: parameter})
+
+
+

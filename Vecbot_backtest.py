@@ -120,7 +120,7 @@ class Quantify_systeam(object):
             'ETHUSDT-15K-OB-VCP', 'VCPStrategy', 'ETHUSDT', 15,  1.0,  0.002, 0.0025))
 
         ordermap.set_parameter(
-            {'std_n3': 10, 'volume_n3': 90}
+            {"highest_n1": 300.0, "lowest_n2": 600.0, "std_n3": 50.0, "volume_n3": 150.0}
         )
 
         pf = ordermap.logic_order()
@@ -280,4 +280,4 @@ class Quantify_systeam_online(object):
 
 if __name__ == "__main__":
     systeam = Quantify_systeam()
-    systeam.PortfolioBacktesting()
+    systeam.Backtesting()

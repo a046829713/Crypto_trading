@@ -51,22 +51,33 @@ class AppSetting():
 
         return data
 
-
     @staticmethod
     def get_UserDeadline():
         data = {
-            "48d326d82ea14efc6710e4043722c204ee230b001f0524d1f7b3f37091542136":"2023-12-31",
-            "094cb2eaec7a7eb0eb8f7dce3a5e1d082af20e9424ac70413ff79fc47d9dcecb":"2023-09-10" # UTTER
+            "48d326d82ea14efc6710e4043722c204ee230b001f0524d1f7b3f37091542136": "2023-12-31",
+            "094cb2eaec7a7eb0eb8f7dce3a5e1d082af20e9424ac70413ff79fc47d9dcecb": "2023-10-10"  # UTTER
         }
-        
-        
+
         return data
-    
-    @staticmethod
-    def get_version() ->str:
-        return '2023-07-02'
-    
 
     @staticmethod
-    def get_emergency_times() ->str:
+    def get_version() -> str:
+        return '2023-07-02'
+
+    @staticmethod
+    def get_emergency_times() -> str:
         return 20
+
+    @staticmethod
+    def get_DQN_setting() -> str:
+        setting_data = {
+            "SAVES_PATH": "saves", # 儲存的路徑
+            "LEARNING_RATE": 0.0001,  # optim 的學習率,
+            "BARS_COUNT": 20, # 用來準備要取樣的特徵長度,例如:開高低收成交量各取10根K棒
+            "VOLUMES_TURNON": True, # 特徵是否要採用成交量
+            'BATCH_SIZE' : 32, #  每次要從buffer提取的資料筆數,用來給神經網絡更新權重
+            'DEFAULT_COMMISSION_PERC':0.002,  # 手續費用(傭金)(乘上100 類神經網絡會更有反應)(影響reward)
+            "DEFAULT_SLIPPAGE": 0.0025, #滑價
+            "REWARD_ON_CLOSE" : True, # 結束之後才給獎勵
+        }
+        return setting_data

@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import Optional
 import os
 from Major.DataProvider import DataProvider_online, DataProvider
+from Database import SQL_operate
 def check_file(filename: str):
     """ 檢查檔案是否存在 否則創建 """
     if not os.path.exists(filename):
@@ -72,3 +73,21 @@ def check_table_if_exits(table_name: Optional[str] = None):
             return func(*args, **kwargs)
         return warpper
     return _check_table_if_exits
+
+
+def check_all_need_table():
+    SQL = SQL_operate.DB_operate()
+    dataProvider = DataProvider()
+    getAllTablesName = dataProvider.SQL.get_db_data('show tables;')
+    getAllTablesName = [y[0] for y in getAllTablesName]
+    
+    if 'orderresult' not in getAllTablesName:
+        SQL.change_db_data(
+            """
+                CREATE TABLE `crypto_data`.`orderresult`(
+                    `orderId` BIGINT NOT NULL,
+                    `order_info` TEXT NOT NULL,
+                    PRIMARY KEY(`orderId`)
+                );
+            """
+        )

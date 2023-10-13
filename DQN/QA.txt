@@ -1,0 +1,13 @@
+Q : 我發現在訓練(train_model.py) 的時候,environ的State會進入兩次
+
+A: 因為其中是有兩個環境會用到,    
+    env = environ.StocksEnv(stock_data, bars_count=BARS_COUNT, reset_on_close=True, state_1d=False, volumes=False)
+    env_tst = environ.StocksEnv(stock_data, bars_count=BARS_COUNT, reset_on_close=True, state_1d=False)
+
+
+Q : 我要如何訓練更多的標的物?
+A : 在 StocksEnv 這個object 裡面,reset,其實訓練的時候就會隨機取用商品,所以只要直接丟入不同的商品dict即可
+
+
+Q : 是否實驗了每次給予獎勵,跟結束才給予獎勵的區別?
+A : 目前尚未實驗,因為目前尚未思考如何給予(每次給予獎勵)的滑價處罰
