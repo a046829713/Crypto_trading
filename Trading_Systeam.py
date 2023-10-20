@@ -9,14 +9,13 @@ import pandas as pd
 from utils import BackUp, Debug_tool
 import logging
 from Database.SQL_operate import SqlSentense
-import asyncio
 from Datatransformer import Datatransformer
 import os
 from binance.exceptions import BinanceAPIException
 from binance import BinanceSocketManager
 import copy
 from AppSetting import AppSetting
-
+from DQN.lib import Backtest
 
 # 增加總投組獲利平倉，或是單一策略平倉?
 # 增加匯出 optimizeresult 的功能,或許可以增加GUI
@@ -25,6 +24,10 @@ from AppSetting import AppSetting
 
 
 # 檢查交易資料是否不斷重新生成
+
+
+
+
 
 class Trading_systeam():
     def __init__(self) -> None:
@@ -39,7 +42,7 @@ class Trading_systeam():
         self.new_symbol_map = {}
         # formal正式啟動環境
         self.dataprovider_online = DataProvider_online()
-        
+
         self.engine = self.buildEngine()
         self.line_alert = LINE_Alert()
         self.checkout = False
@@ -55,15 +58,21 @@ class Trading_systeam():
         """
 
         BackUp.check_all_need_table()
-    
-    
-    
-    
+
     @BackUp.check_table_if_exits('lastinitcapital')
-    def buildEngine(self):
+    def buildEngine(self, RL_model: bool = True):
+        """ 用來創建回測系統
+
+        Returns:
+            _type_: _description_
+        """
         capital = self.dataprovider_online.SQL.get_db_data(
             "select *  from `lastinitcapital`;")
-        return Quantify_systeam_online(capital[0][-1])
+
+        if RL_model:
+            return Backtest.Quantify_systeam_DQN(capital[0][-1], formal=True)
+        # else:
+        #     return Quantify_systeam_online(capital[0][-1])
 
     def checkDailydata(self):
         """
@@ -89,13 +98,11 @@ class Trading_systeam():
             # 當有新的商品出現之後,會導致有錯誤,錯誤修正
             if list(filter(lambda x: False if x.lower() + "-f-d" in all_tables else True, allsymobl)):
                 self.dataprovider_online.reload_all_data(time_type='D')
-                
 
     def exportOptimizeResult(self):
         """
             將sql的優化資料匯出
         """
-        print("測試進入")
         df = self.dataprovider_online.SQL.read_Dateframe("optimizeresult")
         df.set_index("strategyName", inplace=True)
         df.to_csv("optimizeresult.csv")
@@ -190,7 +197,6 @@ class Trading_systeam():
 
         """
         for each_symbol in self.dataprovider_online.Binanceapp.get_targetsymobls():
-            print(each_symbol)
             # 檢查是否在資料庫裏面
             symbol_name_list = self.dataprovider_online.SQL.get_db_data(
                 'show tables;')
@@ -222,6 +228,7 @@ class Trading_systeam():
         all_symbols = self.dataprovider_online.get_symbols_history_data(
             time_type='D')
         example = get_symobl_filter_useful(all_symbols)
+        
         return example
 
     def change_money(self):
@@ -311,6 +318,7 @@ class AsyncTrading_systeam(Trading_systeam):
     def process_target_symbol(self):
         # 取得要交易的標的
         market_symobl = list(map(lambda x: x[0], self.get_target_symbol()))
+        print(market_symobl)
         # 取得binance實際擁有標的,合併 (因為原本有部位的也要持續追蹤)
         self.targetsymbol = self.datatransformer.target_symobl(
             market_symobl, self.dataprovider_online.Binanceapp.getfutures_account_name())
@@ -323,8 +331,8 @@ class AsyncTrading_systeam(Trading_systeam):
 
     def register_portfolio(self):
         # 初始化投資組合 (傳入要買的標的物, 並且傳入相關參數)
-        self.engine.Portfolio_online_register(
-            self.targetsymbol, self.dataprovider_online.SQL.read_Dateframe("optimizeresult"))
+        self.engine.Portfolio_register(
+            self.targetsymbol)
         self.symbol_name: set = self.engine.get_symbol_name()
         self.SendProcessBarUpdate(80)
 
@@ -357,25 +365,27 @@ class AsyncTrading_systeam(Trading_systeam):
                         self.symbol_map[name] = original_df
                         self.get_catch(name, eachCatchDf)
 
-                    
                     info = self.engine.get_symbol_info()
                     for strategy_name, symbol_name, freq_time in info:
                         # 取得可交易之資料
                         trade_data = self.dataprovider_online.get_trade_data(
                             self.symbol_map[symbol_name], freq_time)
-                        
+
                         # 將資料注入
-                        # 由於最新不確定突破或跌破,所以只給入已發生結束的歷史資料
-                        self.engine.register_data(strategy_name, trade_data[:-1])
+                        # 由於最新不確定突破或跌破,所以只給入已發生結束的歷史資料                        
+                        # 嚴重注意,這會和類神經網絡的最後一根K棒有衝突(已經拿掉了一次)
+                        self.engine.register_data(
+                            strategy_name, trade_data[:-1])
 
                     self.printfunc("開始進入回測")
                     # 註冊完資料之後進入回測
-                    pf = self.engine.Portfolio_online_start()
+                    pf = self.engine.Portfolio_start()
+                    
                     if not self.checkout:
                         # 檢查資金水位
                         self.check_money_level()
                         self.checkout = True
-                        pf = self.engine.Portfolio_online_start()
+                        pf = self.engine.Portfolio_start()
 
                     # 將資料發送給GUI
                     self.SendClosedProfit(pf.order['ClosedPostionprofit'])
@@ -400,7 +410,7 @@ class AsyncTrading_systeam(Trading_systeam):
 
                     if order_finally:
                         self.dataprovider_online.Binanceapp.execute_orders(
-                            order_finally, self.line_alert, current_size=current_size, symbol_map=self.symbol_map, formal=True)
+                            order_finally, self.line_alert, current_size=current_size, symbol_map=self.symbol_map, formal=False)
 
                     self.printfunc("時間差", time.time() - begin_time)
                     last_min = datetime.now().minute
@@ -452,9 +462,4 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
 
 
 if __name__ == '__main__':
-
-    app = Trading_systeam()
-
-    
-    app.OptimizeAllSymbols('TurtleStrategy')
-    
+    app = AsyncTrading_systeam()

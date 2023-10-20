@@ -4,11 +4,12 @@ import numpy as np
 import torch
 import torch.nn as nn
 import pandas as pd
-from Count.Base import Event_count, vecbot_count
+from Count.Base import Event_count
 import numpy as np
 import pandas as pd
 from Database.SQL_operate import DB_operate
 from Datatransformer import Datatransformer
+from utils.TimeCountMsg import TimeCountMsg
 
 
 class RewardTracker:
@@ -144,6 +145,19 @@ def calc_loss(batch, net, tgt_net, gamma, device="cpu"):
     return nn.MSELoss()(state_action_values, expected_state_action_values)
 
 
+def update_eval_states(buffer, STATES_TO_EVALUATE):
+    """    
+        用來定時更新驗證資料
+    Args:
+        buffer (_type_): _description_
+        STATES_TO_EVALUATE (_type_): _description_
+    """
+    eval_states = buffer.sample(STATES_TO_EVALUATE)
+    eval_states = [np.array(transition.state, copy=False)
+                   for transition in eval_states]
+    return np.array(eval_states, copy=False)
+
+
 class Strategy_base_DQN(object):
     """ 
         原本這個類別我是放置在Base.Strategy_base裡面,沒有merge原本的程序是怕說之後運行會產生錯誤,
@@ -165,9 +179,11 @@ class Strategy_base_DQN(object):
                  size: float,
                  fee: float,
                  slippage: float,
+                 model_count_path: str,
                  init_cash: float = 10000.0,
                  symobl_type: str = "Futures",
-                 lookback_date: str = None) -> None:
+                 lookback_date: str = None,
+                 formal: bool = False) -> None:
         self.strategy_name = strategy_name
         self.strategytype = strategytype
         self.symbol_name = symbol_name
@@ -175,31 +191,28 @@ class Strategy_base_DQN(object):
         self.size = size
         self.fee = fee
         self.slippage = slippage
+        self.model_count_path = model_count_path
         self.init_cash = init_cash
         self.symobl_type = symobl_type
         self.lookback_date = lookback_date
+        self.formal = formal
 
-
-    def simulationdata(self, fast_type: bool = False):
+    def check_if_df_exits(self, fast_type: bool = False):
         """
 
-        Args:
-            data_type (str, optional): _description_. Defaults to 'event_data'.
-
+            依然會有兩種行為
         Returns:
             _type_: _description_
         """
         if self.symobl_type == 'Futures':
             self.symobl_type = "F"
 
-        # 歷史資料模式
         if fast_type:
             self.df = pd.read_csv(
                 f"DQN\{self.symbol_name}-{self.symobl_type}-{self.freq_time}-Min.csv")
-
             self.df.set_index("Datetime", inplace=True)
         else:
-            # 及時使用資料庫模式
+            # 及時使用資料庫模式(並非正式交易)
             self.df = DB_operate().read_Dateframe(
                 f"select Datetime, Open, High, Low, Close, Volume from `{self.symbol_name.lower()}-{self.symobl_type.lower()}`;")
 
@@ -210,16 +223,26 @@ class Strategy_base_DQN(object):
 
             self.df.index = self.df.index.astype(str)
 
+    def simulationdata(self, fast_type: bool = False):
+        """
+
+        Args:
+            data_type (str, optional): _description_. Defaults to 'event_data'.
+
+        Returns:
+            _type_: _description_
+        """
+
+        # 非正式交易的時候,要自己取得資料
+        if not self.formal:
+            self.check_if_df_exits(fast_type=fast_type)
+
         if self.lookback_date:
             self.df = self.df[self.df.index > self.lookback_date]
 
         return self.df.to_dict("index"), self.df.to_numpy()
 
-    def get_datetimes(self):
-        # 這邊應該要在優化 =====================================
-        self.data, self.array_data = self.simulationdata()
-        # 這邊應該要在優化 =====================================
-        
-        self.datetimes = Event_count.get_index(self.data)
-                
+    def get_datetimes(self, fast_type: bool = False) -> list:
+        self.check_if_df_exits(fast_type=fast_type)
+        self.datetimes = self.df.index.to_list()
         return self.datetimes

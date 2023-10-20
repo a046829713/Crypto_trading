@@ -84,6 +84,7 @@ class DQNAgent(BaseAgent):
             states = self.preprocessor(states)
             if torch.is_tensor(states):
                 states = states.to(self.device)
+                
         q_v = self.dqn_model(states)
         q = q_v.data.cpu().numpy()
         actions = self.action_selector(q)

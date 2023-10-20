@@ -9,10 +9,13 @@ import torch.nn.functional as F
 class NoisyLinear(nn.Linear):
     def __init__(self, in_features, out_features, sigma_init=0.017, bias=True):
         super(NoisyLinear, self).__init__(in_features, out_features, bias=bias)
-        self.sigma_weight = nn.Parameter(torch.full((out_features, in_features), sigma_init))
-        self.register_buffer("epsilon_weight", torch.zeros(out_features, in_features))
+        self.sigma_weight = nn.Parameter(torch.full(
+            (out_features, in_features), sigma_init))
+        self.register_buffer(
+            "epsilon_weight", torch.zeros(out_features, in_features))
         if bias:
-            self.sigma_bias = nn.Parameter(torch.full((out_features,), sigma_init))
+            self.sigma_bias = nn.Parameter(
+                torch.full((out_features,), sigma_init))
             self.register_buffer("epsilon_bias", torch.zeros(out_features))
         self.reset_parameters()
 
@@ -32,12 +35,12 @@ class NoisyLinear(nn.Linear):
 
 class SimpleFFDQN(nn.Module):
     """
-    
+
     """
+
     def __init__(self, obs_len, actions_n):
         super(SimpleFFDQN, self).__init__()
 
-        
         # 值函數部分 (Value function):
         # 這部分是Dueling DQN中的狀態價值函數部分。
         # 給定一個狀態，它嘗試估計該狀態的值。它由三層全連接層和ReLU激活函數組成。
@@ -49,7 +52,6 @@ class SimpleFFDQN(nn.Module):
             nn.Linear(512, 1)
         )
 
-        
         # 優勢函數部分 (Advantage function):
         # 這部分是Dueling DQN中的優勢函數部分。給定一個狀態，它嘗試估計每個動作的優勢。
         # 結構和值函數部分非常相似，但最後一層的輸出大小為actions_n，代表每個動作的優勢值。
@@ -64,7 +66,7 @@ class SimpleFFDQN(nn.Module):
     def forward(self, x):
         # Q(s,a)=V(s)+(A(s,a)−mean(A(s,a′ )))
         # 這是模型的前向傳播方法。給定一個輸入狀態x，它先計算該狀態的價值val和每個動作的優勢值adv。
-        # 然後，根據Dueling DQN的公式，它結合這兩個部分來計算動作價值函數(Q函數)的估計。        
+        # 然後，根據Dueling DQN的公式，它結合這兩個部分來計算動作價值函數(Q函數)的估計。
 
         val = self.fc_val(x)
         adv = self.fc_adv(x)
@@ -73,10 +75,20 @@ class SimpleFFDQN(nn.Module):
 
 class DQNConv1D(nn.Module):
     def __init__(self, shape, actions_n):
+        """捲積網路的參數詳解
+            in_channels = 特徵的數量
+            out_channels 出來的特徵數量
+            kernel_size (濾波器的大小)
+            stride = (移動步長)
+            padding =補0
+        Args:
+            shape (_type_): _description_
+            actions_n (_type_): _description_
+        """
         super(DQNConv1D, self).__init__()
 
         self.conv = nn.Sequential(
-            nn.Conv1d(shape[0], 128, 5),
+            nn.Conv1d(shape[0], 128, kernel_size=5),
             nn.ReLU(),
             nn.Conv1d(128, 128, 5),
             nn.ReLU(),
@@ -97,11 +109,20 @@ class DQNConv1D(nn.Module):
         )
 
     def _get_conv_out(self, shape):
+        """用來計算flatten後的參數個數
+
+        Args:
+            shape (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         o = self.conv(torch.zeros(1, *shape))
         return int(np.prod(o.size()))
 
     def forward(self, x):
-        conv_out = self.conv(x).view(x.size()[0], -1)
+        # 要丟進去一般網絡之前要先flatten
+        conv_out = self.conv(x).view(x.size()[0], -1) #執行flatten的動作
         val = self.fc_val(conv_out)
         adv = self.fc_adv(conv_out)
         return val + adv - adv.mean(dim=1, keepdim=True)
@@ -112,21 +133,21 @@ class DQNConv1DLarge(nn.Module):
         super(DQNConv1DLarge, self).__init__()
 
         self.conv = nn.Sequential(
-            nn.Conv1d(shape[0], 32, 3),
-            nn.MaxPool1d(3, 2),
+            nn.Conv1d(shape[0], 32, 5),
+            nn.MaxPool1d(5, 4),
             nn.ReLU(),
-            nn.Conv1d(32, 32, 3),
-            nn.MaxPool1d(3, 2),
+            nn.Conv1d(32, 32, 5),
+            nn.MaxPool1d(5, 4),
             nn.ReLU(),
-            nn.Conv1d(32, 32, 3),
-            nn.MaxPool1d(3, 2),
+            nn.Conv1d(32, 32, 5),
+            nn.MaxPool1d(5, 4),
             nn.ReLU(),
-            nn.Conv1d(32, 32, 3),
-            nn.MaxPool1d(3, 2),
+            nn.Conv1d(32, 32, 5),
+            nn.MaxPool1d(5, 4),
             nn.ReLU(),
-            nn.Conv1d(32, 32, 3),
+            nn.Conv1d(32, 32, 5),
             nn.ReLU(),
-            nn.Conv1d(32, 32, 3),
+            nn.Conv1d(32, 32, 5),
             nn.ReLU(),
         )
 

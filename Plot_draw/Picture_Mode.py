@@ -16,8 +16,13 @@ class Picture_maker():
         self.pf = Order_info
         self.annotations = []
         
+        print("參數檢查:")
+        print(self.pf.order)
+        print(self.pf.ClosedPostionprofit_array)
+        print('*'*120)
         self.get_Mdd_UI(self.pf.order.index.to_numpy(
         ), self.pf.ClosedPostionprofit_array, self.pf.drawdown, self.pf.drawdown_per)
+        
 
     # 定義事件響應函數
     def on_motion(self,event):
@@ -71,7 +76,10 @@ class Picture_maker():
             dd_data (np.ndarray): _description_
             dd_perdata (np.ndarray): _description_
         """
-        x1_data = np.array([date.split(' ')[0] for date in x1_data])
+        if x1_data.dtype == 'datetime64[ns]':
+            x1_data = [str(date).split('T')[0] for date in x1_data]
+        else:            
+            x1_data = np.array([date.split(' ')[0] for date in x1_data])
 
         fig, (self.ax1, self.ax2, ax3) = plt.subplots(
             3, 1, figsize=(80, 10), height_ratios=(2, 1, 1),dpi=80)

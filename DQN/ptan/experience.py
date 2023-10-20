@@ -7,7 +7,7 @@ from torch.autograd import Variable
 import numpy as np
 
 from collections import namedtuple, deque
-
+import time
 from .agent import BaseAgent
 from .common import utils
 
@@ -55,7 +55,6 @@ class ExperienceSource:
         
         for env in self.pool:
             obs = env.reset()
-            print("ExperienceSource obser:",obs)
             # if the environment is vectorized, all it's output is lists of results.
             # Details are here: https://github.com/openai/universe/blob/master/doc/env_semantics.rst
             if self.vectorized:
@@ -175,7 +174,7 @@ class ExperienceSourceFirstLast(ExperienceSource):
         self.steps = steps_count
 
     def __iter__(self):
-        for exp in super(ExperienceSourceFirstLast, self).__iter__():
+        for exp in super(ExperienceSourceFirstLast, self).__iter__():            
             if exp[-1].done and len(exp) <= self.steps:
                 last_state = None
                 elems = exp

@@ -2,7 +2,7 @@
 import pandas as pd
 import collections
 import numpy as np
-
+from typing import Optional
 
 PricesObject = collections.namedtuple(
     'Prices', field_names=['open', 'high', 'low', 'close', 'volume'])
@@ -13,17 +13,19 @@ class DataFeature():
         用來產生資料特徵,不過實際產生game狀態的在 environ裡面
     """
 
-    def __init__(self) -> None:
-        # 目前設計是訓練模式才會使用到
-        self.targetsymbols = ['BCHUSDT', 'BTCUSDT', 'ETHUSDT', 'TRBUSDT','AAVEUSDT',"SOLUSDT"]
+    def __init__(self, formal: bool = False) -> None:
+        # 目前設計是訓練模式才會使用到                            
+        self.targetsymbols = ['SOLUSDT', 'BTCUSDT', 'BTCDOMUSDT', 'DEFIUSDT', 'XMRUSDT', 'AAVEUSDT', 'TRBUSDT', 'MKRUSDT']
+        # self.targetsymbols = [ 'BTCUSDT']
+        self.formal = formal
 
     def load_relative(self):
         array_data = self.df.values
-        volume_change = self.calculate_volume_change(array_data[:, 5])
-        return self.prices_to_relative(PricesObject(open=array_data[:, 1],
-                                                    high=array_data[:, 2],
-                                                    low=array_data[:, 3],
-                                                    close=array_data[:, 4],
+        volume_change = self.calculate_volume_change(array_data[:, 4])
+        return self.prices_to_relative(PricesObject(open=array_data[:, 0],
+                                                    high=array_data[:, 1],
+                                                    low=array_data[:, 2],
+                                                    close=array_data[:, 3],
                                                     volume=volume_change,
                                                     ))
 
@@ -52,24 +54,33 @@ class DataFeature():
         rc = (prices.close - prices.open) / prices.open
         return PricesObject(open=prices.open, high=rh, low=rl, close=rc, volume=prices.volume)
 
-    def get_net_work_data(self) -> dict:
+    def get_train_net_work_data(self) -> dict:
         """
             用來取得類神經網絡所需要的資料
         """
         out_dict = {}
         for symbol in self.targetsymbols:
             df = pd.read_csv(f'DQN\{symbol}-F-15-Min.csv')
+            df.set_index('Datetime',inplace=True)
             self.df = df
             out_dict.update({symbol: self.load_relative()})
         return out_dict
 
-    def get_test_net_work_data(self, symbol: str):        
+    def get_test_net_work_data(self, symbol: str, symbol_data: Optional[pd.DataFrame] = None):
+        """
+
+            單一回測的資料
+        Args:
+            symbol (str): _description_
+
+        Returns:
+            _type_: _description_
+        """
+
         out_dict = {}
-        df = pd.read_csv(f'DQN\{symbol}-F-15-Min.csv')
-        self.df = df
+        assert isinstance(symbol_data, pd.DataFrame), "formal model is on,symbol data can't be None"
+        self.df = symbol_data
         out_dict.update({symbol: self.load_relative()})
         return out_dict
 
-if __name__ == "__main__":
-    app = DataFeature()
-    print(app.get_net_work_data())
+

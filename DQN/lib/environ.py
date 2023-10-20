@@ -107,12 +107,61 @@ class State:
         rel_close = self._prices.close[self._offset]
         return open * (1.0 + rel_close)
 
+    # def step(self, action):
+    #     """
+    #     Perform one step in our price, adjust offset, check for the end of prices
+    #     and handle position change
+    #     :param action:
+    #     :return: reward, done
+    #     """
+    #     assert isinstance(action, Actions)
+    #     reward = 0.0
+    #     done = False
+    #     close = self._cur_close()
+
+    #     if action == Actions.Buy and not self.have_position:
+    #         self.have_position = True
+            
+    #         # 目前會這樣寫是因為 這樣的滑價比較合理 每根K棒給reward還要再思考
+    #         if self.reward_on_close:
+    #             self.open_price = close * (1 + setting['DEFAULT_SLIPPAGE'])
+    #         else:
+    #             self.open_price = close
+                
+    #         reward -= self.commission_perc
+
+    #     elif action == Actions.Close and self.have_position:
+    #         reward -= self.commission_perc
+    #         done |= self.reset_on_close
+
+    #         if self.reward_on_close:
+    #             reward += 100.0 * (close* (1 - setting['DEFAULT_SLIPPAGE']) - self.open_price) / self.open_price
+            
+    #         self.have_position = False
+    #         self.open_price = 0.0
+
+    #     self._offset += 1
+    #     prev_close = close # 上一根的收盤價
+    #     close = self._cur_close()
+    #     done |= self._offset >= self._prices.close.shape[0]-1
+
+    #     # 訓練時 每一根K棒都給獎勵 (及時獎勵機制)
+    #     if self.have_position and not self.reward_on_close:
+    #         reward += 100.0 * (close - prev_close) / prev_close
+
+    #     return reward, done
+    
     def step(self, action):
         """
-        Perform one step in our price, adjust offset, check for the end of prices
-        and handle position change
-        :param action:
-        :return: reward, done
+            修改了原作者的setp程序            
+            保留了在買進和平倉時​​扣除佣金的邏輯
+            當持倉時每支K棒的收盤價與前一支K棒的收盤價進行比較根據漲跌給予即時獎勵。
+            在平倉時根據交易的整體盈利或虧損給予獎勵或懲罰。
+        Args:
+            action (_type_): _description_
+
+        Returns:
+            _type_: _description_
         """
         assert isinstance(action, Actions)
         reward = 0.0
@@ -121,22 +170,13 @@ class State:
 
         if action == Actions.Buy and not self.have_position:
             self.have_position = True
+            self.open_price = close * (1 + setting['DEFAULT_SLIPPAGE'])            
+            reward -= self.commission_perc  # 扣除佣金
             
-            # 目前會這樣寫是因為 這樣的滑價比較合理 每根K棒給reward還要再思考
-            if self.reward_on_close:
-                self.open_price = close * (1 + setting['DEFAULT_SLIPPAGE'])
-            else:
-                self.open_price = close
-                
-            reward -= self.commission_perc
-
         elif action == Actions.Close and self.have_position:
             reward -= self.commission_perc
             done |= self.reset_on_close
-
-            if self.reward_on_close:
-                reward += 100.0 * (close* (1 - setting['DEFAULT_SLIPPAGE']) - self.open_price) / self.open_price
-            
+            reward += 100.0 * (close* (1 - setting['DEFAULT_SLIPPAGE']) - self.open_price) / self.open_price            
             self.have_position = False
             self.open_price = 0.0
 
@@ -147,11 +187,11 @@ class State:
 
         # 訓練時 每一根K棒都給獎勵 (及時獎勵機制)
         if self.have_position and not self.reward_on_close:
+            
             reward += 100.0 * (close - prev_close) / prev_close
 
         return reward, done
-
-
+        
 class State1D(State):
     """
     State with shape suitable for 1D convolution
@@ -174,10 +214,12 @@ class State1D(State):
             dst = 4
         else:
             dst = 3
+            
         if self.have_position:
             res[dst] = 1.0
             res[dst+1] = (self._cur_close() - self.open_price) / \
                 self.open_price
+               
         return res
 
 
@@ -185,7 +227,7 @@ class StocksEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
     def __init__(self, prices, bars_count,
-                 commission=setting['DEFAULT_COMMISSION_PERC'], reset_on_close=True, state_1d=False,
+                 commission=setting['MODEL_DEFAULT_COMMISSION_PERC'], reset_on_close=True, state_1d=False,
                  random_ofs_on_reset=True, reward_on_close=False, volumes=False):
 
         
@@ -213,7 +255,6 @@ class StocksEnv(gym.Env):
 
         # 我認為要訓練多個目標要檢查這裡
         self._instrument = self.np_random.choice(list(self._prices.keys()))
-
         prices = self._prices[self._instrument]
 
         # Prices(open=array([97.6, 100.5, 100.5, ..., 567.0, 574.0, 574.0], dtype=object), high=array([0.02356557377049192, 0.014925373134328358, 0.009950248756218905,

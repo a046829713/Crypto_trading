@@ -71,13 +71,18 @@ class AppSetting():
     @staticmethod
     def get_DQN_setting() -> str:
         setting_data = {
-            "SAVES_PATH": "saves", # 儲存的路徑
+            "SAVES_PATH": "saves",  # 儲存的路徑
             "LEARNING_RATE": 0.0001,  # optim 的學習率,
-            "BARS_COUNT": 20, # 用來準備要取樣的特徵長度,例如:開高低收成交量各取10根K棒
-            "VOLUMES_TURNON": True, # 特徵是否要採用成交量
-            'BATCH_SIZE' : 32, #  每次要從buffer提取的資料筆數,用來給神經網絡更新權重
-            'DEFAULT_COMMISSION_PERC':0.002,  # 手續費用(傭金)(乘上100 類神經網絡會更有反應)(影響reward)
-            "DEFAULT_SLIPPAGE": 0.0025, #滑價
-            "REWARD_ON_CLOSE" : True, # 結束之後才給獎勵
+            "BARS_COUNT": 50,  # 用來準備要取樣的特徵長度,例如:開高低收成交量各取10根K棒
+            "VOLUMES_TURNON": True,  # 特徵是否要採用成交量
+            'BATCH_SIZE': 32,  # 每次要從buffer提取的資料筆數,用來給神經網絡更新權重
+            # 手續費用(傭金)(乘上100 類神經網絡會更有反應)(影響reward)
+            "BACKTEST_DEFAULT_COMMISSION_PERC":0.002, # 回測時要來計算金額,所以要修正
+            "MODEL_DEFAULT_COMMISSION_PERC":0.2,  # 已修正乘上100 ( 0.002)                      
+            "DEFAULT_SLIPPAGE": 0.0025,  # 注意滑價是不能乘上100的,因為reward 本來就會乘上100
+            "REWARD_ON_CLOSE": False,  # 結束之後才給獎勵
+            "MODEL_COUNT_PATH": r'saves\20231019-154809-50k-False\mean_val-2.490.data',  # 運轉的時候,模型所放置的位置
+            'STATE_1D': True,  # 使否要採用捲積神經網絡
+            'EPSILON_START': 1.0  # 起始機率(一開始都隨機運行)
         }
         return setting_data
