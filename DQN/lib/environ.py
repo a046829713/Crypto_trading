@@ -5,7 +5,7 @@ import enum
 import numpy as np
 import time
 from AppSetting import AppSetting
-
+from utils.TimeCountMsg import TimeCountMsg
 
 setting = AppSetting.get_DQN_setting()
 
@@ -93,6 +93,7 @@ class State:
         if not self.have_position:
             res[shift] = 0.0
         else:
+            # 其實我覺得丟這個進去,好像沒什麼用
             res[shift] = (self._cur_close() - self.open_price) / \
                 self.open_price
         return res
@@ -271,7 +272,7 @@ class StocksEnv(gym.Env):
 
         self._state.reset(prices, offset)
         return self._state.encode()
-
+    
     def step(self, action_idx):
         """
             呼叫子類_state 來獲得獎勵

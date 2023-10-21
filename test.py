@@ -1,11 +1,11 @@
 
 
-from Major.DataProvider import DataProvider
+# from Major.DataProvider import DataProvider
 
 
 
-for symbol in['BCHUSDT', 'COMPUSDT']:
-    DataProvider().get_symboldata(symbol_name=symbol)
+# for symbol in['LQTYUSDT', 'BANDUSDT', 'TOMOUSDT', 'RNDRUSDT', 'INJUSDT', 'LINKUSDT', 'ANTUSDT', 'XVSUSDT']:
+#     DataProvider().get_symboldata(symbol_name=symbol)
 # print("state_1d".upper())
 
 
@@ -32,3 +32,8 @@ for symbol in['BCHUSDT', 'COMPUSDT']:
 # print(obs)
 # print(np.array(obs))
 # print(torch.tensor(np.array(obs)))
+
+
+import pandas as pd
+
+

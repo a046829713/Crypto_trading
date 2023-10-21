@@ -7,9 +7,9 @@ from typing import Optional
 from utils.Debug_tool import debug
 import logging
 from binance import AsyncClient, BinanceSocketManager
-from datetime import datetime
+import datetime
+from datetime import timedelta
 import asyncio
-
 
 class DataProvider:
     """
@@ -45,8 +45,10 @@ class DataProvider:
                 df = self.SQL.read_Dateframe(SQL_Q)
 
             elif reload_type == 'Online':
+                parser_date = str(datetime.date.today() + timedelta(days=-100))
                 df = self.SQL.read_Dateframe(
-                    f'SELECT * FROM `{tb_symbol_name}` where Datetime > "2022-12-26"')
+                    f'SELECT * FROM `{tb_symbol_name}` where Datetime > "{parser_date}"')
+                
             elif reload_type == 'all_data':
                 df = self.SQL.read_Dateframe(tb_symbol_name)
 
@@ -210,7 +212,7 @@ class AsyncDataProvider():
 
     async def process_message(self, res):
         filterdata = res['data']['k']
-        data = {"Datetime": datetime.utcfromtimestamp(filterdata["t"]/1000).strftime("%Y-%m-%d %H:%M:%S"),  # 将 Unix 时间戳转换为 datetime 格式
+        data = {"Datetime": datetime.datetime.utcfromtimestamp(filterdata["t"]/1000).strftime("%Y-%m-%d %H:%M:%S"),  # 将 Unix 时间戳转换为 datetime 格式
                 "Open": filterdata["o"],
                 "High": filterdata["h"],
                 "Low": filterdata["l"],

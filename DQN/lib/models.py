@@ -126,7 +126,9 @@ class DQNConv1D(nn.Module):
         val = self.fc_val(conv_out)
         adv = self.fc_adv(conv_out)
         return val + adv - adv.mean(dim=1, keepdim=True)
-
+    
+    # def script_model(self, example_input):
+    #     return torch.jit.script(self, example_input)
 
 class DQNConv1DLarge(nn.Module):
     def __init__(self, shape, actions_n):

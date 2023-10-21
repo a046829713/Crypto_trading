@@ -45,23 +45,30 @@ class Record_Orders():
         net.load_state_dict(torch.load(
             self.model_count_path, map_location=lambda storage, loc: storage))
 
+
+        # 对模型进行脚本化，并用示例输入
+        # example_input = torch.tensor(np.array([env.reset()]))  # 使用环境重置作为示例输入
+        # scripted_net = net.script_model(example_input)
+
         obs = env.reset()  # 從1開始,並不是從0開始
         start_price = env._state._cur_close()        
         step_idx = 0        
         record_orders = []
         while True:
             step_idx += 1
-            obs_v = torch.tensor(np.array([obs]))
-            out_v = net(obs_v)
+            obs_v = torch.tensor(np.array([obs]))            
+            out_v = net(obs_v)            
             action_idx = out_v.max(dim=1)[1].item()
-            record_orders.append(self._parser_order(action_idx))
+            record_orders.append(self._parser_order(action_idx))            
             obs, reward, done, _ = env.step(action_idx)
             if done:
                 break
-            
+                        
         self.pf = Backtest.Backtest(
             self.strategy.df, self.BARS, self.strategy).order_becktest(record_orders)
+        
 
+        
     def getpf(self):
         return self.pf
 
@@ -80,7 +87,7 @@ class Record_Orders():
         if action == 2:
             marketpostion = 0
             return marketpostion
-
+        
     def _parser_order(self, action_value: int):
         if action_value == 2:
             return -1

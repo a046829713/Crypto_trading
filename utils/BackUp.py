@@ -1,16 +1,14 @@
 """ TO export data from crypto_data """
-""" in Trading systeam  get data from DataProvider"""
+""" in Trading systeam  get data from DataProvider """
 """ check if change compute systeam"""
-
-
-
-
 from Database.SQL_operate import SqlSentense
 from datetime import datetime
 from typing import Optional
 import os
 from Major.DataProvider import DataProvider_online, DataProvider
 from Database import SQL_operate
+from Database.SQL_operate import SqlSentense
+
 def check_file(filename: str):
     """ 檢查檔案是否存在 否則創建 """
     if not os.path.exists(filename):
@@ -81,6 +79,7 @@ def check_all_need_table():
     getAllTablesName = dataProvider.SQL.get_db_data('show tables;')
     getAllTablesName = [y[0] for y in getAllTablesName]
     
+    # 訂單的結果
     if 'orderresult' not in getAllTablesName:
         SQL.change_db_data(
             """
@@ -90,4 +89,10 @@ def check_all_need_table():
                     PRIMARY KEY(`orderId`)
                 );
             """
+        )
+    
+    # 用來放置平均策略的虧損
+    if 'avgloss' not in getAllTablesName:
+        SQL.change_db_data(
+            SqlSentense.createAvgLoss()
         )

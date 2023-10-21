@@ -117,6 +117,58 @@ class SqlSentense():
         return sql_query
 
     @staticmethod
+    def createAvgLoss() -> str:
+        sql_query = """
+            CREATE TABLE `avgloss` (
+            `strategyName` varchar(30) NOT NULL,
+            `freq_time` int NOT NULL,            
+            `symbol` varchar(20) NOT NULL,
+            `strategytype` varchar(20) NOT NULL,
+            `updatetime` date NOT NULL,
+            `avgLoss` decimal(15,5) NOT NULL,
+            PRIMARY KEY (`strategyName`)
+            ) ;
+        """
+
+        return sql_query
+
+    @staticmethod
+    def update_avgloss(result: dict) -> str:
+        """
+        Args:{'freq_time': 15, 'symbol': 'BTCUSDT', 'strategytype': 'DQNStrategy', 'strategyName': 'BTCUSDT-15K-OB-DQN', 'updatetime': '2023-10-20', 'avgLoss': -345.0}
+        Returns:
+            str: 返回要執行的SQL 語句
+        """
+
+        sql_query = f"""UPDATE `crypto_data`.`avgLoss`
+                                SET
+                                `updatetime` = '{result['updatetime']}',
+                                `freq_time` = {result['freq_time']},                    
+                                `symbol` = '{result['symbol']}',
+                                `Strategytype` = '{result['Strategytype']}',
+                                `avgLoss` = '{result['avgLoss']}'
+                                WHERE `strategyName` = '{result['strategyName']}';
+                            """
+
+        return sql_query
+
+    @staticmethod
+    def insert_avgloss(result) -> str:
+        """
+        result:
+            {'freq_time': 15, 'symbol': 'BTCUSDT', 'strategytype': 'DQNStrategy', 'strategyName': 'BTCUSDT-15K-OB-DQN', 'updatetime': '2023-10-20', 'avgLoss': -345.0}
+        """
+        sql_query = f"""
+
+            INSERT INTO `crypto_data`.`avgLoss`
+                (`freq_time`, `symbol`, `Strategytype`, `strategyName`, `updatetime`,`avgLoss`)
+            VALUES
+            {tuple(result.values())};
+            
+            """
+        return sql_query
+
+    @staticmethod
     def insert_optimizeresult(result, strategy_type) -> str:
         """
         result:

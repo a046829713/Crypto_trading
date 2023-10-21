@@ -1,6 +1,6 @@
 from Major.DataProvider import DataProvider_online, AsyncDataProvider
 from Major.Symbol_filter import get_symobl_filter_useful
-from Vecbot_backtest import Quantify_systeam_online, Optimizer
+from Vecbot_backtest import Optimizer
 import time
 from datetime import datetime, timedelta
 import sys
@@ -12,22 +12,12 @@ from Database.SQL_operate import SqlSentense
 from Datatransformer import Datatransformer
 import os
 from binance.exceptions import BinanceAPIException
-from binance import BinanceSocketManager
 import copy
 from AppSetting import AppSetting
 from DQN.lib import Backtest
 
-# 增加總投組獲利平倉，或是單一策略平倉?
-# 增加匯出 optimizeresult 的功能,或許可以增加GUI
-# 為了方便轉移 還是需要打包起來
-# 建構輸入輸出檢查的decorator
-
-
-# 檢查交易資料是否不斷重新生成
-
-
-
-
+#  設計GUI 導入 avgloss 的介面
+#  測試這樣是否可以讓神經網絡的口數更平穩
 
 class Trading_systeam():
     def __init__(self) -> None:
@@ -40,9 +30,9 @@ class Trading_systeam():
         self.symbol_map = {}
         # 這次新產生的資料
         self.new_symbol_map = {}
-        # formal正式啟動環境
-        self.dataprovider_online = DataProvider_online()
+        self.RL_model = True
 
+        self.dataprovider_online = DataProvider_online()
         self.engine = self.buildEngine()
         self.line_alert = LINE_Alert()
         self.checkout = False
@@ -56,11 +46,10 @@ class Trading_systeam():
         Returns:
             _type_: _description_
         """
-
         BackUp.check_all_need_table()
 
     @BackUp.check_table_if_exits('lastinitcapital')
-    def buildEngine(self, RL_model: bool = True):
+    def buildEngine(self):
         """ 用來創建回測系統
 
         Returns:
@@ -69,8 +58,8 @@ class Trading_systeam():
         capital = self.dataprovider_online.SQL.get_db_data(
             "select *  from `lastinitcapital`;")
 
-        if RL_model:
-            return Backtest.Quantify_systeam_DQN(capital[0][-1], formal=True)
+        if self.RL_model:
+            return Backtest.Quantify_systeam_DQN(capital[0][-1], formal=AppSetting.get_trading_permission()['Data_transmission'])
         # else:
         #     return Quantify_systeam_online(capital[0][-1])
 
@@ -106,6 +95,31 @@ class Trading_systeam():
         df = self.dataprovider_online.SQL.read_Dateframe("optimizeresult")
         df.set_index("strategyName", inplace=True)
         df.to_csv("optimizeresult.csv")
+
+    def exportavgloss(self):
+        """
+            將avgloss資料匯出
+        """
+        df = self.dataprovider_online.SQL.read_Dateframe("avgloss")
+        df.set_index("strategyName", inplace=True)
+        df.to_csv("avgloss.csv")
+
+    def importavgloss(self):
+        """
+            將avgloss資料導入
+        """
+        try:
+            df = pd.read_csv("avgloss.csv")
+            df.set_index("strategyName", inplace=True)
+
+            self.dataprovider_online.SQL.change_db_data(
+                "DELETE FROM `avgloss`;"
+            )
+            # 為了避免修改到原始sql 的create 使用append
+            self.dataprovider_online.SQL.write_Dateframe(
+                df, "avgloss", exists='append')
+        except Exception as e:
+            print(f"導入資料錯誤:{e}")
 
     @BackUp.check_table_if_exits(table_name="optimizeresult")
     def importOptimizeResult(self):
@@ -176,6 +190,32 @@ class Trading_systeam():
                 self.dataprovider_online.SQL.change_db_data(
                     SqlSentense.insert_optimizeresult(result, optimize_strategy_type))
 
+    def count_all_avgloss(self):
+        all_symbols = self.dataprovider_online.Binanceapp.get_targetsymobls()
+
+        # 將資料讀取出來
+        avglossdf = self.dataprovider_online.SQL.read_Dateframe(
+            "select strategyName, symbol from avgloss")
+
+        strategylist = avglossdf['strategyName'].to_list()
+
+        # 使用 Optimizer # 建立DB
+        for eachsymbol in all_symbols:
+            target_strategy_name = eachsymbol + '-15K-OB-DQN'
+            print(eachsymbol)
+            if target_strategy_name in strategylist:
+                continue
+
+            result = Backtest.Optimizer_DQN(
+            ).Create_strategy_to_get_avgloss([eachsymbol])
+            print(result)
+            if result['strategyName'] in strategylist:
+                self.dataprovider_online.SQL.change_db_data(
+                    SqlSentense.update_avgloss(result))
+            else:
+                self.dataprovider_online.SQL.change_db_data(
+                    SqlSentense.insert_avgloss(result))
+
     def exportAllKbarsData(self):
         """
             將資料庫裡面的資料全部讀取出來保存成CSV檔案
@@ -228,7 +268,7 @@ class Trading_systeam():
         all_symbols = self.dataprovider_online.get_symbols_history_data(
             time_type='D')
         example = get_symobl_filter_useful(all_symbols)
-        
+
         return example
 
     def change_money(self):
@@ -305,10 +345,11 @@ class Trading_systeam():
 class AsyncTrading_systeam(Trading_systeam):
     def __init__(self) -> None:
         super().__init__()
-        self.check_and_reload_dailydata()
-        self.process_target_symbol()
-        self.init_async_data_provider()
-        self.register_portfolio()
+        # self.check_and_reload_dailydata()
+        # self.process_target_symbol()
+        # self.init_async_data_provider()
+        # self.register_portfolio()
+        self._get_avgloss()
 
     def check_and_reload_dailydata(self):
         """ check if already update, and reload data"""
@@ -318,10 +359,11 @@ class AsyncTrading_systeam(Trading_systeam):
     def process_target_symbol(self):
         # 取得要交易的標的
         market_symobl = list(map(lambda x: x[0], self.get_target_symbol()))
-        print(market_symobl)
+
         # 取得binance實際擁有標的,合併 (因為原本有部位的也要持續追蹤)
         self.targetsymbol = self.datatransformer.target_symobl(
             market_symobl, self.dataprovider_online.Binanceapp.getfutures_account_name())
+
         self.SendProcessBarUpdate(40)
 
     def init_async_data_provider(self):
@@ -336,9 +378,15 @@ class AsyncTrading_systeam(Trading_systeam):
         self.symbol_name: set = self.engine.get_symbol_name()
         self.SendProcessBarUpdate(80)
 
+    def _get_avgloss(self):
+        avgloss_df = self.dataprovider_online.SQL.read_Dateframe("select * from 'avgloss'")
+        print(avgloss_df)
+        print(avgloss_df.info)
+
     async def main(self):
         self.printfunc("Crypto_trading 正式交易啟動")
         self.line_alert.req_line_alert('Crypto_trading 正式交易啟動')
+
         # 先將資料從DB撈取出來
         for name in self.symbol_name:
             original_df, eachCatchDf = self.dataprovider_online.get_symboldata(
@@ -371,16 +419,20 @@ class AsyncTrading_systeam(Trading_systeam):
                         trade_data = self.dataprovider_online.get_trade_data(
                             self.symbol_map[symbol_name], freq_time)
 
-                        # 將資料注入
-                        # 由於最新不確定突破或跌破,所以只給入已發生結束的歷史資料                        
-                        # 嚴重注意,這會和類神經網絡的最後一根K棒有衝突(已經拿掉了一次)
-                        self.engine.register_data(
-                            strategy_name, trade_data[:-1])
+                        if self.RL_model:
+                            # 類神經網絡會忽略掉最後一根K棒,所以傳遞完整的進去就可以了
+                            self.engine.register_data(
+                                strategy_name, trade_data)
+                        else:
+                            # 將資料注入
+                            # 由於最新不確定突破或跌破,所以只給入已發生結束的歷史資料
+                            self.engine.register_data(
+                                strategy_name, trade_data[:-1])
 
                     self.printfunc("開始進入回測")
                     # 註冊完資料之後進入回測
                     pf = self.engine.Portfolio_start()
-                    
+
                     if not self.checkout:
                         # 檢查資金水位
                         self.check_money_level()
@@ -410,7 +462,7 @@ class AsyncTrading_systeam(Trading_systeam):
 
                     if order_finally:
                         self.dataprovider_online.Binanceapp.execute_orders(
-                            order_finally, self.line_alert, current_size=current_size, symbol_map=self.symbol_map, formal=False)
+                            order_finally, self.line_alert, current_size=current_size, symbol_map=self.symbol_map, formal=AppSetting.get_trading_permission()['execute_orders'])
 
                     self.printfunc("時間差", time.time() - begin_time)
                     last_min = datetime.now().minute
@@ -462,4 +514,5 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
 
 
 if __name__ == '__main__':
-    app = AsyncTrading_systeam()
+    app = Trading_systeam()
+    app.importavgloss()

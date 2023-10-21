@@ -11,10 +11,11 @@ from .run_model import Record_Orders
 import copy
 from Count.Base import Event_count
 from utils.TimeCountMsg import TimeCountMsg
-
+import datetime
 
 # 10/9 (並且再次懷疑在驗算的時候, 原本的系統沒有考慮到最後一根K棒還沒有完成這個問題,但印象中以前已經處理)
 # order_becktest 可能要再注意一下copy or deepcopy的問題
+
 
 class Backtest(object):
     def __init__(self, Symbol_data, bars_count: int, strategy: Strategy_base_DQN) -> None:
@@ -25,12 +26,12 @@ class Backtest(object):
         self.strategy = strategy
 
     def order_becktest(self, order: list):
-        """ 
+        """
 
         order (list):
             類神經網絡所產生的訂單
 
-        {'shiftorder': array([0, 0, 0, ..., 0, 0, 0], dtype=int64),
+        params = {'shiftorder': array([0, 0, 0, ..., 0, 0, 0], dtype=int64),
                 'open_array': array([ 146.  ,  146.  ,  146.  , ..., 1631.48, 1627.78, 1628.54]),
                 'Length': 135450,
                 'init_cash': 10000.0,
@@ -42,11 +43,8 @@ class Backtest(object):
         self.shiftorder = np.array(order)
         self.shiftorder = np.roll(self.shiftorder, 1)
         self.shiftorder[0] = 0  # 一率將其歸零即可
-
         datetime_list = self.Symbol_data.index.to_list()
-        
-        print("樣本檢查:",datetime_list[:50])
-        
+
         # # 前面10個當樣本
         datetime_list = datetime_list[self.bars_count:]
 
@@ -109,6 +107,12 @@ class PortfolioTrader_DQN(object):
         self.setting = AppSetting.get_DQN_setting()  # 取得類神經網絡的相關配置
         self.formal = formal
 
+        # 用來保存pf
+        self.pf_map = {}
+
+        # 用來記錄df 的長度判斷有無變化過
+        self.length_df = {}
+
     def register(self, strategy_info: Strategy_base_DQN):
         """
             將所有的商品資訊 合併做總回測
@@ -122,27 +126,53 @@ class PortfolioTrader_DQN(object):
         self.strategys_maps.update(
             {strategy_info.strategy_name: strategy_info})
 
-    
-    @TimeCountMsg.record_timemsg
     def time_min_scale(self):
         """
             用來取得最密集的時間序列
         """
         all_datetimes = []
         for strategy in self.strategys:
-            all_datetimes.extend(strategy.get_datetimes(fast_type=True))
+            if self.formal:
+                all_datetimes.extend(strategy.datetimes)
+            else:
+                all_datetimes.extend(strategy.get_datetimes(fast_type=True))
 
         self.min_scale = list(set(all_datetimes))
         self.min_scale.sort()
-        
-    @TimeCountMsg.record_timemsg
+
+        print("最後時間:", self.min_scale[-1])
+
     def add_data(self):
         """
             將訂單的買賣方向匯入
         """
+        avgloss_df = pd.read_csv("avgloss.csv")
+        avgloss_df = avgloss_df[['symbol','avgLoss']]
+        avgloss_df.set_index('symbol',inplace=True)
+        avgloss_data =  avgloss_df.to_dict('index')
+       
         for strategy in self.strategys:
-            # 在取得之前必須要完全配置好
-            pf = Record_Orders(strategy, self.formal).getpf()
+            # 判斷是否要取得運算過的pf加速流程
+            if strategy.strategy_name in self.pf_map:
+                # 判斷長度是否相同
+                if strategy.strategy_name in self.length_df:
+                    # 兩個一樣的話結果也會一樣
+                    if self.length_df[strategy.strategy_name] == len(strategy.df.index):
+                        pf = self.pf_map[strategy.strategy_name]
+                    else:
+                        # 更新pf
+                        pf = Record_Orders(strategy, self.formal).getpf()
+                        self.pf_map[strategy.strategy_name] = pf
+                        self.length_df[strategy.strategy_name] = len(
+                            strategy.df.index)
+                else:
+                    self.length_df[strategy.strategy_name] = len(
+                        strategy.df.index)
+            else:
+                # 在進入這裡之前資料已經更新了
+                pf = Record_Orders(strategy, self.formal).getpf()
+                self.pf_map[strategy.strategy_name] = pf
+                self.length_df[strategy.strategy_name] = len(strategy.df.index)
 
             out_list = []
             for datetime_ in strategy.df.index:
@@ -151,11 +181,13 @@ class PortfolioTrader_DQN(object):
                 else:
                     out_list.append(0)
 
+            # 這邊這樣子是有意義的嗎?為甚麼要copy出來,因為之前寫的時候沒有註解,不敢輕動
             strategy.df = strategy.df.copy()
             strategy.df['Order'] = out_list
             # 添加想要分析的參數
-            strategy.df['avgloss'] = pf.avgloss
-            
+            # strategy.df['avgloss'] = pf.avgloss
+            strategy.df['avgloss'] = avgloss_data[strategy.symbol_name]['avgLoss']
+
     @TimeCountMsg.record_timemsg
     def get_data(self):
         """
@@ -188,7 +220,7 @@ class PortfolioTrader_DQN(object):
         return money * rsikpercent / abs(avgloss)
 
     def logic_order(self):
-        """ 
+        """
         產生投資組合的order
 
             採用對抗模式
@@ -203,7 +235,7 @@ class PortfolioTrader_DQN(object):
         self.data = self.get_data()
 
         levelage = 2  # 槓桿倍數
-        rsikpercent = 0.01  # 風險百分比
+        rsikpercent = 0.005  # 風險百分比
         ClosedPostionprofit = [self.Portfolio_initcash]
 
         strategy_order_info = {}  # 專門用來保存資料
@@ -290,7 +322,7 @@ class PortfolioTrader_DQN(object):
 
         Order_Info = Portfolio_Order_Info(
             datetimelist, orders, stragtegy_names, Portfolio_profit, Portfolio_ClosedPostionprofit, self.Portfolio_initcash, sizes)
-        
+
         if not self.formal:
             Picture_maker(Order_Info)
         return Order_Info
@@ -334,6 +366,7 @@ class Quantify_systeam_DQN(object):
             # 這邊用來決定要運行甚麼策略
             for _strategy in ["DQNStrategy"]:
                 strategyName = f"{each_symbol}-15K-OB-DQN"
+
                 strategy = Strategy_base_DQN(
                     strategyName, _strategy, each_symbol, 15,  1.0,  self.setting['BACKTEST_DEFAULT_COMMISSION_PERC'], self.setting['DEFAULT_SLIPPAGE'], self.setting['MODEL_COUNT_PATH'], formal=self.formal)
 
@@ -359,3 +392,37 @@ class Quantify_systeam_DQN(object):
             list: [tuple,tuple]
         """
         return [(each_strategy.strategy_name, each_strategy.symbol_name, each_strategy.freq_time) for each_strategy in self.Trader.strategys]
+
+
+class Optimizer_DQN(object):
+    def __init__(self) -> None:
+        self.setting = AppSetting.get_DQN_setting()  # 取得類神經網絡的相關配置
+        self.formal = False
+
+    def Create_strategy_to_get_avgloss(self, target_symobl: list) -> dict:
+        """
+            正式投資組合上線環境
+            先將基本資訊註冊
+            並放入策略參數
+            example :
+                target_symobl
+                    ['XMRUSDT', 'BTCUSDT', 'BTCDOMUSDT', 'BNBUSDT', 'ETHUSDT']
+        """
+        for each_symbol in target_symobl:
+            # 這邊用來決定要運行甚麼策略
+            for _strategy in ["DQNStrategy"]:
+                strategyName = f"{each_symbol}-15K-OB-DQN"
+                strategy = Strategy_base_DQN(
+                    strategyName, _strategy, each_symbol, 15,  1.0,  self.setting['BACKTEST_DEFAULT_COMMISSION_PERC'], self.setting['DEFAULT_SLIPPAGE'], self.setting['MODEL_COUNT_PATH'], formal=self.formal)
+
+                strategy.simulationdata(fast_type=False)
+                pf = Record_Orders(strategy, self.formal).getpf()
+
+            
+
+                return {'freq_time': 15,
+                        'symbol': each_symbol,
+                        'strategytype': 'DQNStrategy',
+                        'strategyName': strategyName,
+                        'updatetime': str(datetime.date.today()),
+                        'avgLoss': round(pf.avgloss, 2)}                        
