@@ -183,7 +183,8 @@ class Strategy_base_DQN(object):
                  init_cash: float = 10000.0,
                  symobl_type: str = "Futures",
                  lookback_date: str = None,
-                 formal: bool = False) -> None:
+                 formal: bool = False,
+                 avgloss: float = 0.0) -> None:
         self.strategy_name = strategy_name
         self.strategytype = strategytype
         self.symbol_name = symbol_name
@@ -196,6 +197,7 @@ class Strategy_base_DQN(object):
         self.symobl_type = symobl_type
         self.lookback_date = lookback_date
         self.formal = formal
+        self.avgloss = avgloss
 
     def check_if_df_exits(self, fast_type: bool = False):
         """

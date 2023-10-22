@@ -319,28 +319,29 @@ class Binance_server(object):
     @SetConnectCLose
     def getfutures_funding_rate(self, client: Client):
         """
-        
+
             取得資金費率
         Args:
             client (Client): _description_
         """
         data = client.futures_mark_price()
-        
-        out_list = [(_each_data['symbol'],_each_data['lastFundingRate']) for _each_data in data]
 
-        sort_example = sorted(out_list, key=lambda x: float(x[1]),reverse=True)
-        
-        sort_example = [filter_symbol for filter_symbol in sort_example if float(filter_symbol[1]) <0]
-        
+        out_list = [(_each_data['symbol'], _each_data['lastFundingRate'])
+                    for _each_data in data]
+
+        sort_example = sorted(
+            out_list, key=lambda x: float(x[1]), reverse=True)
+
+        sort_example = [
+            filter_symbol for filter_symbol in sort_example if float(filter_symbol[1]) < 0]
+
         can_trade_symbol_low_level = self.get_targetsymobls()
-        
-        sort_example = [filter_symbol for filter_symbol in sort_example if filter_symbol[0] in can_trade_symbol_low_level]
-        
+
+        sort_example = [
+            filter_symbol for filter_symbol in sort_example if filter_symbol[0] in can_trade_symbol_low_level]
+
         return sort_example
-    
-    
-    
-    
+
     @SetConnectCLose
     def getfutures_account_name(self, client: Client):
         """
@@ -381,6 +382,17 @@ class Binance_server(object):
                                 ready_to_order_size else -1 * filter_size})
 
         return out_dict
+
+    def get_order_times_qty(self, max_qty: str, order_quantity: float) -> tuple:
+        """返回總共要下幾次,跟單次最大數量,餘數不管
+
+        Args:
+            max_qty (str): _description_
+            order_quantity (float): _description_
+        """
+        max_qty = float(max_qty)
+        order_times, _ = divmod(order_quantity, max_qty)
+        return order_times, max_qty
 
     @SetConnectCLose
     def execute_orders(self, client: Client, order_finally: dict, line_alert, model=ORDER_TYPE_MARKET, current_size=dict(), symbol_map=dict(), formal=False):
@@ -509,6 +521,9 @@ class Binance_server(object):
         #     print(Response)
 
         # ===========================================================================================
+        exchange_info_data = self.get_futures_exchange_info()
+
+        # ===========================================================================================
         for symbol, ready_to_order_size in order_finally.items():
             # 取得下單模式
             if model == 'MARKET':
@@ -522,37 +537,48 @@ class Binance_server(object):
             else:
                 order_side = SIDE_SELL
 
-            # 取得 quantity數量
-            order_quantity = abs(ready_to_order_size)
-
             if model == 'MARKET':
                 order_timeInForce = 'IOC'
             else:
                 order_timeInForce = 'GTC'  # 這邊要在注意
 
-            line_alert.req_line_alert(
-                f"商品:{symbol}\n買賣別:{order_side}\n委託單:{order_type}\n委託類別:{order_timeInForce}\n委託數量:{order_quantity}")
+            # 取得 quantity數量
+            order_quantity = abs(ready_to_order_size)
 
-            if order_side == "SELL":
-                args = dict(side=order_side,
-                            type=order_type,
-                            symbol=symbol,
-                            quantity=order_quantity,
-                            reduceOnly=True)
-            else:
-                args = dict(side=order_side,
-                            type=order_type,
-                            symbol=symbol,
-                            quantity=order_quantity)
+            order_times, max_qty = self.get_order_times_qty(
+                exchange_info_data[symbol], order_quantity)
 
+            print("總委託數量:", order_quantity, "委託次數:",
+                  order_times, '單次最大數量:', max_qty)
             
-            if formal:
-                # 丟入最後create 單裡面
-                result = client.futures_create_order(**args)
-                self.save_order_result(result)
+            
+            if order_quantity > max_qty:
+                print(symbol)
+            for _ in range(int(order_times)):
+                line_alert.req_line_alert(
+                    f"商品:{symbol}\n買賣別:{order_side}\n委託單:{order_type}\n委託類別:{order_timeInForce}\n委託數量:{max_qty}")
 
-            else:
-                print("警告:,下單功能被關閉,若目前處於正式交易請重新開啟系統")
+                if order_side == "SELL":
+                    args = dict(side=order_side,
+                                type=order_type,
+                                symbol=symbol,
+                                quantity=max_qty,
+                                reduceOnly=True)
+                else:
+                    args = dict(side=order_side,
+                                type=order_type,
+                                symbol=symbol,
+                                quantity=max_qty)
+
+                if formal:
+                    # 丟入最後create 單裡面
+                    result = client.futures_create_order(**args)
+                    self.save_order_result(result)
+
+                else:
+                    print("警告:,下單功能被關閉,若目前處於正式交易請重新開啟系統")
+                print("循環進入測試")
+                time.sleep(0.5)
 
     def save_order_result(self, order_data: dict):
         """
@@ -560,7 +586,7 @@ class Binance_server(object):
             保存至本地磚資料夾
 
             2023/10/9 發現格式更改,故決定將其改成字串保存減少報錯的機率
-            
+
             1. 將原始的table刪除
                 CREATE TABLE `crypto_data`.`orderresult`(
                 `orderId` BIGINT NOT NULL,
@@ -596,10 +622,10 @@ class Binance_server(object):
         Args:
             order_data (dict): # 
             版本1:{'orderId': 22019361762, 'symbol': 'SOLUSDT', 'status': 'NEW', 'clientOrderId': 'yfobvBPbosaT0Zz38XNxHv', 'price': '0', 'avgPrice': '0.0000', 'origQty': '1', 'executedQty': '0', 'cumQty': '0', 'cumQuote': '0', 'timeInForce': 'GTC', 'type': 'MARKET', 'reduceOnly': False, 'closePosition': False, 'side': 'BUY', 'positionSide': 'BOTH', 'stopPrice': '0', 'workingType': 'CONTRACT_PRICE', 'priceProtect': False, 'origType': 'MARKET', 'updateTime': 1675580975203}
-            
+
             # 實際拿到的respone(24個欄位)
             (15154865689, 'ZECUSDT', 'NEW', '7Xvs36qJXADB3vbPtz6xCZ', '0.00', '0.00', '0.609', '0.000', '0.000', '0.00000', 'GTC', 'MARKET', False, False, 'BUY', 'BOTH', '0.00', 'CONTRACT_PRICE', False, 'MARKET', 'NONE', 'NONE', 0, 1696819981601);
-        
+
             當下官方的文檔為26個欄位:
             {
                 "clientOrderId": "testOrder",
@@ -644,3 +670,31 @@ class Binance_server(object):
         for i in client.futures_account_balance():
             if i['asset'] == 'USDT':
                 return float(i['balance'])
+
+    @SetConnectCLose
+    def get_futures_exchange_info(self, client: Client):
+        """ 用來查看市價單的委託限制
+
+        Args:
+            client (Client): _description_
+
+        Returns:
+            exchange_inf_data.keys = ['timezone', 'serverTime', 'futuresType', 'rateLimits', 'exchangeFilters', 'assets', 'symbols']
+            futuresType = U_MARGINED
+            rateLimits = [{'rateLimitType': 'REQUEST_WEIGHT', 'interval': 'MINUTE', 'intervalNum': 1, 'limit': 2400}, {'rateLimitType': 'ORDERS', 'interval': 'MINUTE', 'intervalNum': 1, 'limit': 1200}, {'rateLimitType': 'ORDERS', 'interval': 'SECOND', 'intervalNum': 10, 'limit': 300}]
+            exchangeFilters = []
+            assets = [{'asset': 'USDT', 'marginAvailable': True, 'autoAssetExchange': '-10000'}, {'asset': 'BTC', 'marginAvailable': True, 'autoAssetExchange': '-0.00100000'}, {'asset': 'BNB', 'marginAvailable': True, 'autoAssetExchange': '-10'}, {'asset': 'ETH', 'marginAvailable': True, 'autoAssetExchange': '-5'}, {'asset': 'XRP', 'marginAvailable': True, 'autoAssetExchange': '0'}, {'asset': 'BUSD', 'marginAvailable': True, 'autoAssetExchange': '-10000'}, {'asset': 'USDC', 'marginAvailable': True, 'autoAssetExchange': '0'}, {'asset': 'TUSD', 'marginAvailable': True, 'autoAssetExchange': '0'}, {'asset': 'USDP', 'marginAvailable': True, 'autoAssetExchange': '0'}]
+            symbols :用來放相關資料
+
+            'ZECUSDT': '111.190'
+        """
+        exchange_inf_data = client.futures_exchange_info()
+
+        out_dict = {}
+        for data in exchange_inf_data['symbols']:
+            symbol = data['symbol']
+            for each_filter in data['filters']:
+                if each_filter['filterType'] == 'MARKET_LOT_SIZE':
+                    out_dict.update({symbol: each_filter['maxQty']})
+
+        return out_dict

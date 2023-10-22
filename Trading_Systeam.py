@@ -19,6 +19,7 @@ from DQN.lib import Backtest
 #  設計GUI 導入 avgloss 的介面
 #  測試這樣是否可以讓神經網絡的口數更平穩
 
+
 class Trading_systeam():
     def __init__(self) -> None:
         self._init_trading_system()
@@ -345,11 +346,10 @@ class Trading_systeam():
 class AsyncTrading_systeam(Trading_systeam):
     def __init__(self) -> None:
         super().__init__()
-        # self.check_and_reload_dailydata()
-        # self.process_target_symbol()
-        # self.init_async_data_provider()
-        # self.register_portfolio()
-        self._get_avgloss()
+        self.check_and_reload_dailydata()
+        self.process_target_symbol()
+        self.init_async_data_provider()
+        self.register_portfolio()
 
     def check_and_reload_dailydata(self):
         """ check if already update, and reload data"""
@@ -361,7 +361,7 @@ class AsyncTrading_systeam(Trading_systeam):
         market_symobl = list(map(lambda x: x[0], self.get_target_symbol()))
 
         # 取得binance實際擁有標的,合併 (因為原本有部位的也要持續追蹤)
-        self.targetsymbol = self.datatransformer.target_symobl(
+        self.targetsymbols = self.datatransformer.target_symobl(
             market_symobl, self.dataprovider_online.Binanceapp.getfutures_account_name())
 
         self.SendProcessBarUpdate(40)
@@ -372,16 +372,32 @@ class AsyncTrading_systeam(Trading_systeam):
         self.SendProcessBarUpdate(60)
 
     def register_portfolio(self):
-        # 初始化投資組合 (傳入要買的標的物, 並且傳入相關參數)
+        # 初始化投資組合 (傳入要買的標的物, 並且讀取神經網絡的參數)
         self.engine.Portfolio_register(
-            self.targetsymbol)
+            self.targetsymbols, self._get_avgloss())  # 傳入平均虧損的資料
         self.symbol_name: set = self.engine.get_symbol_name()
         self.SendProcessBarUpdate(80)
 
-    def _get_avgloss(self):
-        avgloss_df = self.dataprovider_online.SQL.read_Dateframe("select * from 'avgloss'")
-        print(avgloss_df)
-        print(avgloss_df.info)
+    def _get_avgloss(self) -> dict:
+        """
+                    strategyName  freq_time    symbol strategytype updatetime  avgLoss
+            0    AAVEUSDT-15K-OB-DQN         15  AAVEUSDT  DQNStrategy 2023-10-20    -2.03
+            1     ACHUSDT-15K-OB-DQN         15   ACHUSDT  DQNStrategy 2023-10-21  -100.00
+            2     ADAUSDT-15K-OB-DQN         15   ADAUSDT  DQNStrategy 2023-10-20    -0.01
+            3    AGIXUSDT-15K-OB-DQN         15  AGIXUSDT  DQNStrategy 2023-10-21    -0.01
+            4    AGLDUSDT-15K-OB-DQN         15  AGLDUSDT  DQNStrategy 2023-10-21    -0.01
+            ..                   ...        ...       ...          ...        ...      ...
+            198   YGGUSDT-15K-OB-DQN         15   YGGUSDT  DQNStrategy 2023-10-21    -0.02
+            199   ZECUSDT-15K-OB-DQN         15   ZECUSDT  DQNStrategy 2023-10-20    -1.14
+            200   ZENUSDT-15K-OB-DQN         15   ZENUSDT  DQNStrategy 2023-10-21    -1.31
+            201   ZILUSDT-15K-OB-DQN         15   ZILUSDT  DQNStrategy 2023-10-20     0.00
+            202   ZRXUSDT-15K-OB-DQN         15   ZRXUSDT  DQNStrategy 2023-10-20    -0.04
+        """
+        avgloss_df = self.dataprovider_online.SQL.read_Dateframe('avgloss')
+        avgloss_df = avgloss_df[['strategyName', 'avgLoss']]
+        avgloss_df.set_index('strategyName', inplace=True)
+        avgloss_data = avgloss_df.to_dict('index')
+        return {key: value['avgLoss'] for key, value in avgloss_data.items()}
 
     async def main(self):
         self.printfunc("Crypto_trading 正式交易啟動")
@@ -514,5 +530,4 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
 
 
 if __name__ == '__main__':
-    app = Trading_systeam()
-    app.importavgloss()
+    app = AsyncTrading_systeam()

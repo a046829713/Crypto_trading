@@ -210,7 +210,10 @@ class TradeUI(QMainWindow, Ui_MainWindow):
         # 優化結果保存
         self.actionimport.triggered.connect(self.importOptimizeResult)
         self.actionexport.triggered.connect(self.exportOptimizeResult)
-
+        # 平均虧損
+        self.actionexportavgloss.triggered.connect(self.exportavgloss)
+        self.actionimportavgloss.triggered.connect(self.importavgloss)
+        
         if activate == '--autostart':
             self.click_btn_trade()
 
@@ -252,6 +255,16 @@ class TradeUI(QMainWindow, Ui_MainWindow):
         self.importOptimizeResultThread = QThread()
         self.importOptimizeResultThread.run = Trading_systeam().importOptimizeResult()
         self.importOptimizeResultThread.start()
+        
+    def importavgloss(self):
+        self.importavglossThread = QThread()
+        self.importavglossThread.run = Trading_systeam().importavgloss()
+        self.importavglossThread.start()
+        
+    def exportavgloss(self):
+        self.exportavglossThread = QThread()
+        self.exportavglossThread.run = Trading_systeam().exportavgloss()
+        self.exportavglossThread.start()
 
     def import_history_data(self):
         self.import_history_data_Thread = QThread()

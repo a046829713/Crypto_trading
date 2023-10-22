@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1173</width>
-    <height>667</height>
+    <width>1233</width>
+    <height>664</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -76,7 +76,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1173</width>
+     <width>1233</width>
      <height>22</height>
     </rect>
    </property>
@@ -95,7 +95,15 @@
     <addaction name="actionExport_History_Data"/>
     <addaction name="actionImport_History_Data"/>
    </widget>
+   <widget class="QMenu" name="menuData">
+    <property name="title">
+     <string>Data</string>
+    </property>
+    <addaction name="actionimportavgloss"/>
+    <addaction name="actionexportavgloss"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuData"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="toolBar">
@@ -124,6 +132,9 @@
    <addaction name="actionImport_History_Data"/>
    <addaction name="actionReload_Day_Data"/>
    <addaction name="actionReload_Min_Data"/>
+   <addaction name="separator"/>
+   <addaction name="actionexportavgloss"/>
+   <addaction name="actionimportavgloss"/>
   </widget>
   <action name="actionimport">
    <property name="icon">
@@ -195,6 +206,24 @@
    </property>
    <property name="text">
     <string>Import History Data</string>
+   </property>
+  </action>
+  <action name="actionexportavgloss">
+   <property name="icon">
+    <iconset>
+     <normaloff>Images/export.png</normaloff>Images/export.png</iconset>
+   </property>
+   <property name="text">
+    <string>exportavgloss</string>
+   </property>
+  </action>
+  <action name="actionimportavgloss">
+   <property name="icon">
+    <iconset>
+     <normaloff>Images/import.png</normaloff>Images/import.png</iconset>
+   </property>
+   <property name="text">
+    <string>importavgloss</string>
    </property>
   </action>
  </widget>

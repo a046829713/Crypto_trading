@@ -146,11 +146,7 @@ class PortfolioTrader_DQN(object):
         """
             將訂單的買賣方向匯入
         """
-        avgloss_df = pd.read_csv("avgloss.csv")
-        avgloss_df = avgloss_df[['symbol','avgLoss']]
-        avgloss_df.set_index('symbol',inplace=True)
-        avgloss_data =  avgloss_df.to_dict('index')
-       
+
         for strategy in self.strategys:
             # 判斷是否要取得運算過的pf加速流程
             if strategy.strategy_name in self.pf_map:
@@ -186,7 +182,7 @@ class PortfolioTrader_DQN(object):
             strategy.df['Order'] = out_list
             # 添加想要分析的參數
             # strategy.df['avgloss'] = pf.avgloss
-            strategy.df['avgloss'] = avgloss_data[strategy.symbol_name]['avgLoss']
+            strategy.df['avgloss'] = strategy.avgloss
 
     @TimeCountMsg.record_timemsg
     def get_data(self):
@@ -235,7 +231,7 @@ class PortfolioTrader_DQN(object):
         self.data = self.get_data()
 
         levelage = 2  # 槓桿倍數
-        rsikpercent = 0.005  # 風險百分比
+        rsikpercent = 0.01  # 風險百分比
         ClosedPostionprofit = [self.Portfolio_initcash]
 
         strategy_order_info = {}  # 專門用來保存資料
@@ -353,7 +349,7 @@ class Quantify_systeam_DQN(object):
                 each_strategy.datetimes = Event_count.get_index(
                     each_strategy.data)
 
-    def Portfolio_register(self, target_symobl: list):
+    def Portfolio_register(self, target_symobl: list, avgloss_data: dict):
         """
             正式投資組合上線環境
             先將基本資訊註冊
@@ -362,13 +358,19 @@ class Quantify_systeam_DQN(object):
                 target_symobl
                     ['XMRUSDT', 'BTCUSDT', 'BTCDOMUSDT', 'BNBUSDT', 'ETHUSDT']
         """
+        assert isinstance(
+            avgloss_data, dict), 'avgloss_data type isn`t dict'
+
         for each_symbol in target_symobl:
             # 這邊用來決定要運行甚麼策略
             for _strategy in ["DQNStrategy"]:
                 strategyName = f"{each_symbol}-15K-OB-DQN"
 
                 strategy = Strategy_base_DQN(
-                    strategyName, _strategy, each_symbol, 15,  1.0,  self.setting['BACKTEST_DEFAULT_COMMISSION_PERC'], self.setting['DEFAULT_SLIPPAGE'], self.setting['MODEL_COUNT_PATH'], formal=self.formal)
+                    strategyName, _strategy, each_symbol, 15,  1.0,
+                    self.setting['BACKTEST_DEFAULT_COMMISSION_PERC'],
+                    self.setting['DEFAULT_SLIPPAGE'], self.setting['MODEL_COUNT_PATH'],
+                    formal=self.formal, avgloss=avgloss_data[strategyName])
 
                 self.Trader.register(strategy)
 
@@ -418,11 +420,9 @@ class Optimizer_DQN(object):
                 strategy.simulationdata(fast_type=False)
                 pf = Record_Orders(strategy, self.formal).getpf()
 
-            
-
                 return {'freq_time': 15,
                         'symbol': each_symbol,
                         'strategytype': 'DQNStrategy',
                         'strategyName': strategyName,
                         'updatetime': str(datetime.date.today()),
-                        'avgLoss': round(pf.avgloss, 2)}                        
+                        'avgLoss': round(pf.avgloss, 2)}
