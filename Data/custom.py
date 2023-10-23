@@ -230,7 +230,7 @@ class Binance_server(object):
         每次連線之前重新建立連線,減少斷線次數
 
     Args:
-        object (_type_): 
+        object (_type_):
     """
 
     def __init__(self, formal=False) -> None:
@@ -383,8 +383,10 @@ class Binance_server(object):
 
         return out_dict
 
-    def get_order_times_qty(self, max_qty: str, order_quantity: float) -> tuple:
-        """返回總共要下幾次,跟單次最大數量,餘數不管
+    def _limit_order_times_qty(self, max_qty: str, order_quantity: float) -> tuple:
+        """
+            主要原因在於市價單的拋出數量有限制如果採用市價拋出的話,有可能會報出錯誤
+            返回總共要下幾次,跟單次最大數量限制,餘數不管
 
         Args:
             max_qty (str): _description_
@@ -398,9 +400,9 @@ class Binance_server(object):
     def execute_orders(self, client: Client, order_finally: dict, line_alert, model=ORDER_TYPE_MARKET, current_size=dict(), symbol_map=dict(), formal=False):
         """
             Execute orders to Binance.
-            use for futures 
+            use for futures
             to develop data = 2023-1-15
-            note i can't find create_test_order by futures. 
+            note i can't find create_test_order by futures.
 
 
             To place a futures limit order:
@@ -440,8 +442,9 @@ class Binance_server(object):
 
             Response example:{'symbol': 'XMRUSDT', 'leverage': 10, 'maxNotionalValue': '1000000'}
 
-
-
+            待修正問題:
+                1.binance.exceptions.BinanceAPIException: APIError(code=-2027): Exceeded the maximum allowable position at current leverage.
+                2.binance.exceptions.BinanceAPIException: APIError(code=-2019): Margin is insufficient.
         """
 
         self.trade_count += 1
@@ -454,17 +457,13 @@ class Binance_server(object):
         # 將已經持倉的部位傳入(讀取所有的槓桿)
         leverage_map = {}
         for i in current_size.keys():
-            # 获取 BTCUSDT 合约的当前部位信息
+            # 獲取 BTCUSDT 合約的當前部位信息
             position = client.futures_position_information(symbol=i)
-
-            # 获取当前杠杆倍数
+            # 取得目前槓桿倍數
             leverage = int(position[0]['leverage'])
-
             leverage_map.update({i: leverage})
 
         for each_symbol, ready_to_order_size in order_finally.items():
-            print(each_symbol)
-
             if leverage_map.get(each_symbol, None) is None:
                 def _change_leverage(_symbol, _leverage: int):
                     time.sleep(0.3)
@@ -505,6 +504,7 @@ class Binance_server(object):
                 while True:
                     if (float(current_size[each_symbol]) + ready_to_order_size) * symbol_map[each_symbol]['Close'].iloc[-1] < float(Response['maxNotionalValue']):
                         break
+                                        
                     time.sleep(0.3)
                     beginleverage = beginleverage - 1
                     Response = client.futures_change_leverage(
@@ -520,10 +520,24 @@ class Binance_server(object):
         #     print("新手無法使用超過20倍之槓桿")
         #     print(Response)
 
-        # ===========================================================================================
-        exchange_info_data = self.get_futures_exchange_info()
+        self._execute_orders(client, line_alert=line_alert,
+                             model=model, order_finally=order_finally, formal=formal)
 
-        # ===========================================================================================
+    def _execute_orders(self, client: Client, line_alert, model=ORDER_TYPE_MARKET, order_finally: dict = None, formal=False):
+        """
+            將下單邏輯分開方便除錯
+
+        Args:
+            client (Client): _description_
+            line_alert (_type_): _description_
+            model (_type_, optional): _description_. Defaults to ORDER_TYPE_MARKET.
+            order_finally (dict, optional): _description_. Defaults to None.
+            formal (bool, optional): _description_. Defaults to False.
+        """
+        
+        assert isinstance(order_finally, dict), "danger order_finally is None"
+
+        exchange_info_data = self._get_futures_exchange_info()
         for symbol, ready_to_order_size in order_finally.items():
             # 取得下單模式
             if model == 'MARKET':
@@ -545,36 +559,34 @@ class Binance_server(object):
             # 取得 quantity數量
             order_quantity = abs(ready_to_order_size)
 
-            order_times, max_qty = self.get_order_times_qty(
-                exchange_info_data[symbol], order_quantity)
+            order_times, max_qty = self._limit_order_times_qty(
+                exchange_info_data[symbol], order_quantity)            
 
-            print("總委託數量:", order_quantity, "委託次數:",
-                  order_times, '單次最大數量:', max_qty)
-            
-            
-            if order_quantity > max_qty:
-                print(symbol)
-            for _ in range(int(order_times)):
+            for _ in range(max([1, int(order_times)])):
+                if int(order_times) == 0:
+                    real_order = order_quantity
+                else:
+                    real_order = max_qty
+
                 line_alert.req_line_alert(
-                    f"商品:{symbol}\n買賣別:{order_side}\n委託單:{order_type}\n委託類別:{order_timeInForce}\n委託數量:{max_qty}")
+                    f"商品:{symbol}\n買賣別:{order_side}\n委託單:{order_type}\n委託類別:{order_timeInForce}\n委託數量:{real_order}")
 
                 if order_side == "SELL":
                     args = dict(side=order_side,
                                 type=order_type,
                                 symbol=symbol,
-                                quantity=max_qty,
+                                quantity=real_order,
                                 reduceOnly=True)
                 else:
                     args = dict(side=order_side,
                                 type=order_type,
                                 symbol=symbol,
-                                quantity=max_qty)
+                                quantity=real_order)
 
                 if formal:
                     # 丟入最後create 單裡面
                     result = client.futures_create_order(**args)
                     self.save_order_result(result)
-
                 else:
                     print("警告:,下單功能被關閉,若目前處於正式交易請重新開啟系統")
                 print("循環進入測試")
@@ -620,11 +632,13 @@ class Binance_server(object):
                 PRIMARY KEY(`orderId`)
                 );
         Args:
-            order_data (dict): # 
-            版本1:{'orderId': 22019361762, 'symbol': 'SOLUSDT', 'status': 'NEW', 'clientOrderId': 'yfobvBPbosaT0Zz38XNxHv', 'price': '0', 'avgPrice': '0.0000', 'origQty': '1', 'executedQty': '0', 'cumQty': '0', 'cumQuote': '0', 'timeInForce': 'GTC', 'type': 'MARKET', 'reduceOnly': False, 'closePosition': False, 'side': 'BUY', 'positionSide': 'BOTH', 'stopPrice': '0', 'workingType': 'CONTRACT_PRICE', 'priceProtect': False, 'origType': 'MARKET', 'updateTime': 1675580975203}
+            order_data (dict): #
+            版本1:{'orderId': 22019361762, 'symbol': 'SOLUSDT', 'status': 'NEW', 'clientOrderId': 'yfobvBPbosaT0Zz38XNxHv', 'price': '0', 'avgPrice': '0.0000', 'origQty': '1', 'executedQty': '0', 'cumQty': '0', 'cumQuote': '0', 'timeInForce': 'GTC',
+                'type': 'MARKET', 'reduceOnly': False, 'closePosition': False, 'side': 'BUY', 'positionSide': 'BOTH', 'stopPrice': '0', 'workingType': 'CONTRACT_PRICE', 'priceProtect': False, 'origType': 'MARKET', 'updateTime': 1675580975203}
 
             # 實際拿到的respone(24個欄位)
-            (15154865689, 'ZECUSDT', 'NEW', '7Xvs36qJXADB3vbPtz6xCZ', '0.00', '0.00', '0.609', '0.000', '0.000', '0.00000', 'GTC', 'MARKET', False, False, 'BUY', 'BOTH', '0.00', 'CONTRACT_PRICE', False, 'MARKET', 'NONE', 'NONE', 0, 1696819981601);
+            (15154865689, 'ZECUSDT', 'NEW', '7Xvs36qJXADB3vbPtz6xCZ', '0.00', '0.00', '0.609', '0.000', '0.000', '0.00000', 'GTC',
+             'MARKET', False, False, 'BUY', 'BOTH', '0.00', 'CONTRACT_PRICE', False, 'MARKET', 'NONE', 'NONE', 0, 1696819981601);
 
             當下官方的文檔為26個欄位:
             {
@@ -640,20 +654,20 @@ class Binance_server(object):
                 "side": "BUY",
                 "positionSide": "SHORT",
                 "status": "NEW",
-                "stopPrice": "9300",       
-                "closePosition": False,   
+                "stopPrice": "9300",
+                "closePosition": False,
                 "symbol": "BTCUSDT",
                 "timeInForce": "GTD",
                 "type": "TRAILING_STOP_MARKET",
                 "origType": "TRAILING_STOP_MARKET",
-                "activatePrice": "9020",   
-                "priceRate": "0.3",         
+                "activatePrice": "9020",
+                "priceRate": "0.3",
                 "updateTime": 1566818724722,
                 "workingType": "CONTRACT_PRICE",
-                "priceProtect": False,          
-                "priceMatch": "NONE",             
-                "selfTradePreventionMode": "NONE", 
-                "goodTillDate": 1693207680000      
+                "priceProtect": False,
+                "priceMatch": "NONE",
+                "selfTradePreventionMode": "NONE",
+                "goodTillDate": 1693207680000
             }
         """
         try:
@@ -665,25 +679,28 @@ class Binance_server(object):
         except:
             debug.print_info(error_msg="保存系統order單錯誤")
 
-    @SetConnectCLose
+    @ SetConnectCLose
     def get_futuresaccountbalance(self, client: Client) -> float:
         for i in client.futures_account_balance():
             if i['asset'] == 'USDT':
                 return float(i['balance'])
 
-    @SetConnectCLose
-    def get_futures_exchange_info(self, client: Client):
+    @ SetConnectCLose
+    def _get_futures_exchange_info(self, client: Client):
         """ 用來查看市價單的委託限制
 
         Args:
             client (Client): _description_
 
         Returns:
-            exchange_inf_data.keys = ['timezone', 'serverTime', 'futuresType', 'rateLimits', 'exchangeFilters', 'assets', 'symbols']
+            exchange_inf_data.keys = ['timezone', 'serverTime', 'futuresType',
+                'rateLimits', 'exchangeFilters', 'assets', 'symbols']
             futuresType = U_MARGINED
-            rateLimits = [{'rateLimitType': 'REQUEST_WEIGHT', 'interval': 'MINUTE', 'intervalNum': 1, 'limit': 2400}, {'rateLimitType': 'ORDERS', 'interval': 'MINUTE', 'intervalNum': 1, 'limit': 1200}, {'rateLimitType': 'ORDERS', 'interval': 'SECOND', 'intervalNum': 10, 'limit': 300}]
+            rateLimits = [{'rateLimitType': 'REQUEST_WEIGHT', 'interval': 'MINUTE', 'intervalNum': 1, 'limit': 2400}, {'rateLimitType': 'ORDERS',
+                'interval': 'MINUTE', 'intervalNum': 1, 'limit': 1200}, {'rateLimitType': 'ORDERS', 'interval': 'SECOND', 'intervalNum': 10, 'limit': 300}]
             exchangeFilters = []
-            assets = [{'asset': 'USDT', 'marginAvailable': True, 'autoAssetExchange': '-10000'}, {'asset': 'BTC', 'marginAvailable': True, 'autoAssetExchange': '-0.00100000'}, {'asset': 'BNB', 'marginAvailable': True, 'autoAssetExchange': '-10'}, {'asset': 'ETH', 'marginAvailable': True, 'autoAssetExchange': '-5'}, {'asset': 'XRP', 'marginAvailable': True, 'autoAssetExchange': '0'}, {'asset': 'BUSD', 'marginAvailable': True, 'autoAssetExchange': '-10000'}, {'asset': 'USDC', 'marginAvailable': True, 'autoAssetExchange': '0'}, {'asset': 'TUSD', 'marginAvailable': True, 'autoAssetExchange': '0'}, {'asset': 'USDP', 'marginAvailable': True, 'autoAssetExchange': '0'}]
+            assets = [{'asset': 'USDT', 'marginAvailable': True, 'autoAssetExchange': '-10000'}, {'asset': 'BTC', 'marginAvailable': True, 'autoAssetExchange': '-0.00100000'}, {'asset': 'BNB', 'marginAvailable': True, 'autoAssetExchange': '-10'}, {'asset': 'ETH', 'marginAvailable': True, 'autoAssetExchange': '-5'}, {'asset': 'XRP',
+                'marginAvailable': True, 'autoAssetExchange': '0'}, {'asset': 'BUSD', 'marginAvailable': True, 'autoAssetExchange': '-10000'}, {'asset': 'USDC', 'marginAvailable': True, 'autoAssetExchange': '0'}, {'asset': 'TUSD', 'marginAvailable': True, 'autoAssetExchange': '0'}, {'asset': 'USDP', 'marginAvailable': True, 'autoAssetExchange': '0'}]
             symbols :用來放相關資料
 
             'ZECUSDT': '111.190'

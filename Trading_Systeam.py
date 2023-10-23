@@ -364,6 +364,8 @@ class AsyncTrading_systeam(Trading_systeam):
         self.targetsymbols = self.datatransformer.target_symobl(
             market_symobl, self.dataprovider_online.Binanceapp.getfutures_account_name())
 
+
+        print(self.targetsymbols)
         self.SendProcessBarUpdate(40)
 
     def init_async_data_provider(self):
