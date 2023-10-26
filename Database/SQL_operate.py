@@ -250,3 +250,8 @@ class SqlSentense():
         );"""
 
         return sql_query
+
+    @staticmethod
+    def createsysstatus() -> str:
+        sql_query = """CREATE TABLE `crypto_data`.`sysstatus`(`ID` varchar(255) NOT NULL,`systeam_datetime` varchar(255) NOT NULL,PRIMARY KEY(`ID`));"""
+        return sql_query

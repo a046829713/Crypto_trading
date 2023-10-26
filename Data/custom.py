@@ -238,14 +238,6 @@ class Binance_server(object):
         self.BinanceDate = BinanceDate()
 
     @SetConnectCLose
-    def getaccount(self, client: Client) -> dict:
-        """ 回傳保證金帳戶
-        Returns:
-            _type_: _description_
-        """
-        return client.get_margin_account()
-
-    @SetConnectCLose
     def getfuturesinfo(self, client: Client) -> dict:
         """ 回傳交易所的合約
 
@@ -315,7 +307,19 @@ class Binance_server(object):
             out_put.update({i['symbol']: i['positionAmt']})
 
         return out_put
-
+    
+    @SetConnectCLose
+    def get_futures_account(self, client: Client):  
+        margin_account_details = client.futures_account()    
+    
+        allnotional = 0
+        for each_position in margin_account_details['positions']:
+            notional = float(each_position['notional'])
+            if notional != 0:
+                allnotional +=notional            
+        
+        return allnotional
+    
     @SetConnectCLose
     def getfutures_funding_rate(self, client: Client):
         """
@@ -443,15 +447,15 @@ class Binance_server(object):
             Response example:{'symbol': 'XMRUSDT', 'leverage': 10, 'maxNotionalValue': '1000000'}
 
             待修正問題:
-                1.binance.exceptions.BinanceAPIException: APIError(code=-2027): Exceeded the maximum allowable position at current leverage.
+                # 在已經最佳化的槓桿下如果爆出已下錯誤的話,我認為是否是下注過大絕對超過4倍槓桿
+                # 所以目前不知道該如何修復
                 2.binance.exceptions.BinanceAPIException: APIError(code=-2019): Margin is insufficient.
         """
 
         self.trade_count += 1
         print('目前交易次數', self.trade_count)
         print(f"進入下單,目前下單模式:{model}")
-
-        balance_money = self.get_futuresaccountbalance()
+        
         # 下單前檢查leverage
         # 商品槓桿
         # 將已經持倉的部位傳入(讀取所有的槓桿)
@@ -465,37 +469,37 @@ class Binance_server(object):
 
         for each_symbol, ready_to_order_size in order_finally.items():
             if leverage_map.get(each_symbol, None) is None:
-                def _change_leverage(_symbol, _leverage: int):
-                    time.sleep(0.3)
-                    try:
-                        Response = client.futures_change_leverage(
-                            symbol=_symbol, leverage=_leverage)
-                        print(Response)
+                def _change_leverage(_symbol):
+                    last_leverage = 0
+                    leverage = 1
+                    Response = client.futures_change_leverage(symbol=_symbol, leverage=leverage)
+                    while True:
+                        try:                            
+                            # 比下單資金更大才行
+                            if float(Response['maxNotionalValue']) > ready_to_order_size * symbol_map[each_symbol]['Close'].iloc[-1]:
+                                last_leverage = leverage
+                                leverage += 1
+                                Response = client.futures_change_leverage(
+                                    symbol=_symbol, leverage=leverage)
+                            else:
+                                Response = client.futures_change_leverage(
+                                    symbol=_symbol, leverage=last_leverage)
+                                break
 
-                        # 比下單資金更大才行
-                        if float(Response['maxNotionalValue']) > ready_to_order_size * symbol_map[each_symbol]['Close'].iloc[-1]:
-                            if float(Response['maxNotionalValue']) > balance_money * 2:
-                                _change_leverage(
-                                    _symbol=_symbol, _leverage=_leverage+1)
-                        else:
-                            Response = client.futures_change_leverage(
-                                symbol=_symbol, leverage=_leverage-1)
+                        except BinanceAPIException as e:
+                            if e.code == -4028:
+                                # 槓桿值無效。請選擇一個有效的槓桿值。
+                                print(
+                                    "Invalid leverage value. Please choose a valid leverage value.")
+                                # 已經沒辦法在大開更大的槓桿時,跳出
+                                break
+                            else:
+                                raise e
 
-                    except BinanceAPIException as e:
-                        if e.code == -4028:
-                            print(
-                                "Invalid leverage value. Please choose a valid leverage value.")
-                        elif e.code == -2027:
-                            print(
-                                "Exceeded the maximum allowable position at current leverage.")
-                        else:
-                            raise e
-
-                _change_leverage(each_symbol, 1)
+                _change_leverage(each_symbol)
             else:
                 # 如果商品已經存在 直接呼叫
                 # 判斷是否需要更改槓桿 不需要管正負號
-
                 Response = client.futures_change_leverage(
                     symbol=each_symbol, leverage=leverage_map.get(each_symbol))
 
@@ -504,12 +508,10 @@ class Binance_server(object):
                 while True:
                     if (float(current_size[each_symbol]) + ready_to_order_size) * symbol_map[each_symbol]['Close'].iloc[-1] < float(Response['maxNotionalValue']):
                         break
-                                        
                     time.sleep(0.3)
                     beginleverage = beginleverage - 1
                     Response = client.futures_change_leverage(
                         symbol=each_symbol, leverage=beginleverage)
-
                     print("調整槓桿:", Response)
 
         # ===========================================================================================
@@ -534,7 +536,7 @@ class Binance_server(object):
             order_finally (dict, optional): _description_. Defaults to None.
             formal (bool, optional): _description_. Defaults to False.
         """
-        
+
         assert isinstance(order_finally, dict), "danger order_finally is None"
 
         exchange_info_data = self._get_futures_exchange_info()
@@ -560,7 +562,7 @@ class Binance_server(object):
             order_quantity = abs(ready_to_order_size)
 
             order_times, max_qty = self._limit_order_times_qty(
-                exchange_info_data[symbol], order_quantity)            
+                exchange_info_data[symbol], order_quantity)
 
             for _ in range(max([1, int(order_times)])):
                 if int(order_times) == 0:

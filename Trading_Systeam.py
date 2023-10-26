@@ -16,8 +16,8 @@ import copy
 from AppSetting import AppSetting
 from DQN.lib import Backtest
 
-#  設計GUI 導入 avgloss 的介面
-#  測試這樣是否可以讓神經網絡的口數更平穩
+# 可以製作持有部位總市值的指標GUI
+# 爬取現貨資料
 
 
 class Trading_systeam():
@@ -49,7 +49,6 @@ class Trading_systeam():
         """
         BackUp.check_all_need_table()
 
-    @BackUp.check_table_if_exits('lastinitcapital')
     def buildEngine(self):
         """ 用來創建回測系統
 
@@ -122,7 +121,6 @@ class Trading_systeam():
         except Exception as e:
             print(f"導入資料錯誤:{e}")
 
-    @BackUp.check_table_if_exits(table_name="optimizeresult")
     def importOptimizeResult(self):
         """
             將sql的優化資料導入
@@ -312,7 +310,6 @@ class Trading_systeam():
             self.line_alert.req_line_alert("警告:請校正資金水位,投資組合水位差距超過百分之10")
             self.change_money()
 
-    @BackUp.check_table_if_exits(table_name="sysstatus")
     def timewritersql(self):
         """
             寫入保存時間
@@ -363,9 +360,6 @@ class AsyncTrading_systeam(Trading_systeam):
         # 取得binance實際擁有標的,合併 (因為原本有部位的也要持續追蹤)
         self.targetsymbols = self.datatransformer.target_symobl(
             market_symobl, self.dataprovider_online.Binanceapp.getfutures_account_name())
-
-
-        print(self.targetsymbols)
         self.SendProcessBarUpdate(40)
 
     def init_async_data_provider(self):

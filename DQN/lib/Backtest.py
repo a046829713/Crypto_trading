@@ -231,7 +231,7 @@ class PortfolioTrader_DQN(object):
         self.data = self.get_data()
 
         levelage = 2  # 槓桿倍數
-        rsikpercent = 0.0025  # 風險百分比
+        rsikpercent = 0.0025 # 風險百分比
         ClosedPostionprofit = [self.Portfolio_initcash]
 
         strategy_order_info = {}  # 專門用來保存資料
