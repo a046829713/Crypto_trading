@@ -81,7 +81,7 @@ class DB_operate():
         except:
             Debug_tool.debug.print_info()
 
-    def write_Dateframe(self, df: pd.DataFrame, symbol_name: str, exists='replace') -> pd.DataFrame:
+    def write_Dateframe(self, df: pd.DataFrame, symbol_name: str, exists='replace', if_index=True) -> pd.DataFrame:
         """
             to write pandas Dateframe
             symbol_name or tablename: 'btcusdt-f'
@@ -89,7 +89,8 @@ class DB_operate():
         try:
             self.userconn = router.Router().mysql_financialdata_conn
             with self.userconn as conn:
-                df.to_sql(symbol_name, con=conn, if_exists=exists)
+                df.to_sql(symbol_name, con=conn,
+                          if_exists=exists, index=if_index)
         except:
             Debug_tool.debug.print_info()
 
@@ -254,4 +255,15 @@ class SqlSentense():
     @staticmethod
     def createsysstatus() -> str:
         sql_query = """CREATE TABLE `crypto_data`.`sysstatus`(`ID` varchar(255) NOT NULL,`systeam_datetime` varchar(255) NOT NULL,PRIMARY KEY(`ID`));"""
+        return sql_query
+
+    @staticmethod
+    def createorderresult() -> str:
+        sql_query = """
+                CREATE TABLE `crypto_data`.`orderresult`(
+                    `orderId` BIGINT NOT NULL,
+                    `order_info` TEXT NOT NULL,
+                    PRIMARY KEY(`orderId`)
+                );
+            """
         return sql_query

@@ -92,15 +92,15 @@
     <addaction name="separator"/>
     <addaction name="actionReload_Day_Data"/>
     <addaction name="actionReload_Min_Data"/>
-    <addaction name="actionExport_History_Data"/>
-    <addaction name="actionImport_History_Data"/>
+    <addaction name="actionExport_all_tables"/>
+    <addaction name="actionImport_all_talbes"/>
    </widget>
    <widget class="QMenu" name="menuData">
     <property name="title">
      <string>Data</string>
     </property>
-    <addaction name="actionimportavgloss"/>
-    <addaction name="actionexportavgloss"/>
+    <addaction name="actionImportavgloss"/>
+    <addaction name="actionExportavgloss"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuData"/>
@@ -128,13 +128,13 @@
    <addaction name="actionimport"/>
    <addaction name="actionexport"/>
    <addaction name="separator"/>
-   <addaction name="actionExport_History_Data"/>
-   <addaction name="actionImport_History_Data"/>
+   <addaction name="actionExport_all_tables"/>
+   <addaction name="actionImport_all_talbes"/>
    <addaction name="actionReload_Day_Data"/>
    <addaction name="actionReload_Min_Data"/>
    <addaction name="separator"/>
-   <addaction name="actionexportavgloss"/>
-   <addaction name="actionimportavgloss"/>
+   <addaction name="actionExportavgloss"/>
+   <addaction name="actionImportavgloss"/>
   </widget>
   <action name="actionimport">
    <property name="icon">
@@ -190,25 +190,25 @@
     <string>Reload Min Data</string>
    </property>
   </action>
-  <action name="actionExport_History_Data">
+  <action name="actionExport_all_tables">
    <property name="icon">
     <iconset>
      <normaloff>Images/exporthistory.png</normaloff>Images/exporthistory.png</iconset>
    </property>
    <property name="text">
-    <string>Export History Data</string>
+    <string>export all tables</string>
    </property>
   </action>
-  <action name="actionImport_History_Data">
+  <action name="actionImport_all_talbes">
    <property name="icon">
     <iconset>
      <normaloff>Images/importhistory.png</normaloff>Images/importhistory.png</iconset>
    </property>
    <property name="text">
-    <string>Import History Data</string>
+    <string>import all talbes</string>
    </property>
   </action>
-  <action name="actionexportavgloss">
+  <action name="actionExportavgloss">
    <property name="icon">
     <iconset>
      <normaloff>Images/export.png</normaloff>Images/export.png</iconset>
@@ -217,7 +217,7 @@
     <string>exportavgloss</string>
    </property>
   </action>
-  <action name="actionimportavgloss">
+  <action name="actionImportavgloss">
    <property name="icon">
     <iconset>
      <normaloff>Images/import.png</normaloff>Images/import.png</iconset>

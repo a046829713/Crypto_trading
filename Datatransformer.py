@@ -6,7 +6,6 @@ from utils.TimeCountMsg import TimeCountMsg
 import numpy as np
 
 
-
 class Datatransformer:
     def get_tradedata(self, original_df: pd.DataFrame, freq: int = 30):
         """
@@ -108,7 +107,6 @@ class Datatransformer:
 
         return diff_map
 
-    
     def mergeData(self, symbol_name: str, lastdata: pd.DataFrame, socketdata: dict):
         """合併資料用來
 
@@ -168,3 +166,34 @@ class Datatransformer:
                 if isinstance(value, np.int16):
                     data[key] = int(value)
         return data
+
+    def generate_table_name(self, symbol_name, symbol_type, time_type, iflower=True):
+        """
+        根据给定的参数生成表名。
+
+        参数:
+        symbol_name (str): 符号名
+        symbol_type (str): 符号类型 ('FUTURES', 'SPOT')
+        time_type (str): 时间类型 ('1d', '1m')
+        iflower (bool): 如果为True，则将表名转换为小写
+
+        返回:
+        str: 生成的表名
+        """
+        # 根据 symbol_type 修改符号名
+        if symbol_type == 'FUTURES':
+            tb_symbol_name = symbol_name + '-F'
+        elif symbol_type == 'SPOT':
+            tb_symbol_name = symbol_name
+
+        # 根据 time_type 修改符号名
+        if time_type == '1d':
+            tb_symbol_name = tb_symbol_name + '-D'
+        elif time_type == '1m':
+            tb_symbol_name = tb_symbol_name
+
+        # 如果 iflower 为 True，则将符号名转换为小写
+        if iflower:
+            tb_symbol_name = tb_symbol_name.lower()
+
+        return tb_symbol_name

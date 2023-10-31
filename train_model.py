@@ -14,6 +14,7 @@ from datetime import datetime
 
 # 問題紀錄:
 # 1.為甚麼每次都要從5-6根K棒開始運行程序?
+# 2.如果更改特徵的話,會不會影響到整體?
 
 # 代辦事項:
 # 驗證程序(run_model)
@@ -35,8 +36,6 @@ EPSILON_STOP = 0.1
 CHECKPOINT_EVERY_STEP = 1000000
 VALIDATION_EVERY_STEP = 100000
 WRITER_EVERY_STEP = 100
-
-
 NUM_EVAL_EPISODES = 10  # 每次评估的样本数
 setting = AppSetting.get_DQN_setting()
 
@@ -79,6 +78,7 @@ if __name__ == "__main__":
         setting['EPSILON_START'])
 
     agent = ptan.agent.DQNAgent(net, selector, device=device)
+    
     exp_source = ptan.experience.ExperienceSourceFirstLast(
         env, agent, GAMMA, steps_count=REWARD_STEPS)
 

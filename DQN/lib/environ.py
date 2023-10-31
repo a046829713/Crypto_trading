@@ -107,50 +107,6 @@ class State:
         open = self._prices.open[self._offset]
         rel_close = self._prices.close[self._offset]
         return open * (1.0 + rel_close)
-
-    # def step(self, action):
-    #     """
-    #     Perform one step in our price, adjust offset, check for the end of prices
-    #     and handle position change
-    #     :param action:
-    #     :return: reward, done
-    #     """
-    #     assert isinstance(action, Actions)
-    #     reward = 0.0
-    #     done = False
-    #     close = self._cur_close()
-
-    #     if action == Actions.Buy and not self.have_position:
-    #         self.have_position = True
-            
-    #         # 目前會這樣寫是因為 這樣的滑價比較合理 每根K棒給reward還要再思考
-    #         if self.reward_on_close:
-    #             self.open_price = close * (1 + setting['DEFAULT_SLIPPAGE'])
-    #         else:
-    #             self.open_price = close
-                
-    #         reward -= self.commission_perc
-
-    #     elif action == Actions.Close and self.have_position:
-    #         reward -= self.commission_perc
-    #         done |= self.reset_on_close
-
-    #         if self.reward_on_close:
-    #             reward += 100.0 * (close* (1 - setting['DEFAULT_SLIPPAGE']) - self.open_price) / self.open_price
-            
-    #         self.have_position = False
-    #         self.open_price = 0.0
-
-    #     self._offset += 1
-    #     prev_close = close # 上一根的收盤價
-    #     close = self._cur_close()
-    #     done |= self._offset >= self._prices.close.shape[0]-1
-
-    #     # 訓練時 每一根K棒都給獎勵 (及時獎勵機制)
-    #     if self.have_position and not self.reward_on_close:
-    #         reward += 100.0 * (close - prev_close) / prev_close
-
-    #     return reward, done
     
     def step(self, action):
         """
@@ -283,8 +239,8 @@ class StocksEnv(gym.Env):
             _type_: _description_
         """
         action = Actions(action_idx)
-        reward, done = self._state.step(action)
-        obs = self._state.encode()
+        reward, done = self._state.step(action) # 這邊會更新步數
+        obs = self._state.encode() # 呼叫這裡的時候就會取得新的狀態
         info = {"instrument": self._instrument, "offset": self._state._offset}
         return obs, reward, done, info
 

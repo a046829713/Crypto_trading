@@ -18,7 +18,7 @@ from DQN.lib import Backtest
 
 # 可以製作持有部位總市值的指標GUI
 # 爬取現貨資料
-
+# 確保原始程序可以運作
 
 class Trading_systeam():
     def __init__(self) -> None:
@@ -31,23 +31,13 @@ class Trading_systeam():
         self.symbol_map = {}
         # 這次新產生的資料
         self.new_symbol_map = {}
-        self.RL_model = True
+        self.RL_model = True        
 
         self.dataprovider_online = DataProvider_online()
         self.engine = self.buildEngine()
         self.line_alert = LINE_Alert()
         self.checkout = False
         self.datatransformer = Datatransformer()
-        self.check_all_need_table()
-
-    def check_all_need_table(self):
-        """
-            感覺設計上,一開始在建立trading_systeam的時候,就要建立檢查table的機制,感覺會比用裝飾器來檢查資料庫更好
-
-        Returns:
-            _type_: _description_
-        """
-        BackUp.check_all_need_table()
 
     def buildEngine(self):
         """ 用來創建回測系統
@@ -75,7 +65,8 @@ class Trading_systeam():
 
         if sql_date != _todaydate:
             # 更新日資料 並且在回補完成後才繼續進行 即時行情的回補
-            self.dataprovider_online.reload_all_data(time_type='D')
+            self.dataprovider_online.reload_all_data(
+                time_type='1d', symbol_type='FUTURES')
         else:
             # 判斷幣安裡面所有可交易的標的
             allsymobl = self.dataprovider_online.Binanceapp.get_targetsymobls()
@@ -86,7 +77,7 @@ class Trading_systeam():
 
             # 當有新的商品出現之後,會導致有錯誤,錯誤修正
             if list(filter(lambda x: False if x.lower() + "-f-d" in all_tables else True, allsymobl)):
-                self.dataprovider_online.reload_all_data(time_type='D')
+                self.dataprovider_online.reload_all_data(time_type='1d', symbol_type='FUTURES')
 
     def exportOptimizeResult(self):
         """
@@ -215,57 +206,21 @@ class Trading_systeam():
                 self.dataprovider_online.SQL.change_db_data(
                     SqlSentense.insert_avgloss(result))
 
-    def exportAllKbarsData(self):
+    def export_all_tables(self):
         """
-            將資料庫裡面的資料全部讀取出來保存成CSV檔案
-            只保留1 min的數據
-        """
-        BackUp.check_file("History")
-
-        for each_symbol in self.dataprovider_online.Binanceapp.get_targetsymobls():
-            BackUp.exportKbarsData(each_symbol, self.dataprovider_online)
-
-    def exportKbarsData(self, symbol: str, data_type: str = None):
-        BackUp.check_file("History")
-        BackUp.exportKbarsData(
-            symbol, self.dataprovider_online, data_type=data_type)
-
-    def importAllKbarsData(self):
-        """
-            將資料全部寫入MySQL
+            將資料全部從Mysql寫出
 
         """
-        for each_symbol in self.dataprovider_online.Binanceapp.get_targetsymobls():
-            # 檢查是否在資料庫裏面
-            symbol_name_list = self.dataprovider_online.SQL.get_db_data(
-                'show tables;')
-            symbol_name_list = [y[0] for y in symbol_name_list]
-
-            tb_symbol_name = each_symbol + '-F'
-            tb_symbol_name = tb_symbol_name.lower()
-
-            if tb_symbol_name in symbol_name_list:
-                continue
-            else:
-                self.dataprovider_online.SQL.change_db_data(
-                    SqlSentense.create_table_name(tb_symbol_name))
-
-            file_path = "History\\" + each_symbol.lower() + "-f.csv"
-            df = pd.read_csv(file_path)
-            df.set_index('Datetime', inplace=True)
-
-            self.dataprovider_online.SQL.write_Dateframe(
-                df, tb_symbol_name, exists='append')
-            print("開始刪除")
-            os.remove(file_path)
-
+        BackUp.DatabaseBackupRestore().export_all_tables()
+    
+    
     def get_target_symbol(self):
         """ 
         # 取得交易標的
 
         """
         all_symbols = self.dataprovider_online.get_symbols_history_data(
-            time_type='D')
+            symbol_type='FUTURES', time_type='1d')
         example = get_symobl_filter_useful(all_symbols)
 
         return example
@@ -402,7 +357,7 @@ class AsyncTrading_systeam(Trading_systeam):
         # 先將資料從DB撈取出來
         for name in self.symbol_name:
             original_df, eachCatchDf = self.dataprovider_online.get_symboldata(
-                name)
+                name, QMType='Online')
             self.symbol_map.update({name: original_df})
             self.get_catch(name, eachCatchDf)
 

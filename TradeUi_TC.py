@@ -23,7 +23,7 @@ from AppSetting import AppSetting
 import datetime
 from Database.clients import checkIfDataBase
 import time
-
+from utils import BackUp
 
 def checkifUserDeadlineEnd():
     with open(r'C:\PhoneNumber.txt', 'r') as file:
@@ -204,15 +204,18 @@ class TradeUI(QMainWindow, Ui_MainWindow):
         self.actionSaveData.triggered.connect(self.click_save_data)
         self.actionReload_Day_Data.triggered.connect(self.reload_data_day)
         self.actionReload_Min_Data.triggered.connect(self.reload_data_min)
-        self.actionImport_History_Data.triggered.connect(
-            self.import_history_data)
+        
+        self.actionExport_all_tables.triggered.connect(self.export_all_tables)
+        self.actionImport_all_talbes.triggered.connect(
+            self.import_all_tables)
 
         # 優化結果保存
         self.actionimport.triggered.connect(self.importOptimizeResult)
         self.actionexport.triggered.connect(self.exportOptimizeResult)
+        
         # 平均虧損
-        self.actionexportavgloss.triggered.connect(self.exportavgloss)
-        self.actionimportavgloss.triggered.connect(self.importavgloss)
+        self.actionExportavgloss.triggered.connect(self.exportavgloss)
+        self.actionImportavgloss.triggered.connect(self.importavgloss)
         
         if activate == '--autostart':
             self.click_btn_trade()
@@ -266,11 +269,19 @@ class TradeUI(QMainWindow, Ui_MainWindow):
         self.exportavglossThread.run = Trading_systeam().exportavgloss()
         self.exportavglossThread.start()
 
-    def import_history_data(self):
-        self.import_history_data_Thread = QThread()
-        self.import_history_data_Thread.run = Trading_systeam().importAllKbarsData()
-        self.import_history_data_Thread.start()
-
+    def import_all_tables(self):
+        """
+            在設計的思考上,回補資料等不需要進入系統的操作應該要獨立出來
+        """ 
+        self.import_all_tables_Thread = QThread()
+        self.import_all_tables_Thread.run = BackUp.DatabaseBackupRestore().import_all_tables()
+        self.import_all_tables_Thread.start()
+    
+    def export_all_tables(self):        
+        self.export_all_tables_Thread = QThread()
+        self.export_all_tables_Thread.run = Trading_systeam().export_all_tables()
+        self.export_all_tables_Thread.start()
+    
     def _close_reload_dialog(self):
         # 當系統建置之後,關閉原本的畫面
         self.reload_dialog.close()

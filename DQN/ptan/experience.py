@@ -3,7 +3,7 @@ import torch
 import random
 import collections
 from torch.autograd import Variable
-
+import time
 import numpy as np
 
 from collections import namedtuple, deque
@@ -41,13 +41,14 @@ class ExperienceSource:
         else:
             self.pool = [env]
         
-        self.agent = agent
-        self.steps_count = steps_count
-        self.steps_delta = steps_delta
+        self.agent = agent # <DQN.ptan.agent.DQNAgent object at 0x0000016C63B05D60>
+        self.steps_count = steps_count # 3
+        self.steps_delta = steps_delta # 1
         self.total_rewards = []
         self.total_steps = []
-        self.vectorized = vectorized
+        self.vectorized = vectorized # False
 
+    
     def __iter__(self):
         print("ExperienceSource iter 測試進入次數:",)
         states, agent_states, histories, cur_rewards, cur_steps = [], [], [], [], []
@@ -66,44 +67,61 @@ class ExperienceSource:
             env_lens.append(obs_len)
 
             for _ in range(obs_len):
-                histories.append(deque(maxlen=self.steps_count))
+                histories.append(deque(maxlen=self.steps_count)) 
                 cur_rewards.append(0.0)
                 cur_steps.append(0)
-                agent_states.append(self.agent.initial_state())
+                agent_states.append(self.agent.initial_state()) 
 
+            
+            # states # 隨機狀態
+            # agent_states # [None]
+            # histories # [deque([], maxlen=3)]
+            # cur_rewards # [0.0]
+            # cur_steps # [0]
+            
+            
         iter_idx = 0
         while True:
-            actions = [None] * len(states)
+            actions = [None] * len(states) # [None]            
             states_input = []
             states_indices = []
             for idx, state in enumerate(states):
                 if state is None:
                     actions[idx] = self.pool[0].action_space.sample()  # assume that all envs are from the same family
                 else:
-                    states_input.append(state)
-                    states_indices.append(idx)
+                    states_input.append(state) # 狀態
+                    states_indices.append(idx) # 索引
+            
             if states_input:
-                states_actions, new_agent_states = self.agent(states_input, agent_states)
+                # 會吐出動作和新狀態[2] [None] # 不過原作者這邊好似沒有使用到agent_states
+                states_actions, new_agent_states = self.agent(states_input, agent_states)               
                 for idx, action in enumerate(states_actions):
+                    
                     g_idx = states_indices[idx]
                     actions[g_idx] = action
                     agent_states[g_idx] = new_agent_states[idx]
+            
+            # [[2]]
             grouped_actions = _group_list(actions, env_lens)
 
             global_ofs = 0
             for env_idx, (env, action_n) in enumerate(zip(self.pool, grouped_actions)):
+                # 0 (<TimeLimit<StocksEnv instance>>, [2])                
                 if self.vectorized:
                     next_state_n, r_n, is_done_n, _ = env.step(action_n)
                 else:
                     next_state, r, is_done, _ = env.step(action_n[0])
                     next_state_n, r_n, is_done_n = [next_state], [r], [is_done]
 
-                for ofs, (action, next_state, r, is_done) in enumerate(zip(action_n, next_state_n, r_n, is_done_n)):
+                for ofs, (action, next_state, r, is_done) in enumerate(zip(action_n, next_state_n, r_n, is_done_n)):                
                     idx = global_ofs + ofs
+                    
                     state = states[idx]
                     history = histories[idx]
 
                     cur_rewards[idx] += r
+                    print(cur_rewards)
+                    print('*'*120)
                     cur_steps[idx] += 1
                     if state is not None:
                         history.append(Experience(state=state, action=action, reward=r, done=is_done))
@@ -166,6 +184,12 @@ class ExperienceSourceFirstLast(ExperienceSource):
     and last states and action taken in the first state.
 
     If we have partial trajectory at the end of episode, last_state will be None
+    這是一個圍繞ExperienceSource的包裝器（wrapper），
+    用於在我們只需要初始和最終狀態時，防止在重播緩衝區（replay buffer）
+    中儲存完整的軌跡。對於每一個軌跡片段，它會計算折扣獎勵，並且只輸出第一個和最後一個狀態，以及在初始狀態中採取的行動。
+
+    如果在劇集結束時我們有部分軌跡，那麼last_state將為None。
+    
     """
     def __init__(self, env, agent, gamma, steps_count=1, steps_delta=1, vectorized=False):
         assert isinstance(gamma, float)
