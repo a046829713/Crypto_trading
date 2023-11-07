@@ -21,7 +21,7 @@ def check_sysLive():
             datetime.strptime(data[0][1], "%Y-%m-%d %H:%M:%S.%f")
 
         print("系統差異秒數:", difftime.seconds)
-        if difftime.seconds > 600:
+        if difftime.seconds > 1000:
             LINE_Alert().req_line_alert("緊急通知>>程式已經停止運作!!!!!")
 
         time.sleep(60)

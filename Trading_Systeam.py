@@ -418,7 +418,7 @@ class AsyncTrading_systeam(Trading_systeam):
 
                     # >>比對目前binance 內的部位狀態 進行交易
                     order_finally = self.dataprovider_online.transformer.calculation_size(
-                        last_status, current_size, self.symbol_map)
+                        last_status, current_size, self.symbol_map,exchange_info = self.dataprovider_online.Binanceapp.getfuturesinfo() )
 
                     print("測試order_finally", order_finally)
                     # 將order_finally 跟下單最小單位相比
