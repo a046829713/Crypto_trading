@@ -370,7 +370,7 @@ class AsyncTrading_systeam(Trading_systeam):
                     begin_time = time.time()
                     # 取得原始資料
                     all_data_copy = await self.asyncDataProvider.get_all_data()
-
+                    
                     # 避免在self.symbol_map
                     symbol_map_copy = copy.deepcopy(self.symbol_map)
                     for name, each_df in symbol_map_copy.items():
@@ -379,7 +379,8 @@ class AsyncTrading_systeam(Trading_systeam):
                             name, each_df, all_data_copy)
                         self.symbol_map[name] = original_df
                         self.get_catch(name, eachCatchDf)
-
+                        
+                    
                     info = self.engine.get_symbol_info()
                     for strategy_name, symbol_name, freq_time in info:
                         # 取得可交易之資料

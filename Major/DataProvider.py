@@ -10,9 +10,7 @@ import datetime
 from datetime import timedelta
 import asyncio
 from . import custom
-import sys
-import time
-
+import copy
 
 class DataProvider:
     """
@@ -199,7 +197,7 @@ class AsyncDataProvider():
 
     async def get_all_data(self) -> dict:
         async with self.lock:
-            return dict(self.all_data)
+            return copy.deepcopy(self.all_data)
 
     async def subscriptionData(self, streams: set):
         """ 用來訂閱系統資料

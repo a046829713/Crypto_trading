@@ -96,6 +96,6 @@ class AppSetting():
         """
         permission_data = {
             'Data_transmission': True,
-            'execute_orders': False
+            'execute_orders': True
         }
         return permission_data
