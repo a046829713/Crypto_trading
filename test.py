@@ -10,10 +10,15 @@
 # DatabaseBackupRestore().export_all_tables()
 
 
-object_test = {"Datetime": 123456,  
-                "Open": 123456}
-all_data ={"test":object}
+# object_test = {"Datetime": 123456,  
+#                 "Open": 123456}
+# all_data ={"test":object}
 
-b = dict(all_data)
+# b = dict(all_data)
 
-print(id(all_data["test"]),id(b["test"]))
+# print(id(all_data["test"]),id(b["test"]))
+
+
+# print(round(-0.00009, 5))
+
+

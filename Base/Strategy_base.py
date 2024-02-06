@@ -194,7 +194,7 @@ class Np_Order_Info(object):
         )
 
     def register(self, strategy_info: Strategy_base):
-        """將原始策略的資訊記錄起來
+        """將原始策略的資訊記錄起來,取用裡面的開高低收
 
         Args:
             strategy_info (_type_): _description_
@@ -210,7 +210,8 @@ class Np_Order_Info(object):
             _type_: _description_
         """
         if self.LossTrades == 0:
-            return -100.0  # 由於都沒有交易輸的紀錄
+            # 由於都沒有交易輸的紀錄 改採用收盤價的拉回百分之50
+            return (self.strategy_info.df['Close'].iloc[-1] * -1) * 0.5  
         else:
             return self.order['Gross_loss'].iloc[-1] / self.LossTrades
 

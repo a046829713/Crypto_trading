@@ -192,12 +192,13 @@ class Trading_systeam():
         # 使用 Optimizer # 建立DB
         for eachsymbol in all_symbols:
             target_strategy_name = eachsymbol + '-15K-OB-DQN'
-            print(eachsymbol)
+            print(eachsymbol) 
             if target_strategy_name in strategylist:
                 continue
-
+            
             result = Backtest.Optimizer_DQN(
             ).Create_strategy_to_get_avgloss([eachsymbol])
+            
             print(result)
             if result['strategyName'] in strategylist:
                 self.dataprovider_online.SQL.change_db_data(
@@ -315,6 +316,10 @@ class AsyncTrading_systeam(Trading_systeam):
         # 取得binance實際擁有標的,合併 (因為原本有部位的也要持續追蹤)
         self.targetsymbols = self.datatransformer.target_symobl(
             market_symobl, self.dataprovider_online.Binanceapp.getfutures_account_name())
+        
+        if "TRBUSDT" in self.targetsymbols:
+            self.targetsymbols.remove('TRBUSDT')
+            print("目前持有標的",self.targetsymbols)
         self.SendProcessBarUpdate(40)
 
     def init_async_data_provider(self):
@@ -482,4 +487,5 @@ class GUI_Trading_systeam(AsyncTrading_systeam):
 
 
 if __name__ == '__main__':
-    app = AsyncTrading_systeam()
+    app = Trading_systeam()
+    app.exportavgloss()

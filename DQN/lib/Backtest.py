@@ -425,4 +425,4 @@ class Optimizer_DQN(object):
                         'strategytype': 'DQNStrategy',
                         'strategyName': strategyName,
                         'updatetime': str(datetime.date.today()),
-                        'avgLoss': round(pf.avgloss, 2)}
+                        'avgLoss': round(pf.avgloss, 5)}
